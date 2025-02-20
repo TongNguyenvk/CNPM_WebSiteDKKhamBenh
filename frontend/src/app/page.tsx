@@ -7,7 +7,7 @@ import { jwtDecode } from 'jwt-decode'; // Cài đặt: npm install jwt-decode
 interface DecodedToken {
   userId: number;
   email: string;
-  [key: string]: any; // Cho phép các trường khác
+  [key: string]: unknown; // Cho phép các trường khác
 }
 
 function HomePage() {
@@ -23,7 +23,7 @@ function HomePage() {
         console.log('Decoded JWT Token:', decodedToken); // Log để kiểm tra
 
         // Kiểm tra token hết hạn
-        const isExpired = (decodedToken.exp || 0) * 1000 < Date.now();
+        const isExpired = (decodedToken.exp !== undefined && typeof decodedToken.exp === 'number' ? decodedToken.exp : 0) * 1000 < Date.now();
         if (isExpired) {
           localStorage.removeItem('token');
           router.push('/login');
@@ -53,9 +53,9 @@ function HomePage() {
         <>
           <p>Chào mừng, {user.email}!</p>
           <p>User ID: {user.userId}</p>
-          <p>Vai trò: {user.role}</p>
           {/* In ra object user để kiểm tra */}
           <pre>{JSON.stringify(user, null, 2)}</pre>
+          {user.role !== undefined && typeof user.role === 'string' && <p>Vai trò: {user.role}</p>}
           <button onClick={() => {
             localStorage.removeItem('token');
             router.push('/login');

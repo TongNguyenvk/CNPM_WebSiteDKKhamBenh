@@ -1,7 +1,7 @@
 // models/User.js
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const bcrypt = require('bcrypt'); // Import bcrypt
+const bcrypt = require('bcryptjs'); // Import bcrypt
 
 const User = sequelize.define('User', {
   firstName: DataTypes.STRING,

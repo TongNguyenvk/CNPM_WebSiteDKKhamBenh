@@ -2,11 +2,22 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginUser } from '@/app/lib/api' // Import hàm loginUser
+import { loginUser } from '@/app/lib/api';
 
-interface LoginPageProps { }
+interface LoginResponse {
+    token: string;
+}
 
-const LoginPage: React.FC<LoginPageProps> = () => {
+interface ApiError {
+    response?: {
+        data?: {
+            message?: string;
+        };
+    };
+    message?: string;
+}
+
+const LoginPage: React.FC = () => { // Loại bỏ LoginPageProps
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
@@ -17,14 +28,23 @@ const LoginPage: React.FC<LoginPageProps> = () => {
         setError('');
 
         try {
-            const response = await loginUser({ email, password }); // Gọi api backend
+            const response: LoginResponse = await loginUser({ email, password });
             const { token } = response;
 
             localStorage.setItem('token', token);
-            router.push('/'); // Điều hướng đến trang chủ
-        } catch (error: any) {
+            router.push('/');
+        } catch (error) {
+            let errorMessage = 'Đăng nhập thất bại';
+
+            if (typeof error === 'object' && error !== null) {
+                const apiError = error as ApiError;
+                errorMessage = apiError.response?.data?.message || errorMessage;
+            } else if (typeof error === 'string') {
+                errorMessage = error;
+            }
+
             console.error('Login error:', error);
-            setError(error.response?.data?.message || 'Đăng nhập thất bại');
+            setError(errorMessage);
         }
     };
 
@@ -61,7 +81,10 @@ const LoginPage: React.FC<LoginPageProps> = () => {
                         />
                     </div>
                     <div className="flex items-center justify-between">
-                        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline" type="submit">
+                        <button
+                            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                            type="submit"
+                        >
                             Đăng nhập
                         </button>
                     </div>
