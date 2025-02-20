@@ -135,8 +135,7 @@
     *   Backend: Truy cập `http://localhost:8080` để kiểm tra các API.
 
 ## Cấu trúc thư mục
-Use code with caution.
-Markdown
+
 your-repository/
 ├── .git/
 ├── .gitignore
