@@ -55,7 +55,7 @@ User.associate = function (models) {
   User.belongsTo(models.Allcode, { foreignKey: 'positionId', targetKey: 'keyMap', as: 'positionData' });
   User.hasMany(models.Schedule, { foreignKey: 'doctorId' });
   User.hasMany(models.Booking, { foreignKey: 'patientId' });
-  User.hasOne(models.DoctorDetail, { foreignKey: 'doctorId' });
+  User.hasOne(models.DoctorDetail, { foreignKey: 'doctorId', as: 'doctorDetail' });
   User.belongsTo(models.Specialty, { foreignKey: 'specialtyId' });
 };
 
