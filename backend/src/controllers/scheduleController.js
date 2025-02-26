@@ -123,6 +123,30 @@ const deleteSchedule = async (req, res) => {
         res.status(500).json({ message: 'Lỗi server', error: error.message });
     }
 };
+
+exports.getDoctorSchedule = async (req, res) => {
+    try {
+        const doctorId = req.params.doctorId;
+        const today = new Date();
+        const threeDaysLater = new Date();
+        threeDaysLater.setDate(today.getDate() + 3); // Ngày sau 3 ngày
+
+        const schedules = await Schedule.findAll({
+            where: {
+                doctorId: doctorId,
+                date: {
+                    [Op.between]: [today, threeDaysLater], // Lấy lịch khám trong 3 ngày tới
+                },
+            },
+            order: [["date", "ASC"], ["time", "ASC"]], // Sắp xếp theo ngày & thời gian
+        });
+
+        return res.status(200).json(schedules);
+    } catch (error) {
+        console.error("Lỗi lấy lịch khám:", error);
+        return res.status(500).json({ message: "Lỗi server" });
+    }
+};
 module.exports = {
     getDoctorSchedules,
     deleteSchedule,

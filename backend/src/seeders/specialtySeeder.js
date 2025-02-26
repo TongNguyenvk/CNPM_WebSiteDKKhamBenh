@@ -8,8 +8,8 @@ module.exports = {
             specialties.push({
                 name: faker.person.jobType(),
                 image: faker.image.url(),
-                descriptionHTML: faker.lorem.paragraph(),
-                descriptionMarkdown: faker.lorem.paragraph(),
+                description: faker.lorem.paragraph(),
+
                 createdAt: new Date(),
                 updatedAt: new Date()
             });

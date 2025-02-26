@@ -1,111 +1,92 @@
-// src/controllers/specialtyController.js
-const Specialty = require('../models/Specialty');
+const { Specialty } = require('../models');
 
-// @desc    Lấy tất cả các specialties
-// @route   GET /api/specialties
-// @access  Public
-const getAllSpecialties = async (req, res) => {
+exports.getAllSpecialties = async (req, res) => {
     try {
         const specialties = await Specialty.findAll();
-        res.json(specialties);
+        res.status(200).json(specialties);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Lỗi server', error: error.message });
+        res.status(500).json({ message: 'Error fetching specialties', error: error.message });
     }
 };
 
-// @desc    Lấy thông tin một specialty theo ID
-// @route   GET /api/specialties/:id
-// @access  Public
-const getSpecialtyById = async (req, res) => {
+exports.getSpecialtyById = async (req, res) => {
     try {
-        const specialtyId = req.params.id;
-        const specialty = await Specialty.findByPk(specialtyId);
+        const { id } = req.params;
+
+
+
+        // Tìm chuyên khoa theo ID
+        const specialty = await Specialty.findByPk(id);
 
         if (!specialty) {
-            return res.status(404).json({ message: 'Không tìm thấy chuyên khoa' });
+            return res.status(404).json({ message: `Specialty with ID ${specialtyId} not found` });
         }
 
-        res.json(specialty);
+        res.status(200).json(specialty);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Lỗi server', error: error.message });
+        console.error("Error fetching specialty:", error);
+        res.status(500).json({ message: 'Error fetching specialty details', error: error.message });
     }
 };
 
-// @desc    Tạo một specialty mới
-// @route   POST /api/specialties
-// @access  Public
-const createSpecialty = async (req, res) => {
-    try {
-        const { description, image, name } = req.body;
 
-        const specialty = await Specialty.create({
-            description,
-            image,
-            name
+exports.createSpecialty = async (req, res) => {
+    try {
+        const { name, description } = req.body; // description sẽ ở dạng HTML từ WYSIWYG editor
+
+        if (!name || !description) {
+            return res.status(400).json({ message: "Name and description are required" });
+        }
+
+        const newSpecialty = await Specialty.create({
+            name,
+            description // Lưu HTML vào database
         });
 
-        res.status(201).json({ message: 'Chuyên khoa đã được tạo thành công', specialty });
+        res.status(201).json({ message: "Specialty created successfully", specialty: newSpecialty });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Lỗi server', error: error.message });
+        console.error("Error creating specialty:", error);
+        res.status(500).json({ message: "Error creating specialty", error: error.message });
     }
 };
 
-// @desc    Cập nhật thông tin một specialty
-// @route   PUT /api/specialties/:id
-// @access  Public
-const updateSpecialty = async (req, res) => {
+
+exports.updateSpecialty = async (req, res) => {
     try {
-        const specialtyId = req.params.id;
-        const { description, image, name } = req.body;
+        const { specialtyId } = req.params;
+        const { name, description } = req.body; // description là HTML
 
         const specialty = await Specialty.findByPk(specialtyId);
-
         if (!specialty) {
-            return res.status(404).json({ message: 'Không tìm thấy chuyên khoa' });
+            return res.status(404).json({ message: `Specialty with ID ${specialtyId} not found` });
         }
 
-        specialty.description = description || specialty.description;
-        specialty.image = image || specialty.image;
         specialty.name = name || specialty.name;
+        specialty.description = description || specialty.description;
 
         await specialty.save();
-
-        res.json({ message: 'Thông tin chuyên khoa đã được cập nhật thành công', specialty });
+        res.status(200).json({ message: "Specialty updated successfully", specialty });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Lỗi server', error: error.message });
+        console.error("Error updating specialty:", error);
+        res.status(500).json({ message: "Error updating specialty", error: error.message });
     }
 };
 
-// @desc    Xóa một specialty
-// @route   DELETE /api/specialties/:id
-// @access  Public
-const deleteSpecialty = async (req, res) => {
+
+exports.deleteSpecialty = async (req, res) => {
     try {
-        const specialtyId = req.params.id;
+        const { specialtyId } = req.params;
 
         const specialty = await Specialty.findByPk(specialtyId);
 
         if (!specialty) {
-            return res.status(404).json({ message: 'Không tìm thấy chuyên khoa' });
+            return res.status(404).json({ message: 'Specialty not found' });
         }
 
         await specialty.destroy();
 
-        res.json({ message: 'Chuyên khoa đã được xóa thành công' });
+        res.status(200).json({ message: 'Specialty deleted successfully' });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Lỗi server', error: error.message });
+        res.status(500).json({ message: 'Error deleting specialty', error: error.message });
     }
-};
-
-module.exports = {
-    getAllSpecialties,
-    getSpecialtyById,
-    createSpecialty,
-    updateSpecialty,
-    deleteSpecialty
 };

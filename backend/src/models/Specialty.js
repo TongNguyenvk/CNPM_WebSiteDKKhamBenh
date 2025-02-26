@@ -4,8 +4,8 @@ const sequelize = require('../config/database'); // Import sequelize instance
 const Specialty = sequelize.define('Specialty', {
   name: DataTypes.STRING,
   image: DataTypes.STRING,
-  descriptionHTML: DataTypes.TEXT,
-  descriptionMarkdown: DataTypes.TEXT
+  description: DataTypes.TEXT,
+  //descriptionMarkdown: DataTypes.TEXT
 }, {
   tableName: 'Specialties',
   timestamps: true,
