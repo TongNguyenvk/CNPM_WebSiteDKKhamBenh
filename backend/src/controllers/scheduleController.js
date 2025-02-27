@@ -124,7 +124,7 @@ const deleteSchedule = async (req, res) => {
     }
 };
 
-exports.getDoctorSchedule = async (req, res) => {
+const  getDoctorSchedule = async (req, res) => {
     try {
         const doctorId = req.params.doctorId;
         const today = new Date();
@@ -148,7 +148,7 @@ exports.getDoctorSchedule = async (req, res) => {
     }
 };
 module.exports = {
-    getDoctorSchedules,
+    getDoctorSchedule,
     deleteSchedule,
     createSchedule,
     updateSchedule,

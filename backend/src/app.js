@@ -6,6 +6,7 @@ const userRoutes = require('./routes/userRoute')
 const doctorRoutes = require('./routes/doctorRoute')
 const specialtyRoutes = require('./routes/specialtyRoute');
 const scheduleRoutes = require('./routes/scheduleRoute');
+const bookingRoutes = require('./routes/bookingRoute');
 const app = express();
 
 const corsOptions = {
@@ -23,4 +24,5 @@ app.use('/api/auth', authRoutes);
 app.use('/api/specialties', specialtyRoutes);
 app.use('/api/doctor', doctorRoutes);
 app.use('/api/schedule', scheduleRoutes);
+app.use('/api/bookings', bookingRoutes);
 module.exports = app;
