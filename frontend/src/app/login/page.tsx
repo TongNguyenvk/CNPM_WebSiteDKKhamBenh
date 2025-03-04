@@ -1,9 +1,12 @@
-'use client';
+'use client'
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginUser, LoginResponse } from '@/app/lib/auth';
+import { loginUser } from '@/app/lib/api';
+
+interface LoginResponse {
+  token: string;
+}
 
 interface ApiError {
   response?: {
@@ -14,8 +17,8 @@ interface ApiError {
   message?: string;
 }
 
-const LoginPage: React.FC = () => {
-  const [username, setUsername] = useState('');
+const LoginPage: React.FC = () => { // Loại bỏ LoginPageProps
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
@@ -25,16 +28,10 @@ const LoginPage: React.FC = () => {
     setError('');
 
     try {
-      const response: LoginResponse = await loginUser({ username, password });
-      const { token, role } = response;
+      const response: LoginResponse = await loginUser({ email, password });
+      const { token } = response;
 
-      // Sử dụng useEffect để lưu vào localStorage trên client-side
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('token', token);
-        localStorage.setItem('role', role);
-      }
-
-      // Chuyển hướng đến /home
+      localStorage.setItem('token', token);
       router.push('/home');
     } catch (error) {
       let errorMessage = 'Đăng nhập thất bại';
@@ -51,6 +48,7 @@ const LoginPage: React.FC = () => {
     }
   };
 
+
   return (
     <div className="login-container">
       {error && <div className="text-red-500 text-center mb-4">{error}</div>}
@@ -58,13 +56,13 @@ const LoginPage: React.FC = () => {
         <h1>Đăng nhập</h1>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
-            <label>Tên người dùng</label>
+            <label>Email</label>
             <input
               type="text"
               name="username"
               placeholder="Nhập tên người dùng"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               className="input-field"
             />
           </div>

@@ -1,7 +1,6 @@
 // controllers/doctorController.js
 const db = require('../config/database');
-const User = require('../models/User');
-const DoctorDetail = require('../models/DoctorDetail');
+const {User, DoctorDetail} = require('../models')
 const { Op } = require("sequelize");
 
 const createDoctor = async (req, res) => {
