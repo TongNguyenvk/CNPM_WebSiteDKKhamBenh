@@ -32,7 +32,7 @@ exports.getSpecialtyById = async (req, res) => {
 
 exports.createSpecialty = async (req, res) => {
     try {
-        const { name, description } = req.body; // description sẽ ở dạng HTML từ WYSIWYG editor
+        const { name, image, description } = req.body; // description sẽ ở dạng HTML từ WYSIWYG editor
 
         if (!name || !description) {
             return res.status(400).json({ message: "Name and description are required" });
@@ -40,6 +40,7 @@ exports.createSpecialty = async (req, res) => {
 
         const newSpecialty = await Specialty.create({
             name,
+            image,
             description // Lưu HTML vào database
         });
 
@@ -53,12 +54,12 @@ exports.createSpecialty = async (req, res) => {
 
 exports.updateSpecialty = async (req, res) => {
     try {
-        const { specialtyId } = req.params;
+        const { id } = req.params;
         const { name, description } = req.body; // description là HTML
 
-        const specialty = await Specialty.findByPk(specialtyId);
+        const specialty = await Specialty.findByPk(id);
         if (!specialty) {
-            return res.status(404).json({ message: `Specialty with ID ${specialtyId} not found` });
+            return res.status(404).json({ message: `Specialty with ID ${id} not found` });
         }
 
         specialty.name = name || specialty.name;
@@ -75,9 +76,9 @@ exports.updateSpecialty = async (req, res) => {
 
 exports.deleteSpecialty = async (req, res) => {
     try {
-        const { specialtyId } = req.params;
+        const { id } = req.params;
 
-        const specialty = await Specialty.findByPk(specialtyId);
+        const specialty = await Specialty.findByPk(id);
 
         if (!specialty) {
             return res.status(404).json({ message: 'Specialty not found' });

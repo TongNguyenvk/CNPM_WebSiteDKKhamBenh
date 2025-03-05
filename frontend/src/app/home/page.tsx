@@ -1,3 +1,4 @@
+import Image from 'next/image';
 async function getSpecialties() {
   const res = await fetch("http://localhost:8080/api/specialties/", { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch");
@@ -37,7 +38,7 @@ export default async function Home() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }}>
         {specialties.map((specialty) => (
           <div key={specialty.id} style={{ background: "#f9f9f9", padding: "20px", borderRadius: "8px", textAlign: "center" }}>
-            <img src={specialty.image} alt={specialty.name} style={{ width: "300px", height: "300px", alignItems:"center" }} />
+            <img src= {specialty.image} alt={specialty.name} style={{ width: "300px", height: "300px", alignItems:"center" }} />
             <h3 style={{ fontSize: "20px", marginTop: "10px" , color:"#000"}}>{specialty.name}</h3>
             <a href="#" style={{ color: "#007BFF", textDecoration: "none" }}>Learn more →</a>
           </div>
