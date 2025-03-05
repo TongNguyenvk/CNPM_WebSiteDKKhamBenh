@@ -44,8 +44,8 @@ module.exports = {
         users.push({
             firstName: faker.person.firstName(),
             lastName: faker.person.lastName(),
-            email: faker.internet.email(),
-            password: hashedPassword,
+            email: "admin@gmail.com",
+            password: "admin123",
             address: faker.location.streetAddress(),
             gender: faker.datatype.boolean(),
             roleId: 'R3', // Quản trị viên
