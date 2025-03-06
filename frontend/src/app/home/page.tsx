@@ -16,34 +16,43 @@ export default async function Home() {
   const doctors = await getDoctors();
 
   return (
-    <div style={{ fontFamily: "Montserrat, sans-serif", maxWidth: "1200px", margin: "auto", padding: "20px" }}>
+    <div style={{ fontFamily: "Montserrat, sans-serif", maxWidth: "1500px", margin: "auto", padding: "20px" }}>
       {/* Header */}
-      <nav style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 20px", backgroundColor: "#fff", boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)" }}>
-        <img style={{ width: "50px" }} src="https://placehold.co/50x50" alt="Logo" />
-        <ul style={{ display: "flex", listStyle: "none", gap: "20px", margin: 0, padding: 0 }}>
-          <li><a href="/book-appointment" style={{ textDecoration: "none", color: "#171717" }}>Đặt lịch khám</a></li>
-          <li><a href="/appointments" style={{ textDecoration: "none", color: "#171717" }}>Lịch hẹn</a></li>
-          <li><a href="/contact" style={{ textDecoration: "none", color: "#171717" }}>Liên hệ</a></li>
+      <nav style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 20px", backgroundColor: "#fff", boxShadow: "0 4px 6px rgba(41, 40, 40, 0.1)" }}>
+        <img style={{ width: "80px" }} src="https://phuongnamvina.com/img_data/images/logo-benh-vien.jpg" alt="Logo" />
+        <ul style={{ display: "flex", listStyle: "none", gap: "100px", margin: 0, padding: 0, paddingRight:"50px" }}>
+          <li><a href="/book-appointment" style={{ textDecoration: "none", color: "#171717", fontFamily:"unset" }}>Đặt lịch khám</a></li>
+          <li><a href="/appointments" style={{ textDecoration: "none", color: "#171717", fontFamily:"unset" }}>Lịch hẹn</a></li>
+          <li><a href="/contact" style={{ textDecoration: "none", color: "#171717", fontFamily:"unset" }}>Liên hệ</a></li>
+          <li><a href="#" style={{ textDecoration: "none", color: "#171717", fontFamily:"unset", gap:"50px" }}>Tôi</a></li>
         </ul>
       </nav>
 
       {/* Hero Section */}
       <div style={{ textAlign: "center", margin: "40px 0" }}>
-        <h1 style={{ fontSize: "40px", fontFamily: "-moz-initial", color: "#000" }}>Hệ thống đặt lịch khám bệnh trực tuyến</h1>
-        <p style={{ fontSize: "18px", fontFamily: "-moz-initial", color: "#000" }}>Chủ động thời gian khám bệnh, đặt lịch trực tuyến nhanh chóng</p>
+        <h1 style={{ fontSize: "40px", fontFamily:"unset", color: "#000" }}>Hệ thống đặt lịch khám bệnh trực tuyến</h1>
+        <p style={{ fontSize: "18px", fontFamily:"unset", color: "#000" }}>Chủ động thời gian khám bệnh, đặt lịch trực tuyến nhanh chóng</p>
       </div>
 
-      {/* Chuyên khoa */}
-      <h2 style={{ fontSize: "28px", marginBottom: "20px",color: "#000" }}>Chuyên khoa</h2>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }}>
-        {specialties.map((specialty) => (
-          <div key={specialty.id} style={{ background: "#f9f9f9", padding: "20px", borderRadius: "8px", textAlign: "center" }}>
-            <img src= {specialty.image} alt={specialty.name} style={{ width: "300px", height: "300px", alignItems:"center" }} />
-            <h3 style={{ fontSize: "20px", marginTop: "10px" , color:"#000"}}>{specialty.name}</h3>
-            <a href="#" style={{ color: "#007BFF", textDecoration: "none" }}>Learn more →</a>
+          {/* Chuyên khoa */}
+          <h2 style={{ fontSize: "28px", marginBottom: "20px",color: "#000" }}>Chuyên khoa</h2>
+          <a href="#">
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }}>
+            {specialties.map((specialty) => (
+          <div key={specialty.id} style={{ padding: "20px", borderRadius: "20px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+            <img src={specialty.image} alt={specialty.name} style={{ width: "300px", height: "300px", objectFit: "cover" }} />
+            <h3 style={{ fontSize: "20px", marginTop: "10px", color: "#000" }}>{specialty.name}</h3>
+            <div style={{ height: "1px", backgroundColor: "cyan", width: "100%", margin: "20px auto" }}></div>
+            {<a href="#" style={{ alignItems: "center", gap: "8px", padding: "10px 20px", border: "2px solid cyan", borderRadius: "30px", textDecoration: "none", color: "black", fontSize: "16px", transition: "all 0.3s ease", display: "inline-flex" }}>Xem thêm
+              <span style={{ color: "blue", fontSize: "20px" }}>→</span>
+            </a>}
+
           </div>
-        ))}
-      </div>
+          ))}
+          </div>
+          </a>
+
 
       {/* Bác sĩ */}
       <h2 style={{ fontSize: "28px", marginTop: "40px", marginBottom: "20px",color: "#000" }}>Bác sĩ</h2>
@@ -61,8 +70,8 @@ export default async function Home() {
       </div>
 
       {/* Thông tin liên lạc */}
-      <div style={{ textAlign: "center", marginTop: "40px", padding: "20px", background: "#f9f9f9", borderRadius: "8px" }}>
-        <h2 style={{ fontSize: "24px",color: "#000" }}>Thông tin liên lạc</h2>
+      <div style={{ textAlign: "center", marginTop: "40px", padding: "20px", background: "#669999", borderRadius: "8px" }}>
+        <h2 style={{ fontSize: "24px",color: "#000" }}>Thông tin liên lạc</h2><br></br>
         <input type="email" placeholder="Nhập email của bạn" style={{ padding: "10px", width: "250px", borderRadius: "5px", border: "1px solid #ccc" }} />
         <button style={{ padding: "10px 20px", marginLeft: "10px", background: "black", color: "white", border: "none", borderRadius: "5px" }}>Gửi</button>
       </div>

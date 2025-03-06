@@ -1,4 +1,4 @@
-// seeders/[timestamp]-demo-users.js
+seeders/[timestamp]-demo-users.js
 const bcrypt = require('bcryptjs');
 const { faker } = require('@faker-js/faker');
 
