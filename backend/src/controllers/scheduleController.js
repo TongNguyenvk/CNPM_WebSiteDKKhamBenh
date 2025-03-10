@@ -4,15 +4,27 @@ const { Schedule, Allcode } = require('../models');
 const getDoctorSchedules = async (req, res) => {
     try {
         const { doctorId } = req.params;
-        const { date } = req.query;
+        let { date } = req.query;
+
+        // Nếu không có date, mặc định lấy ngày hiện tại
+        const today = new Date();
+        if (!date) {
+            date = today.toISOString().split('T')[0]; // YYYY-MM-DD
+        }
+
+        // Chuyển đổi ngày bắt đầu thành dạng Date
+        const startDate = new Date(date);
+
+        // Lấy 3 ngày kế tiếp
+        const endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 3);
 
         const whereClause = {
-            doctorId: doctorId
+            doctorId: doctorId,
+            date: {
+                [Op.between]: [startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0]]
+            }
         };
-
-        if (date) {
-            whereClause.date = date;
-        }
 
         const schedules = await Schedule.findAll({
             where: whereClause,
@@ -30,6 +42,7 @@ const getDoctorSchedules = async (req, res) => {
         res.status(500).json({ message: 'Lỗi server', error: error.message });
     }
 };
+
 
 const getAllSchedules = async (req, res) => {
     try {
@@ -124,7 +137,7 @@ const deleteSchedule = async (req, res) => {
     }
 };
 
-const  getDoctorSchedule = async (req, res) => {
+const getDoctorSchedule = async (req, res) => {
     try {
         const doctorId = req.params.doctorId;
         const today = new Date();
@@ -148,7 +161,7 @@ const  getDoctorSchedule = async (req, res) => {
     }
 };
 module.exports = {
-    getDoctorSchedule,
+    getDoctorSchedules,
     deleteSchedule,
     createSchedule,
     updateSchedule,

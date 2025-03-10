@@ -44,7 +44,7 @@ export default async function Home() {
             <img src={specialty.image} alt={specialty.name} style={{ width: "300px", height: "300px", objectFit: "cover" }} />
             <h3 style={{ fontSize: "20px", marginTop: "10px", color: "#000" }}>{specialty.name}</h3>
             <div style={{ height: "1px", backgroundColor: "cyan", width: "100%", margin: "20px auto" }}></div>
-            {<a href="#" style={{ alignItems: "center", gap: "8px", padding: "10px 20px", border: "2px solid cyan", borderRadius: "30px", textDecoration: "none", color: "black", fontSize: "16px", transition: "all 0.3s ease", display: "inline-flex" }}>Xem thêm
+            {<a href={`/home/${specialty.id}`} style={{ alignItems: "center", gap: "8px", padding: "10px 20px", border: "2px solid cyan", borderRadius: "30px", textDecoration: "none", color: "black", fontSize: "16px", transition: "all 0.3s ease", display: "inline-flex" }}>Xem thêm
               <span style={{ color: "blue", fontSize: "20px" }}>→</span>
             </a>}
 

@@ -1,6 +1,6 @@
 // controllers/doctorController.js
 const db = require('../config/database');
-const {User, DoctorDetail} = require('../models')
+const { User, DoctorDetail, Specialty } = require('../models')
 const { Op } = require("sequelize");
 
 const createDoctor = async (req, res) => {
@@ -160,20 +160,25 @@ const getAllDoctors = async (req, res) => {
 
 const getDoctorsBySpecialty = async (req, res) => {
     try {
-        const { specialtyId } = req.params;
+        const { id } = req.params;
 
         const doctors = await User.findAll({
             where: {
                 roleId: 'R2', // Lấy tất cả users có role là bác sĩ (R2)
-                specialtyId: specialtyId  // Thêm điều kiện lọc theo chuyên khoa
+                specialtyId: id  // Thêm điều kiện lọc theo chuyên khoa
             },
             attributes: { exclude: ['password'] }, // Loại bỏ password khỏi kết quả
             include: [
                 {
                     model: DoctorDetail,
-                    as: 'doctorDetail', // Alias để truy cập thông tin DoctorDetail
+                    as: 'doctorDetail',
                     attributes: ['descriptionMarkdown', 'descriptionHTML']
-                } // Lấy thông tin chi tiết bác sĩ
+                },
+                {
+                    model: Specialty, // Liên kết với bảng Specialty
+                    //as: 'specialty', // Định danh alias
+                    attributes: ['name'] // Lấy tên chuyên khoa
+                }
             ],
             raw: false,
             nest: true

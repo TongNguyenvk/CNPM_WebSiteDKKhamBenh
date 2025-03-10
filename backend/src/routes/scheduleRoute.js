@@ -18,6 +18,6 @@ router.put('/:id', scheduleController.updateSchedule);
 
 // Xoá schedule theo id
 router.delete('/:id', scheduleController.deleteSchedule);
-router.get("/doctor/:doctorId", scheduleController.getDoctorSchedule);
+router.get("/doctor/:doctorId", scheduleController.getDoctorSchedules);
 
 module.exports = router;
