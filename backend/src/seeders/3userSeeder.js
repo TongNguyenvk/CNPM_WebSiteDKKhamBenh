@@ -25,20 +25,67 @@ module.exports = {
         }
 
         // Thêm một bác sĩ
-        users.push({
-            firstName: faker.person.firstName(),
-            lastName: faker.person.lastName(),
-            email: faker.internet.email(),
-            password: hashedPassword,
-            address: faker.location.streetAddress(),
-            gender: faker.datatype.boolean(),
-            roleId: 'R2', // Bác sĩ
-            phoneNumber: faker.phone.number(),
-            positionId: 'P2', // Trưởng khoa
-            image: faker.image.avatar(),
-            createdAt: new Date(),
-            updatedAt: new Date()
-        });
+        // users.push({
+        //     firstName: faker.person.firstName(),
+        //     lastName: faker.person.lastName(),
+        //     email: faker.internet.email(),
+        //     password: hashedPassword,
+        //     address: faker.location.streetAddress(),
+        //     gender: faker.datatype.boolean(),
+        //     roleId: 'R2', // Bác sĩ
+        //     phoneNumber: faker.phone.number(),
+        //     positionId: 'P2', // Trưởng khoa
+        //     image: faker.image.avatar(),
+        //     createdAt: new Date(),
+        //     updatedAt: new Date()
+        // });
+
+        // Thêm 3 bác sĩ vào danh sách
+            users.push({
+                firstName: "Nguyễn Văn",
+                lastName: "A",
+                email: faker.internet.email(),
+                password: hashedPassword,
+                address: faker.location.streetAddress(),
+                gender: true, // Nam
+                roleId: 'R2', // Bác sĩ
+                phoneNumber: faker.phone.number(),
+                positionId: 'P2', // Trưởng khoa
+                image: faker.image.avatar(),
+                createdAt: new Date(),
+                updatedAt: new Date()
+            });
+
+            users.push({
+                firstName: "Trần Thị",
+                lastName: "B",
+                email: faker.internet.email(),
+                password: hashedPassword,
+                address: faker.location.streetAddress(),
+                gender: false, // Nữ
+                roleId: 'R2',
+                phoneNumber: faker.phone.number(),
+                positionId: 'P1', // Chuyên gia
+                image: faker.image.avatar(),
+                createdAt: new Date(),
+                updatedAt: new Date()
+            });
+
+            users.push({
+                firstName: "Lê Minh",
+                lastName: "C",
+                email: faker.internet.email(),
+                password: hashedPassword,
+                address: faker.location.streetAddress(),
+                gender: true, // Nam
+                roleId: 'R2',
+                phoneNumber: faker.phone.number(),
+                positionId: 'P2',
+                image: faker.image.avatar(),
+                createdAt: new Date(),
+                updatedAt: new Date()
+            });
+
 
         // Thêm một admin
         users.push({
