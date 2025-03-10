@@ -1,4 +1,5 @@
 import Image from 'next/image';
+
 async function getSpecialties() {
   const res = await fetch("http://localhost:8080/api/specialties/", { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch");
@@ -20,42 +21,42 @@ export default async function Home() {
       {/* Header */}
       <nav style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 20px", backgroundColor: "#fff", boxShadow: "0 4px 6px rgba(41, 40, 40, 0.1)" }}>
         <img style={{ width: "80px" }} src="https://phuongnamvina.com/img_data/images/logo-benh-vien.jpg" alt="Logo" />
-        <ul style={{ display: "flex", listStyle: "none", gap: "100px", margin: 0, padding: 0, paddingRight:"50px" }}>
-          <li><a href="/book-appointment" style={{ textDecoration: "none", color: "#171717", fontFamily:"unset" }}>Đặt lịch khám</a></li>
-          <li><a href="/appointments" style={{ textDecoration: "none", color: "#171717", fontFamily:"unset" }}>Lịch hẹn</a></li>
-          <li><a href="/contact" style={{ textDecoration: "none", color: "#171717", fontFamily:"unset" }}>Liên hệ</a></li>
-          <li><a href="#" style={{ textDecoration: "none", color: "#171717", fontFamily:"unset", gap:"50px" }}>Tôi</a></li>
+        <ul style={{ display: "flex", listStyle: "none", gap: "100px", margin: 0, padding: 0, paddingRight: "50px" }}>
+          <li><a href="/book-appointment" style={{ textDecoration: "none", color: "#171717", fontFamily: "unset" }}>Đặt lịch khám</a></li>
+          <li><a href="/appointments" style={{ textDecoration: "none", color: "#171717", fontFamily: "unset" }}>Lịch hẹn</a></li>
+          <li><a href="/contact" style={{ textDecoration: "none", color: "#171717", fontFamily: "unset" }}>Liên hệ</a></li>
+          <li><a href="#" style={{ textDecoration: "none", color: "#171717", fontFamily: "unset", gap: "50px" }}>Tôi</a></li>
         </ul>
       </nav>
 
       {/* Hero Section */}
       <div style={{ textAlign: "center", margin: "40px 0" }}>
-        <h1 style={{ fontSize: "40px", fontFamily:"unset", color: "#000" }}>Hệ thống đặt lịch khám bệnh trực tuyến</h1>
-        <p style={{ fontSize: "18px", fontFamily:"unset", color: "#000" }}>Chủ động thời gian khám bệnh, đặt lịch trực tuyến nhanh chóng</p>
+        <h1 style={{ fontSize: "40px", fontFamily: "unset", color: "#000" }}>Hệ thống đặt lịch khám bệnh trực tuyến</h1>
+        <p style={{ fontSize: "18px", fontFamily: "unset", color: "#000" }}>Chủ động thời gian khám bệnh, đặt lịch trực tuyến nhanh chóng</p>
       </div>
 
-          {/* Chuyên khoa */}
-          <h2 style={{ fontSize: "28px", marginBottom: "20px",color: "#000" }}>Chuyên khoa</h2>
-          <a href="#">
+      {/* Chuyên khoa */}
+      <h2 style={{ fontSize: "28px", marginBottom: "20px", color: "#000" }}>Chuyên khoa</h2>
+      <a href="#">
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }}>
-            {specialties.map((specialty) => (
-          <div key={specialty.id} style={{ padding: "20px", borderRadius: "20px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
-            <img src={specialty.image} alt={specialty.name} style={{ width: "300px", height: "300px", objectFit: "cover" }} />
-            <h3 style={{ fontSize: "20px", marginTop: "10px", color: "#000" }}>{specialty.name}</h3>
-            <div style={{ height: "1px", backgroundColor: "cyan", width: "100%", margin: "20px auto" }}></div>
-            {<a href={`/home/${specialty.id}`} style={{ alignItems: "center", gap: "8px", padding: "10px 20px", border: "2px solid cyan", borderRadius: "30px", textDecoration: "none", color: "black", fontSize: "16px", transition: "all 0.3s ease", display: "inline-flex" }}>Xem thêm
-              <span style={{ color: "blue", fontSize: "20px" }}>→</span>
-            </a>}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }}>
+          {specialties.map((specialty) => (
+            <div key={specialty.id} style={{ padding: "20px", borderRadius: "20px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center" }}>
+              <img src={specialty.image} alt={specialty.name} style={{ width: "300px", height: "300px", objectFit: "cover" }} />
+              <h3 style={{ fontSize: "20px", marginTop: "10px", color: "#000" }}>{specialty.name}</h3>
+              <div style={{ height: "1px", backgroundColor: "cyan", width: "100%", margin: "20px auto" }}></div>
+              {<a href={`/home/${specialty.id}`} style={{ alignItems: "center", gap: "8px", padding: "10px 20px", border: "2px solid cyan", borderRadius: "30px", textDecoration: "none", color: "black", fontSize: "16px", transition: "all 0.3s ease", display: "inline-flex" }}>Xem thêm
+                <span style={{ color: "blue", fontSize: "20px" }}>→</span>
+              </a>}
 
-          </div>
+            </div>
           ))}
-          </div>
-          </a>
+        </div>
+      </a>
 
 
       {/* Bác sĩ */}
-      <h2 style={{ fontSize: "28px", marginTop: "40px", marginBottom: "20px",color: "#000" }}>Bác sĩ</h2>
+      <h2 style={{ fontSize: "28px", marginTop: "40px", marginBottom: "20px", color: "#000" }}>Bác sĩ</h2>
       <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
         {doctors.map((doctor) => (
           <div key={doctor.id} style={{ display: "flex", background: "#f0f0f0", padding: "20px", borderRadius: "8px" }}>
@@ -71,7 +72,7 @@ export default async function Home() {
 
       {/* Thông tin liên lạc */}
       <div style={{ textAlign: "center", marginTop: "40px", padding: "20px", background: "#669999", borderRadius: "8px" }}>
-        <h2 style={{ fontSize: "24px",color: "#000" }}>Thông tin liên lạc</h2><br></br>
+        <h2 style={{ fontSize: "24px", color: "#000" }}>Thông tin liên lạc</h2><br></br>
         <input type="email" placeholder="Nhập email của bạn" style={{ padding: "10px", width: "250px", borderRadius: "5px", border: "1px solid #ccc" }} />
         <button style={{ padding: "10px 20px", marginLeft: "10px", background: "black", color: "white", border: "none", borderRadius: "5px" }}>Gửi</button>
       </div>
