@@ -15,19 +15,12 @@ async function fetchData(url: string) {
 export default function Home() {
   const [specialties, setSpecialties] = useState([]);
   const [doctors, setDoctors] = useState([]);
-  const [search, setSearch] = useState(""); // State cho tìm kiếm
+
 
   useEffect(() => {
     fetchData("http://localhost:8080/api/specialties/").then(setSpecialties);
     fetchData("http://localhost:8080/api/doctor").then(setDoctors);
   }, []);
-
-  // Lọc chuyên khoa theo từ khóa
-  const filteredSpecialties = search
-    ? specialties.filter((specialty: any) =>
-        specialty.name.toLowerCase().includes(search.toLowerCase())
-      )
-    : [];
 
   return (
     <div style={{ fontFamily: "Montserrat, sans-serif", maxWidth: "1600px", margin: "auto", padding: "20px", color:"black" }}>
@@ -43,19 +36,6 @@ export default function Home() {
       >
         {/* Logo */}
         <img style={{ width: "80px" }} src="https://phuongnamvina.com/img_data/images/logo-benh-vien.jpg" alt="Logo" />
-
-        {/* Thanh tìm kiếm - căn giữa */}
-        <div style={{ flex: 1, display: "flex", justifyContent:"flex-end" }}>
-          <input type="text" placeholder="Tìm kiếm..." value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              padding: "8px",
-              border: "1px solid #ccc",
-              borderRadius: "5px",
-              width: "250px",
-            }}
-          />
-        </div>
 
         {/* Menu */}
         <ul style={{ display: "flex", listStyle: "none", gap: "20px", margin: 0, padding: 0 }}>
@@ -74,39 +54,8 @@ export default function Home() {
         <p style={{fontFamily:"revert-layer"}}>Chủ động thời gian khám bệnh, đặt lịch trực tuyến nhanh chóng</p>
       </div>
 
-      {/* Chuyên khoa (Chỉ hiển thị khi có tìm kiếm) */}
-      {search && (
-        <>
-          <h2 style={{fontSize:"30px"}}>Kết quả tìm kiếm</h2><br></br>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "20px" }}>
-            {filteredSpecialties.map((specialty: any) => (
-              <a
-                key={specialty.id}
-                href={`/home/${specialty.id}`}
-                style={{
-                  textAlign: "center",
-                  padding: "20px",
-                  borderRadius: "10px",
-                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.1)",
-                  textDecoration: "none",
-                  color: "black",
-                }}
-              >
-                <img src={specialty.image} alt={specialty.name} style={{ width: "100%", height: "200px", objectFit: "cover", borderRadius: "10px" }} />
-                <h3>{specialty.name}</h3><br></br>
-                {<p href={`/home/${specialty.id}`} style={{ alignItems: "center", gap: "8px", padding: "10px 20px", border: "2px solid cyan", borderRadius: "30px", textDecoration: "none", color: "black", fontSize: "16px", transition: "all 0.3s ease", display: "inline-flex" }}>Nhấn để xem
-                 <span style={{ color: "blue", fontSize: "20px" }}>→</span>
-               </p>}
-              </a>
-            ))}
-          </div>
-          <br></br><br></br>
-        </>
-      )}
-
-
-            {/* Chuyên khoa */}
-            <h2 style={{ color: "#000", fontSize:"30px" }}>Chuyên khoa</h2><br></br>
+      {/* Chuyên khoa */}
+      <h2 style={{ color: "#000", fontSize:"30px" }}>Chuyên khoa</h2><br></br>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "30px" }}>
         {specialties.map((specialty: any) => (
           <a 
@@ -157,9 +106,9 @@ export default function Home() {
       <footer style={{ textAlign: "center", marginTop: "40px", padding: "20px", background: "#222", color: "#fff", borderRadius: "12px" }}>
         <h2>Thông tin liên lạc</h2>
         <div style={{ marginTop: "15px", display: "flex", justifyContent: "center", gap: "10px" }}>
-          <input type="email" placeholder="Nhập email của bạn" style={{ padding: "10px", width: "250px", borderRadius: "8px", border: "1px solid #ccc" }} />
+          <input type="email" placeholder="Nhập email của bạn" style={{ padding: "10px", width: "250px", borderRadius: "8px", border: "1px solid #ccc", color:"#000" }} />
           <button style={{ padding: "10px", background: "#00bfff", color: "#fff", border: "none", borderRadius: "8px", cursor: "pointer" }}>Gửi</button>
-        </div>
+        </div><br></br>
         <p style={{ fontSize: "14px", opacity: 0.8 }}>© {new Date().getFullYear()} Website đặt lịch khám bệnh trực tuyến.</p>
       </footer>
     </div>
