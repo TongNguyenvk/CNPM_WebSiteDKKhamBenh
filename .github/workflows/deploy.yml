@@ -7,7 +7,7 @@ on:
     paths:
       - "frontend/**"
       - "backend/**"
-      - "docker_compose.yml"
+      - "../../docker-compose.yml"
 
 jobs:
   build-and-run:
@@ -17,15 +17,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install Docker Compose
+      - name: Check if docker-compose.yml exists
+        run: |
+          ls -lah
+          test -f docker-compose.yml && echo "✅ docker-compose.yml found" || echo "❌ docker-compose.yml not found"
+
+      - name: Install Docker & Docker Compose
         run: |
           sudo apt-get update
-          sudo apt-get install -y docker-compose
+          sudo apt-get install -y docker docker-compose
 
       - name: Build Docker images
         run: |
-          docker-compose -f docker_compose.yml build
+          docker-compose -f docker-compose.yml build
 
       - name: Run Docker containers
         run: |
-          docker-compose -f docker_compose.yml up -d
+          docker-compose -f docker-compose.yml up -d
