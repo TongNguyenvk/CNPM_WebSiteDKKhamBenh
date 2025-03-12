@@ -1,4 +1,4 @@
-name: Local CI/CD with Docker Compose
+name: CI/CD with Docker Hub
 
 on:
   push:
@@ -10,20 +10,28 @@ on:
       - "docker-compose.yml"
 
 jobs:
-  build-and-run:
+  build-and-push:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Docker
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y docker.io docker-compose
-          sudo systemctl start docker
-          sudo systemctl enable docker
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
 
-      - name: Build and Run Docker Containers
+      - name: Login to Docker Hub (with Access Token)
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+
+      - name: Build and push Backend image
         run: |
-          docker-compose -f docker-compose.yml up -d --build
+          docker-compose build backend
+          docker-compose push backend
+
+      - name: Build and push Frontend image
+        run: |
+          docker-compose build frontend
+          docker-compose push frontend
