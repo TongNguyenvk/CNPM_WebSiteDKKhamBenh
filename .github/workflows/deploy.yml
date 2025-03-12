@@ -1,0 +1,26 @@
+name: CI/CD with Docker Compose (Local)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "frontend/**"
+      - "backend/**"
+      - "docker_compose.yml"
+
+jobs:
+  build-and-run:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Build Docker images
+        run: |
+          docker-compose -f docker_compose.yml build
+
+      - name: Run Docker containers
+        run: |
+          docker-compose -f docker_compose.yml up -d
