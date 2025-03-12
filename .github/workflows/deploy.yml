@@ -7,7 +7,7 @@ on:
     paths:
       - "frontend/**"
       - "backend/**"
-      - "docker_compose.yml"
+      - "../../docker_compose.yml"
 
 jobs:
   build-and-run:
