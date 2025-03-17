@@ -6,7 +6,11 @@ const API_URL = 'http://localhost:8080/api'; // Thay đổi URL backend của b�
 interface UserData {
   email: string;
   password: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
 }
+
 
 interface LoginResponse {
   token: string;
@@ -36,4 +40,32 @@ const loginUser = async (userData: UserData): Promise<LoginResponse> => {
   }
 };
 
-export { loginUser };
+const getUserProfile = async (token: string, userId: number) => {
+  try {
+    const response = await axios.get(`${API_URL}/users/${userId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    const err = error as ApiError;
+    throw err;
+  }
+};
+
+const updateUserProfile = async (token: string, userId: number, userData: UpdateUserData) => {
+  try {
+    const response = await axios.put(`${API_URL}/users/${userId}`, userData, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    const err = error as ApiError;
+    throw err;
+  }
+};
+
+export { loginUser, getUserProfile, updateUserProfile };
