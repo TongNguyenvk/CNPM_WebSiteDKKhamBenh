@@ -23,29 +23,36 @@ export default function Home() {
   }, []);
 
   return (
-    <div style={{ fontFamily: "Montserrat, sans-serif", maxWidth: "1600px", margin: "auto", padding: "20px", color: "black" }}>
-      {/* Navbar */}
-      <nav style={{
+    <div style={{ fontFamily: "Montserrat, sans-serif", maxWidth: "1700px", margin: "auto", padding: "20px", color: "black" }}>
+    {/* Navbar */}
+    <nav style={{
+        position: "fixed",  // 🔥 Giữ navbar cố định trên top
+        top: 0,
+        left: 0,
+        width: "100%",
+        height:"8%",
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
         padding: "10px 20px",
         backgroundColor: "#fff",
         boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-      }}
-      >
+        zIndex: 1000 // 🔥 Giữ navbar luôn ở trên các thành phần khác
+        }}>
         {/* Logo */}
-        <img style={{ width: "80px" }} src="https://phuongnamvina.com/img_data/images/logo-benh-vien.jpg" alt="Logo" />
+        <img style={{ width: "100px" }} src="https://phuongnamvina.com/img_data/images/logo-benh-vien.jpg" alt="Logo" />
 
         {/* Menu */}
-        <ul style={{ display: "flex", listStyle: "none", gap: "20px", margin: 0, padding: 0 }}>
-          <li style={{ marginLeft: "60px" }}><a href="/appointments">Lịch hẹn</a></li>
-          <li style={{ marginLeft: "60px" }}><a href="/book-appointment">Đặt lịch khám</a></li>
-          <li style={{ marginLeft: "60px" }}><a href="/contact">Liên hệ</a></li>
-          <li style={{ marginLeft: "60px", marginRight: "40px" }}><a href="/profile">Tôi</a></li>
+        <ul style={{ display: "flex", listStyle: "none", gap: "40px", margin: 0, padding: 0, fontSize:"125%" }}>
+            <li style={{ marginLeft: "100px" }}><a href="/appointments">Lịch hẹn</a></li>
+            <li style={{ marginLeft: "100px" }}><a href="/book-appointment">Đặt lịch khám</a></li>
+            <li style={{ marginLeft: "100px" }}><a href="/contact">Liên hệ</a></li>
+            <li style={{ marginLeft: "100px", marginRight: "100px" }}><a href="/profile">Tôi</a></li>
         </ul>
-      </nav>
+    </nav>
 
+    {/* 📌 Tạo khoảng trống để nội dung không bị che */}
+    <div style={{ marginTop: "100px" }}></div>  
 
       {/* Hero Section */}
       <div style={{ textAlign: "center", margin: "40px 0" }}>

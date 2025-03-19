@@ -134,7 +134,7 @@ export default function SpecialtyDetailPage() {
                 <div className="flex justify-center">
                     <Image src={`/${specialty.image}`} alt={specialty.name} width={400} height={300} className="rounded-lg shadow-lg" />
                 </div>
-
+                <div style={{width:"5%"}}></div>
                 {/* Nội dung */}
                 <div className="w-full md:w-2/3 text-black">
                     <h1 style={{ fontFamily: "inherit", fontSize: "30px", color: "black" }}>{specialty.name}</h1>
