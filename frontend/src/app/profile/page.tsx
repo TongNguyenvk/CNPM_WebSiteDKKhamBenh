@@ -29,6 +29,7 @@ const UserProfilePage = () => {
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (token) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const decoded: any = jwtDecode(token);
             const userId = decoded.userId;
 
@@ -61,8 +62,6 @@ const UserProfilePage = () => {
 
     return (
         <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-
-
             <div className="bg-white shadow-xl rounded-lg p-6 w-full max-w-md">
                 <h2 className="text-2xl font-semibold text-center text-gray-700 mb-6">
                     Thông tin cá nhân
