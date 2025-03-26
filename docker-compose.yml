@@ -1,6 +1,7 @@
 
 services:
   frontend:
+    image: tongnguyen/frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
@@ -19,6 +20,7 @@ services:
       - app-network
 
   backend:
+    image: tongnguyen/backend
     build:
       context: ./backend
       dockerfile: Dockerfile
