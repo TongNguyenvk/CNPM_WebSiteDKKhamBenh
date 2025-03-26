@@ -37,26 +37,27 @@ export default function Home() {
 
   return (
     <div style={{ fontFamily: "Montserrat, sans-serif", maxWidth: "1700px", margin: "auto", padding: "20px", color: "black" }}>
-    {/* Navbar */}
-    <nav style={{ position: "fixed",  // 🔥 Giữ navbar cố định trên top
-        top: 0, left: 0, width: "100%", height:"8%", display: "flex", justifyContent: "space-between",
+      {/* Navbar */}
+      <nav style={{
+        position: "fixed",  // 🔥 Giữ navbar cố định trên top
+        top: 0, left: 0, width: "100%", height: "8%", display: "flex", justifyContent: "space-between",
         alignItems: "center", padding: "10px 20px", backgroundColor: "#fff", boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
         zIndex: 1000 // 🔥 Giữ navbar luôn ở trên các thành phần khác
-        }}>
+      }}>
         {/* Logo */}
         <Image src="https://phuongnamvina.com/img_data/images/logo-benh-vien.jpg" alt="Logo" width={100} height={50} />
 
         {/* Menu */}
-        <ul style={{ display: "flex", listStyle: "none", gap: "40px", margin: 0, padding: 0, fontSize:"110%" }}>
-            <li ><a href="/appointments">Lịch hẹn</a></li>
-            <li ><a href="/book-appointment">Đặt lịch khám</a></li>
-            <li ><a href="/contact">Liên hệ</a></li>
-            <li style={{ marginRight: "100px" }}><a href="/profile">Tôi</a></li>
+        <ul style={{ display: "flex", listStyle: "none", gap: "40px", margin: 0, padding: 0, fontSize: "110%" }}>
+          <li ><a href="/apointment">Lịch hẹn</a></li>
+          <li ><a href="/book-appointment">Đặt lịch khám</a></li>
+          <li ><a href="/contact">Liên hệ</a></li>
+          <li style={{ marginRight: "100px" }}><a href="/profile">Tôi</a></li>
         </ul>
-    </nav>
+      </nav>
 
-    {/* 📌 Tạo khoảng trống để nội dung không bị che */}
-    <div style={{ marginTop: "100px" }}></div>  
+      {/* 📌 Tạo khoảng trống để nội dung không bị che */}
+      <div style={{ marginTop: "100px" }}></div>
 
       {/* Hero Section */}
       <div style={{ textAlign: "center", margin: "40px 0" }}>
@@ -70,16 +71,17 @@ export default function Home() {
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "30px" }}>
         {specialties.map((specialty: Specialty) => (
           <Link key={specialty.id} href={`/home/${specialty.id}`}
-           style={{ textDecoration: "none", color: "#000", padding: "20px", borderRadius: "10px", textAlign: "center",
-            display: "flex",flexDirection: "column",alignItems: "center", backgroundColor: "#fff"
-          }}>
+            style={{
+              textDecoration: "none", color: "#000", padding: "20px", borderRadius: "10px", textAlign: "center",
+              display: "flex", flexDirection: "column", alignItems: "center", backgroundColor: "#fff"
+            }}>
             <Image src={`/${specialty.image}`} alt={specialty.name} width={400} height={200} style={{ objectFit: "cover" }} />
             <h3 style={{ marginTop: "20px", fontSize: "18px" }}>{specialty.name}</h3><br></br>
             <div style={{ width: "80%", height: "0px", border: "0.5px solid #00F0FF" }}></div><br></br>
             {<p style={{ alignItems: "center", gap: "8px", padding: "10px 20px", border: "2px solid cyan", borderRadius: "30px", textDecoration: "none", color: "black", fontSize: "16px", transition: "all 0.3s ease", display: "inline-flex" }}>Xem thêm
               <span style={{ color: "blue", fontSize: "20px" }}>→</span>
             </p>}
-        </Link>
+          </Link>
         ))}
       </div>
 

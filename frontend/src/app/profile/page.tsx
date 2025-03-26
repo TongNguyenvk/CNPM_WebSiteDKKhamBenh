@@ -12,7 +12,11 @@ interface UserProfile {
     email: string;
     phoneNumber?: string;
 }
-
+interface DecodedToken {
+    userId: number;
+    email: string;
+    exp: number; // Thời gian hết hạn của token
+  }
 const UserProfilePage = () => {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [isEditing, setIsEditing] = useState(false);
@@ -30,7 +34,7 @@ const UserProfilePage = () => {
         const token = localStorage.getItem("token");
         if (token) {
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const decoded: any = jwtDecode(token);
+            const decoded = jwtDecode<DecodedToken>(token);
             const userId = decoded.userId;
 
             getUserProfile(token, userId)
@@ -47,16 +51,27 @@ const UserProfilePage = () => {
     };
 
     const handleSave = async () => {
+        console.log("Bắt đầu lưu thông tin..."); // Kiểm tra xem hàm có chạy không
+
         const token = localStorage.getItem("token");
+
         if (token && user) {
+            const decoded = jwtDecode<DecodedToken>(token);
+            const userId = decoded.userId;
             try {
-                await updateUserProfile(token, user.userId, formData);
+                console.log("Dữ liệu gửi đi:", formData);
+                const response = await updateUserProfile(token, userId, formData);
+                console.log("Cập nhật thành công:", response);
+
                 setUser(formData);
                 setIsEditing(false);
                 alert("Cập nhật thành công!");
             } catch (err) {
                 console.error("Lỗi cập nhật:", err);
+                alert("Có lỗi xảy ra khi cập nhật thông tin.");
             }
+        } else {
+            console.error("Không có token hoặc user!");
         }
     };
 
@@ -102,11 +117,10 @@ const UserProfilePage = () => {
                         {/* 📝 Nút Chỉnh sửa / ✅ Nút Lưu */}
                         <button
                             onClick={isEditing ? handleSave : () => setIsEditing(true)}
-                            className={`w-full p-3 mt-4 rounded-lg text-white font-medium flex items-center justify-center gap-2 transition-all ${
-                                isEditing
-                                    ? "bg-green-500 hover:bg-green-600"
-                                    : "bg-blue-500 hover:bg-blue-600"
-                            }`}
+                            className={`w-full p-3 mt-4 rounded-lg text-white font-medium flex items-center justify-center gap-2 transition-all ${isEditing
+                                ? "bg-green-500 hover:bg-green-600"
+                                : "bg-blue-500 hover:bg-blue-600"
+                                }`}
                         >
                             {isEditing ? <Check size={20} /> : <Pencil size={20} />}
                             {isEditing ? "Lưu" : "Chỉnh sửa"}
@@ -117,8 +131,8 @@ const UserProfilePage = () => {
                 )}
             </div>
 
-                {/* 🔙 Nút Quay lại */}
-            <button style={{ color: "black", padding: "10px 20px ", borderRadius: "100px", border: "2px solid cyan", cursor: "pointer", marginBottom: "20px", marginTop:"30px" }}
+            {/* 🔙 Nút Quay lại */}
+            <button style={{ color: "black", padding: "10px 20px ", borderRadius: "100px", border: "2px solid cyan", cursor: "pointer", marginBottom: "20px", marginTop: "30px" }}
                 onClick={() => router.back()} > ← Quay lại
             </button>
 

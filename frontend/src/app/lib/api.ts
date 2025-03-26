@@ -11,6 +11,11 @@ interface UserData {
   phone?: string;
 }
 
+interface UpdateUserData {
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+}
 
 interface LoginResponse {
   token: string;
@@ -55,17 +60,26 @@ const getUserProfile = async (token: string, userId: number) => {
 };
 
 const updateUserProfile = async (token: string, userId: number, userData: UpdateUserData) => {
+  if (!token) {
+      console.error("Lỗi: Không tìm thấy token xác thực");
+      return;
+  }
+
+  if (!userId) {
+      console.error("Lỗi: userId không hợp lệ");
+      return;
+  }
+
   try {
-    const response = await axios.put(`${API_URL}/users/${userId}`, userData, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    });
-    return response.data;
+      const response = await axios.put(`${API_URL}/users/${userId}`, userData, {
+          headers: { Authorization: `Bearer ${token}` }
+      });
+      return response.data;
   } catch (error) {
-    const err = error as ApiError;
-    throw err;
+      console.error("Lỗi cập nhật người dùng:", error);
+      throw error; // Có thể hiển thị thông báo lỗi trên giao diện
   }
 };
+
 
 export { loginUser, getUserProfile, updateUserProfile };
