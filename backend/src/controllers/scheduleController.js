@@ -1,47 +1,78 @@
 // controllers/scheduleController.js
 const db = require('../config/database');
 const { Schedule, Allcode } = require('../models');
+const { Op } = require('sequelize');
+
+
+
 const getDoctorSchedules = async (req, res) => {
     try {
-        const { doctorId } = req.params;
-        let { date } = req.query;
+        const doctorId = Number(req.params.doctorId);
+        const requestedDate = req.query.date; // Giữ lại biến gốc
 
-        // Nếu không có date, mặc định lấy ngày hiện tại
-        const today = new Date();
-        if (!date) {
-            date = today.toISOString().split('T')[0]; // YYYY-MM-DD
+        if (isNaN(doctorId)) {
+            return res.status(400).json({ message: "doctorId không hợp lệ" });
         }
 
-        // Chuyển đổi ngày bắt đầu thành dạng Date
-        const startDate = new Date(date);
+        let startDate, endDate;
 
-        // Lấy 3 ngày kế tiếp
-        const endDate = new Date(startDate);
-        endDate.setDate(startDate.getDate() + 3);
-
-        const whereClause = {
-            doctorId: doctorId,
-            date: {
-                [Op.between]: [startDate.toISOString().split('T')[0], endDate.toISOString().split('T')[0]]
+        if (requestedDate) {
+            // --- Trường hợp CÓ date query param ---
+            // Chỉ lấy đúng ngày được yêu cầu
+            // Validate date format if needed
+            const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if (!dateRegex.test(requestedDate)) {
+                return res.status(400).json({ message: "Định dạng ngày không hợp lệ. Vui lòng sử dụng YYYY-MM-DD." });
             }
-        };
+            startDate = new Date(requestedDate);
+            if (isNaN(startDate.getTime())) {
+                return res.status(400).json({ message: "Giá trị ngày không hợp lệ." });
+            }
+            endDate = new Date(requestedDate); // endDate giống startDate
+
+        } else {
+            // --- Trường hợp KHÔNG CÓ date query param ---
+            // Lấy ngày hôm nay + 3 ngày tới
+            const today = new Date();
+            // Đặt về 0 giờ để tránh lỗi múi giờ khi tính toán
+            today.setHours(0, 0, 0, 0);
+            startDate = new Date(today);
+            endDate = new Date(today);
+            endDate.setDate(today.getDate() + 3);
+        }
+
+        const startQueryDate = startDate.toISOString().split('T')[0];
+        const endQueryDate = endDate.toISOString().split('T')[0];
+
+        console.log(`Querying schedules for doctor ${doctorId} between ${startQueryDate} and ${endQueryDate}`);
 
         const schedules = await Schedule.findAll({
-            where: whereClause,
+            where: {
+                doctorId,
+                date: {
+                    // Op.between vẫn hoạt động khi start = end (lấy đúng 1 ngày)
+                    [Op.between]: [startQueryDate, endQueryDate]
+                }
+            },
             include: [
-                { model: Allcode, as: 'timeTypeData', attributes: ['valueVi', 'valueEn'] }
+                {
+                    model: Allcode,
+                    as: 'timeTypeData',
+                    attributes: ['valueVi', 'valueEn']
+                }
             ],
+            order: [['date', 'ASC'], ['timeType', 'ASC']],
             raw: false,
-            nest: true,
-            order: [['date', 'ASC'], ['timeType', 'ASC']] // Sắp xếp theo ngày và giờ
+            nest: true
         });
 
-        res.json(schedules);
+        return res.json(schedules);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Lỗi server', error: error.message });
+        console.error("Error in getDoctorSchedules:", error);
+        return res.status(500).json({ message: "Lỗi server", error: error.message });
     }
 };
+
 
 
 const getAllSchedules = async (req, res) => {

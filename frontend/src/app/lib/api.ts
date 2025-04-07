@@ -1,7 +1,12 @@
 // src/app/lib/api.ts
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080/api'; // Thay đổi URL backend của bạn
+const apiClient = axios.create({
+  baseURL: 'http://localhost:8080/api', // Base URL cho API
+  headers: {
+    'Content-Type': 'application/json',
+  },
+}); // Thay đổi URL backend của bạn
 
 interface UserData {
   email: string;
@@ -26,6 +31,77 @@ interface LoginResponse {
   role: string;
 }
 
+interface Schedule {
+  id: number;
+  date: string; // Giữ định dạng YYYY-MM-DD hoặc kiểu dữ liệu phù hợp từ DB
+  doctorId: number;
+  timeType: string; // Key của Allcode
+  maxNumber: number;
+  currentNumber?: number; // Thêm nếu có
+  createdAt?: string;
+  updatedAt?: string;
+  timeTypeData?: { // Include từ Sequelize
+    valueVi: string;
+    valueEn?: string; // Thêm nếu cần
+  };
+}
+
+interface Specialty { // Thêm interface nếu cần chi tiết hơn
+  id?: number;
+  name: string;
+  // Thêm các thuộc tính khác nếu có
+}
+
+
+interface Doctor {
+  id: number;
+  email?: string; // Thêm nếu có
+  password?: string; // Thường không trả về password
+  firstName: string;
+  lastName: string;
+  address?: string; // Thêm nếu có
+  phonenumber?: string; // Thêm nếu có
+  gender?: string; // Key của Allcode
+  roleId?: string; // Key của Allcode
+  positionId?: string; // Key của Allcode
+  image: string; // Đường dẫn hoặc tên file ảnh
+  description?: string; // Markdown
+  contentHTML?: string; // Markdown
+  contentMarkdown?: string; // Markdown
+  clinicId?: number; // Thêm nếu có
+  specialtyId?: number; // Thêm nếu có
+  createdAt?: string;
+  updatedAt?: string;
+  Specialty?: Specialty; // Include từ Sequelize
+  // Thêm các includes khác nếu có: positionData, genderData,...
+}
+
+interface CreateBookingPayload {
+  doctorId: number;
+  patientId: number; // ID người dùng đang đăng nhập (Backend sẽ lấy từ token, nhưng để đây cho rõ)
+  scheduleId: number; // ID của lịch trình cụ thể (khung giờ)
+  date: string;       // Ngày khám (YYYY-MM-DD)
+  timeType: string;   // Key của khung giờ (ví dụ: T1, T2)
+  reason?: string;     // Lý do khám (tùy chọn)
+  // Thêm các trường khác nếu backend yêu cầu (ví dụ: token xác thực nếu cần)
+  statusId: string;   // Trạng thái ban đầu, ví dụ: 'S1' (Chờ xác nhận)
+}
+
+// --- Interface cho dữ liệu Booking trả về từ API (ví dụ) ---
+interface Booking {
+  id: number;
+  statusId: string;
+  doctorId: number;
+  patientId: number;
+  date: string;
+  timeType: string;
+  token?: string; // Token xác nhận/hủy lịch qua email (nếu có)
+  reason?: string;
+  createdAt: string;
+  updatedAt: string;
+  // Có thể bao gồm thông tin patientData, doctorData, timeTypeData nếu API trả về
+}
+
 interface ApiError { // Di chuyển interface ApiError vào đây
   response?: {
     data?: {
@@ -35,9 +111,47 @@ interface ApiError { // Di chuyển interface ApiError vào đây
   message?: string;
 }
 
+export const getDoctorById = async (id: number): Promise<Doctor> => {
+  try {
+    const response = await apiClient.get<Doctor>(`/doctor/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error(`Error fetching doctor with id ${id}:`, error);
+    // Ném lỗi để component có thể bắt và xử lý
+    if (axios.isAxiosError(error)) {
+      throw new Error(`API Error: ${error.response?.status} - ${error.response?.data?.message || error.message}`);
+    }
+    throw new Error('An unexpected error occurred while fetching doctor details.');
+  }
+};
+
+export const getDoctorSchedules = async (doctorId: number, date: string): Promise<Schedule[]> => {
+  try {
+    // Sử dụng params để Axios tự động thêm vào query string
+    const response = await apiClient.get<Schedule[]>(`/schedule/doctor/${doctorId}`, {
+      params: { date } // Sẽ tạo ra URL: /schedule/doctor/:doctorId?date=YYYY-MM-DD
+    });
+    // Đảm bảo luôn trả về một mảng
+    return Array.isArray(response.data) ? response.data : [];
+  } catch (error) {
+    console.error(`Error fetching schedules for doctor ${doctorId} on ${date}:`, error);
+    // Có thể trả về mảng rỗng thay vì ném lỗi để UI không bị vỡ nếu chỉ là không tìm thấy lịch
+    if (axios.isAxiosError(error) && error.response?.status === 404) {
+      console.warn(`No schedules found (404) for doctor ${doctorId} on ${date}. Returning empty array.`);
+      return []; // Trả về mảng rỗng nếu 404 nghĩa là không có lịch
+    }
+    // Ném lỗi cho các trường hợp lỗi khác
+    if (axios.isAxiosError(error)) {
+      throw new Error(`API Error: ${error.response?.status} - ${error.response?.data?.message || error.message}`);
+    }
+    throw new Error('An unexpected error occurred while fetching schedules.');
+  }
+};
+
+
 const loginUser = async (userData: UserData): Promise<LoginResponse> => {
   try {
-    const response = await axios.post<LoginResponse>(`${API_URL}/auth/login`, userData);
+    const response = await apiClient.post<LoginResponse>(`/auth/login`, userData);
     return response.data;
   } catch (error: unknown) { // Vẫn cần any ở đây, nhưng đã có ApiError
     const err = error as ApiError; // Ép kiểu error về ApiError
@@ -47,7 +161,7 @@ const loginUser = async (userData: UserData): Promise<LoginResponse> => {
 
 const getUserProfile = async (token: string, userId: number) => {
   try {
-    const response = await axios.get(`${API_URL}/users/${userId}`, {
+    const response = await apiClient.get(`/users/${userId}`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -61,27 +175,79 @@ const getUserProfile = async (token: string, userId: number) => {
 
 const updateUserProfile = async (token: string, userId: number, userData: UpdateUserData) => {
   if (!token) {
-      console.error("Lỗi: Không tìm thấy token xác thực");
-      return;
+    console.error("Lỗi: Không tìm thấy token xác thực");
+    return;
   }
 
   if (!userId) {
-      console.error("Lỗi: userId không hợp lệ");
-      return;
+    console.error("Lỗi: userId không hợp lệ");
+    return;
   }
 
   try {
-      const response = await axios.put(`${API_URL}/users/${userId}`, userData, {
-          headers: { Authorization: `Bearer ${token}` }
-      });
-      return response.data;
+    const response = await apiClient.put(`/users/${userId}`, userData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
   } catch (error) {
-      console.error("Lỗi cập nhật người dùng:", error);
-      throw error; // Có thể hiển thị thông báo lỗi trên giao diện
+    console.error("Lỗi cập nhật người dùng:", error);
+    throw error; // Có thể hiển thị thông báo lỗi trên giao diện
   }
 };
 
+const getAuthToken = (): string | null => {
+  // Thay thế bằng logic lấy token của bạn (localStorage, sessionStorage, context,...)
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('authToken');
+  }
+  return null;
+};
 
+// --- Các hàm API đã có (getDoctorById, getDoctorSchedules) ---
+// ... giữ nguyên getDoctorById, getDoctorSchedules ...
+
+// --- Hàm mới: Tạo Booking ---
+export const createBooking = async (payload: Omit<CreateBookingPayload, 'patientId' | 'statusId'>): Promise<Booking> => {
+  // Backend NÊN lấy patientId từ token xác thực
+  // Chúng ta chỉ cần gửi doctorId, scheduleId, date, timeType, reason
+  // statusId thường được backend tự gán mặc định là 'S1' (New/Pending)
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error("Người dùng chưa đăng nhập hoặc không tìm thấy token.");
+  }
+
+  try {
+    const response = await apiClient.post<Booking>('/booking',
+      {
+        ...payload, // Gửi doctorId, scheduleId, date, timeType, reason
+        statusId: 'S1' // Hoặc giá trị mặc định bạn muốn
+        // Backend sẽ tự thêm patientId từ token
+      },
+      {
+        headers: {
+          // Gửi token để backend xác thực người dùng
+          Authorization: `Bearer ${token}`
+        }
+      }
+    );
+    return response.data; // Trả về thông tin booking đã tạo
+  } catch (error) {
+    console.error('Error creating booking:', error);
+    if (axios.isAxiosError(error)) {
+      // Xử lý các lỗi cụ thể từ API
+      if (error.response?.status === 409) { // Ví dụ: Lỗi Conflict (Hết chỗ)
+        throw new Error(error.response?.data?.message || "Khung giờ này đã được đặt hết chỗ.");
+      }
+      if (error.response?.status === 401) { // Lỗi Unauthorized
+        throw new Error("Xác thực thất bại. Vui lòng đăng nhập lại.");
+      }
+      // Lỗi chung từ API
+      throw new Error(`API Error: ${error.response?.status} - ${error.response?.data?.message || error.message}`);
+    }
+    // Lỗi không phải từ axios (mạng, etc.)
+    throw new Error('Không thể kết nối đến máy chủ hoặc đã có lỗi xảy ra.');
+  }
+};
 export { loginUser, getUserProfile, updateUserProfile };
 
 
