@@ -135,7 +135,50 @@
     *   Backend: Truy cập `http://localhost:8080` để kiểm tra các API.
 
 ## Cấu trúc thư mục
+<pre   },
+      "production": {
+        // ...
+      }
+    }
+    ```
 
+## Chạy Ứng Dụng
+
+### Chạy Local
+
+1.  Chạy backend:
+
+    ```bash
+    cd backend
+    npm run dev
+    ```
+
+2.  Chạy frontend:
+
+    ```bash
+    cd frontend
+    npm run dev
+    ```
+
+    Truy cập ứng dụng frontend tại `http://localhost:3000`.
+
+### Chạy Docker
+
+1.  Chạy lệnh sau trong thư mục gốc của dự án:
+
+    ```bash
+    docker-compose up --build
+    ```
+
+    Lệnh này sẽ build các Docker images và khởi động các containers cho frontend, backend và cơ sở dữ liệu.
+
+2.  Truy cập ứng dụng:
+
+    *   Frontend: Truy cập `http://localhost:3000`.
+    *   Backend: Truy cập `http://localhost:8080` để kiểm tra các API.
+
+## Cấu trúc thư mục
+<pre>
 your-repository/
 ├── .git/
 ├── .gitignore
@@ -156,7 +199,7 @@ your-repository/
 ├── package.json
 ├── server.js
 └── Dockerfile
-
+</pre>
 ## Đóng góp
 
 Chúng tôi hoan nghênh mọi đóng góp cho dự án này. Vui lòng tạo một pull request với các thay đổi của bạn.
