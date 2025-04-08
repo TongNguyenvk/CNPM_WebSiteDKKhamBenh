@@ -22,17 +22,31 @@ jobs:
       - name: 🛠️ Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
+      - name: 🐞 Debug secrets
+        run: |
+          echo "DOCKER_USERNAME is: ${{ secrets.DOCKER_USERNAME }}"
+          echo "DOCKER_ACCESS_TOKEN starts with: $(echo ${{ secrets.DOCKER_ACCESS_TOKEN }} | cut -c 1-5)..."
+
       - name: 🔐 Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
-     
+      - name: 🐞 Verify Docker login
+        run: |
+          # Kiểm tra trạng thái đăng nhập
+          docker info --format '{{json .RegistryConfig}}' | grep -q '"auth"' && echo "Logged in to Docker Hub successfully" || (echo "Not logged in to Docker Hub" && exit 1)
+          # In thông tin đăng nhập chi tiết
+          echo "Docker Hub auth config:"
+          docker info --format '{{json .RegistryConfig.IndexConfigs}}'
+          # Thử chạy lệnh docker pull/push đơn giản để kiểm tra
+          docker pull hello-world >/dev/null 2>&1 && echo "Pull test succeeded" || echo "Pull test failed"
+
       - name: 🧪 Prepare Backend tags
         id: backend_tags
         run: |
-          echo "TAG_LATEST=tongnguen/backend:latest" >> $GITHUB_OUTPUT
+          echo "TAG_LATEST=tongnguyen/backend:latest" >> $GITHUB_OUTPUT
           echo "TAG_SHA=tongnguyen/backend:${{ github.sha }}" >> $GITHUB_OUTPUT
 
       - name: 🧱 Build and push Backend image
