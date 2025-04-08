@@ -13,7 +13,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     env:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }} # Khai báo biến môi trường
+      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
 
     steps:
       - name: 📦 Checkout code
@@ -28,6 +28,12 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
+      - name: 🧪 Prepare Backend tags
+        id: backend_tags
+        run: |
+          echo "TAG_LATEST=${{ env.DOCKER_USERNAME }}/backend:latest" >> $GITHUB_OUTPUT
+          echo "TAG_SHA=${{ env.DOCKER_USERNAME }}/backend:${{ github.sha }}" >> $GITHUB_OUTPUT
+
       - name: 🧱 Build and push Backend image
         uses: docker/build-push-action@v4
         with:
@@ -35,8 +41,14 @@ jobs:
           file: ./backend/Dockerfile
           push: true
           tags: |
-            ${{ env.DOCKER_USERNAME }}/backend:latest
-            ${{ env.DOCKER_USERNAME }}/backend:${{ github.sha }}
+            ${{ steps.backend_tags.outputs.TAG_LATEST }}
+            ${{ steps.backend_tags.outputs.TAG_SHA }}
+
+      - name: 🧪 Prepare Frontend tags
+        id: frontend_tags
+        run: |
+          echo "TAG_LATEST=${{ env.DOCKER_USERNAME }}/frontend:latest" >> $GITHUB_OUTPUT
+          echo "TAG_SHA=${{ env.DOCKER_USERNAME }}/frontend:${{ github.sha }}" >> $GITHUB_OUTPUT
 
       - name: 🧱 Build and push Frontend image
         uses: docker/build-push-action@v4
@@ -45,11 +57,14 @@ jobs:
           file: ./frontend/Dockerfile
           push: true
           tags: |
-            ${{ env.DOCKER_USERNAME }}/frontend:latest
-            ${{ env.DOCKER_USERNAME }}/frontend:${{ github.sha }}
+            ${{ steps.frontend_tags.outputs.TAG_LATEST }}
+            ${{ steps.frontend_tags.outputs.TAG_SHA }}
 
       - name: 🐞 Debug tags (optional)
         run: |
           echo "Backend tags:"
-          echo "${{ env.DOCKER_USERNAME }}/backend:latest"
-          echo "${{ env.DOCKER_USERNAME }}/backend:${{ github.sha }}"
+          echo "${{ steps.backend_tags.outputs.TAG_LATEST }}"
+          echo "${{ steps.backend_tags.outputs.TAG_SHA }}"
+          echo "Frontend tags:"
+          echo "${{ steps.frontend_tags.outputs.TAG_LATEST }}"
+          echo "${{ steps.frontend_tags.outputs.TAG_SHA }}"
