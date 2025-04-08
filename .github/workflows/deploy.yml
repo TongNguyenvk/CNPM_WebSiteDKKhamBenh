@@ -7,51 +7,41 @@ on:
     paths:
       - "frontend/**"
       - "backend/**"
-      - "docker-compose.yml"
+      - ".github/workflows/**" # chạy lại khi thay đổi workflow
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: 📦 Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
+      - name: 🛠️ Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Login to Docker Hub
+      - name: 🔐 Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_ACCESS_TOKEN }} # Make sure this is an Access Token
+          password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
-      - name: Build and push Backend image
-        uses: docker/build-push-action@v4 # Use the build-push action
+      - name: 🧱 Build and push Backend image
+        uses: docker/build-push-action@v4
         with:
-          context: ./backend # Path to the backend Dockerfile directory
-          file: ./backend/Dockerfile # Optional: Explicit path to Dockerfile if not named 'Dockerfile'
-          push: true # Tell the action to push the image
-          tags: ${{ secrets.DOCKER_USERNAME }}/backend:latest # Tag(s) for the image
-          # Optional: Add more specific tags, like the commit SHA
-          # tags: |
-          #  ${{ secrets.DOCKER_USERNAME }}/backend:latest
-          #  ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}
-          # Optional: Enable build cache for faster builds
-          # cache-from: type=gha
-          # cache-to: type=gha,mode=max
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/backend:latest
+            ${{ secrets.DOCKER_USERNAME }}/backend:${{ github.sha }}
 
-      - name: Build and push Frontend image
+      - name: 🧱 Build and push Frontend image
         uses: docker/build-push-action@v4
         with:
           context: ./frontend
-          file: ./frontend/Dockerfile # Optional
+          file: ./frontend/Dockerfile
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/frontend:latest
-          # Optional: Add more specific tags
-          # tags: |
-          #  ${{ secrets.DOCKER_USERNAME }}/frontend:latest
-          #  ${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}
-          # Optional: Enable build cache
-          # cache-from: type=gha
-          # cache-to: type=gha,mode=max
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/frontend:latest
+            ${{ secrets.DOCKER_USERNAME }}/frontend:${{ github.sha }}
