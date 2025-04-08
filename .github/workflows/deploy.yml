@@ -28,8 +28,7 @@ jobs:
           username: ${{ env.DOCKER_USER }}
           password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
-      - name: 🧪 Debug: Print Docker username
-        run: echo "Docker username is $DOCKER_USER"
+     
 
       - name: 🧱 Build and push Backend image
         uses: docker/build-push-action@v4
