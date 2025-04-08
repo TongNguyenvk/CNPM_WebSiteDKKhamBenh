@@ -35,19 +35,22 @@ jobs:
 
       - name: 🐞 Verify Docker login
         run: |
-          # Kiểm tra trạng thái đăng nhập
-          docker info --format '{{json .RegistryConfig}}' | grep -q '"auth"' && echo "Logged in to Docker Hub successfully" || (echo "Not logged in to Docker Hub" && exit 1)
-          # In thông tin đăng nhập chi tiết
-          echo "Docker Hub auth config:"
-          docker info --format '{{json .RegistryConfig.IndexConfigs}}'
-          # Thử chạy lệnh docker pull/push đơn giản để kiểm tra
-          docker pull hello-world >/dev/null 2>&1 && echo "Pull test succeeded" || echo "Pull test failed"
+          # Kiểm tra file cấu hình Docker
+          if [ -f ~/.docker/config.json ]; then
+            echo "Docker config file exists:"
+            cat ~/.docker/config.json
+          else
+            echo "Docker config file not found!"
+            exit 1
+          fi
+          # Thử pull image để kiểm tra đăng nhập
+          docker pull hello-world >/dev/null 2>&1 && echo "Pull test succeeded - Logged in to Docker Hub" || (echo "Pull test failed - Not logged in to Docker Hub" && exit 1)
 
       - name: 🧪 Prepare Backend tags
         id: backend_tags
         run: |
-          echo "TAG_LATEST=tongnguyen/backend:latest" >> $GITHUB_OUTPUT
-          echo "TAG_SHA=tongnguyen/backend:${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "TAG_LATEST=${{ env.DOCKER_USERNAME }}/backend:latest" >> $GITHUB_OUTPUT
+          echo "TAG_SHA=${{ env.DOCKER_USERNAME }}/backend:${{ github.sha }}" >> $GITHUB_OUTPUT
 
       - name: 🧱 Build and push Backend image
         uses: docker/build-push-action@v4
@@ -62,8 +65,8 @@ jobs:
       - name: 🧪 Prepare Frontend tags
         id: frontend_tags
         run: |
-          echo "TAG_LATEST=tongnguyen/frontend:latest" >> $GITHUB_OUTPUT
-          echo "TAG_SHA=tongnguyen/frontend:${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "TAG_LATEST=${{ env.DOCKER_USERNAME }}/frontend:latest" >> $GITHUB_OUTPUT
+          echo "TAG_SHA=${{ env.DOCKER_USERNAME }}/frontend:${{ github.sha }}" >> $GITHUB_OUTPUT
 
       - name: 🧱 Build and push Frontend image
         uses: docker/build-push-action@v4
