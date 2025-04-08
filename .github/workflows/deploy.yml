@@ -28,10 +28,10 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
-      - name: 🐞 Check DOCKER_USERNAME
+      - name: 🐞 Verify Docker login
         run: |
-          echo "DOCKER_USERNAME is: ${{ env.DOCKER_USERNAME }}"
-          if [ -z "${{ env.DOCKER_USERNAME }}" ]; then echo "Error: DOCKER_USERNAME is empty"; exit 1; fi
+          docker info --format '{{.LoggedIn}}' | grep -q "true" || (echo "Not logged in to Docker Hub" && exit 1)
+          echo "Logged in to Docker Hub successfully"
 
       - name: 🧪 Prepare Backend tags
         id: backend_tags
@@ -52,8 +52,8 @@ jobs:
       - name: 🧪 Prepare Frontend tags
         id: frontend_tags
         run: |
-          echo "TAG_LATEST=${{ env.DOCKER_USERNAME }}/backend:latest" >> $GITHUB_OUTPUT
-          echo "TAG_SHA=${{ env.DOCKER_USERNAME }}/backend:${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "TAG_LATEST=${{ env.DOCKER_USERNAME }}/frontend:latest" >> $GITHUB_OUTPUT
+          echo "TAG_SHA=${{ env.DOCKER_USERNAME }}/frontend:${{ github.sha }}" >> $GITHUB_OUTPUT
 
       - name: 🧱 Build and push Frontend image
         uses: docker/build-push-action@v4
