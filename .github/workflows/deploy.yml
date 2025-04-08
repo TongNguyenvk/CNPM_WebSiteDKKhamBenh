@@ -32,8 +32,8 @@ jobs:
       - name: 🧪 Prepare Backend tags
         id: backend_tags
         run: |
-          echo "TAG_LATEST=${{ env.DOCKER_USERNAME }}/backend:latest" >> $GITHUB_OUTPUT
-          echo "TAG_SHA=${{ env.DOCKER_USERNAME }}/backend:${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "TAG_LATEST=tongnguen/backend:latest" >> $GITHUB_OUTPUT
+          echo "TAG_SHA=tongnguyen/backend:${{ github.sha }}" >> $GITHUB_OUTPUT
 
       - name: 🧱 Build and push Backend image
         uses: docker/build-push-action@v4
@@ -48,8 +48,8 @@ jobs:
       - name: 🧪 Prepare Frontend tags
         id: frontend_tags
         run: |
-          echo "TAG_LATEST=${{ env.DOCKER_USERNAME }}/frontend:latest" >> $GITHUB_OUTPUT
-          echo "TAG_SHA=${{ env.DOCKER_USERNAME }}/frontend:${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "TAG_LATEST=tongnguyen/frontend:latest" >> $GITHUB_OUTPUT
+          echo "TAG_SHA=tongnguyen/frontend:${{ github.sha }}" >> $GITHUB_OUTPUT
 
       - name: 🧱 Build and push Frontend image
         uses: docker/build-push-action@v4
