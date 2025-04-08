@@ -47,3 +47,9 @@ jobs:
           tags: |
             ${{ env.DOCKER_USERNAME }}/frontend:latest
             ${{ env.DOCKER_USERNAME }}/frontend:${{ github.sha }}
+
+      - name: 🐞 Debug tags (optional)
+        run: |
+          echo "Backend tags:"
+          echo "${{ env.DOCKER_USERNAME }}/backend:latest"
+          echo "${{ env.DOCKER_USERNAME }}/backend:${{ github.sha }}"
