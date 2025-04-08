@@ -13,7 +13,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     env:
-      DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+      DOCKER_USERNAME: tongnguyen
 
     steps:
       - name: 📦 Checkout code
@@ -24,13 +24,13 @@ jobs:
 
       - name: 🐞 Debug secrets
         run: |
-          echo "DOCKER_USERNAME is: ${{ secrets.DOCKER_USERNAME }}"
+          echo "DOCKER_USERNAME is: ${{ env.DOCKER_USERNAME }}"
           echo "DOCKER_ACCESS_TOKEN starts with: $(echo ${{ secrets.DOCKER_ACCESS_TOKEN }} | cut -c 1-5)..."
 
       - name: 🔐 Login to Docker Hub
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
+          username: ${{ env.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
       - name: 🐞 Verify Docker login
