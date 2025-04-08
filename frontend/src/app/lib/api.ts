@@ -76,6 +76,13 @@ interface Doctor {
   // Thêm các includes khác nếu có: positionData, genderData,...
 }
 
+export interface BookingData {
+  statusId: string;
+  doctorId: number;
+  patientId: number;
+  date: string;      // ISO format, ví dụ: "2025-04-08"
+  timeType: string;  // ví dụ: "T1", "T2", tùy vào cách bạn định nghĩa khung giờ
+}
 interface CreateBookingPayload {
   doctorId: number;
   patientId: number; // ID người dùng đang đăng nhập (Backend sẽ lấy từ token, nhưng để đây cho rõ)
@@ -89,7 +96,6 @@ interface CreateBookingPayload {
 
 // --- Interface cho dữ liệu Booking trả về từ API (ví dụ) ---
 interface Booking {
-  id: number;
   statusId: string;
   doctorId: number;
   patientId: number;
@@ -100,6 +106,14 @@ interface Booking {
   createdAt: string;
   updatedAt: string;
   // Có thể bao gồm thông tin patientData, doctorData, timeTypeData nếu API trả về
+}
+
+export interface BookingPayload {
+  doctorId: number;
+  patientId: number;
+  date: string;
+  timeType: string;
+  reason?: string;
 }
 
 interface ApiError { // Di chuyển interface ApiError vào đây
@@ -159,9 +173,9 @@ const loginUser = async (userData: UserData): Promise<LoginResponse> => {
   }
 };
 
-const getUserProfile = async (token: string, userId: number) => {
+const getUserProfile = async (token: string) => {
   try {
-    const response = await apiClient.get(`/users/${userId}`, {
+    const response = await apiClient.get(`/auth/me`, {
       headers: {
         Authorization: `Bearer ${token}`
       }
@@ -172,6 +186,7 @@ const getUserProfile = async (token: string, userId: number) => {
     throw err;
   }
 };
+
 
 const updateUserProfile = async (token: string, userId: number, userData: UpdateUserData) => {
   if (!token) {
@@ -207,46 +222,38 @@ const getAuthToken = (): string | null => {
 // ... giữ nguyên getDoctorById, getDoctorSchedules ...
 
 // --- Hàm mới: Tạo Booking ---
-export const createBooking = async (payload: Omit<CreateBookingPayload, 'patientId' | 'statusId'>): Promise<Booking> => {
-  // Backend NÊN lấy patientId từ token xác thực
-  // Chúng ta chỉ cần gửi doctorId, scheduleId, date, timeType, reason
-  // statusId thường được backend tự gán mặc định là 'S1' (New/Pending)
-  const token = getAuthToken();
+
+
+export async function getDoctorScheduleById(scheduleId: number) {
+  const token = localStorage.getItem("token");
   if (!token) {
-    throw new Error("Người dùng chưa đăng nhập hoặc không tìm thấy token.");
+    throw new Error("Bạn chưa đăng nhập");
   }
 
   try {
-    const response = await apiClient.post<Booking>('/booking',
-      {
-        ...payload, // Gửi doctorId, scheduleId, date, timeType, reason
-        statusId: 'S1' // Hoặc giá trị mặc định bạn muốn
-        // Backend sẽ tự thêm patientId từ token
+    const response = await fetch(`http://localhost:8080/api/schedule/${scheduleId}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
       },
-      {
-        headers: {
-          // Gửi token để backend xác thực người dùng
-          Authorization: `Bearer ${token}`
-        }
-      }
-    );
-    return response.data; // Trả về thông tin booking đã tạo
-  } catch (error) {
-    console.error('Error creating booking:', error);
-    if (axios.isAxiosError(error)) {
-      // Xử lý các lỗi cụ thể từ API
-      if (error.response?.status === 409) { // Ví dụ: Lỗi Conflict (Hết chỗ)
-        throw new Error(error.response?.data?.message || "Khung giờ này đã được đặt hết chỗ.");
-      }
-      if (error.response?.status === 401) { // Lỗi Unauthorized
-        throw new Error("Xác thực thất bại. Vui lòng đăng nhập lại.");
-      }
-      // Lỗi chung từ API
-      throw new Error(`API Error: ${error.response?.status} - ${error.response?.data?.message || error.message}`);
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || "Không thể lấy thông tin lịch khám");
     }
-    // Lỗi không phải từ axios (mạng, etc.)
-    throw new Error('Không thể kết nối đến máy chủ hoặc đã có lỗi xảy ra.');
+
+    return await response.json();
+  } catch (error: any) {
+    console.error("Lỗi khi lấy thông tin lịch khám:", error);
+    throw error;
   }
+}
+
+export const createBooking = async (bookingData: BookingData) => {
+  const response = await apiClient.post('/booking', bookingData);
+  return response.data;
 };
 export { loginUser, getUserProfile, updateUserProfile };
 

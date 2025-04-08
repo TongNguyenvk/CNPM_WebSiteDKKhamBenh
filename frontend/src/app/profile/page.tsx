@@ -16,7 +16,7 @@ interface DecodedToken {
     userId: number;
     email: string;
     exp: number; // Thời gian hết hạn của token
-  }
+}
 const UserProfilePage = () => {
     const [user, setUser] = useState<UserProfile | null>(null);
     const [isEditing, setIsEditing] = useState(false);
@@ -37,7 +37,7 @@ const UserProfilePage = () => {
             const decoded = jwtDecode<DecodedToken>(token);
             const userId = decoded.userId;
 
-            getUserProfile(token, userId)
+            getUserProfile(token)
                 .then((data) => {
                     setUser(data);
                     setFormData(data);

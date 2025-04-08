@@ -1,6 +1,6 @@
 // controllers/doctorController.js
 const db = require('../config/database');
-const { User, DoctorDetail, Specialty } = require('../models')
+const { User, DoctorDetail, Specialty, Allcode } = require('../models')
 const { Op } = require("sequelize");
 
 const createDoctor = async (req, res) => {
@@ -45,8 +45,18 @@ const getDoctor = async (req, res) => {
             include: [
                 {
                     model: DoctorDetail,
-                    as: 'doctorDetail', // Alias để truy cập thông tin DoctorDetail
+                    as: 'doctorDetail',
                     attributes: ['descriptionMarkdown', 'descriptionHTML']
+                },
+                {
+                    model: Specialty,
+                    as: 'Specialty',
+                    attributes: ['id', 'name']
+                },
+                {
+                    model: Allcode,
+                    as: 'positionData',
+                    attributes: ['keyMap', 'valueVi', 'valueEn']
                 }
             ]
         });
@@ -55,12 +65,13 @@ const getDoctor = async (req, res) => {
             return res.status(404).json({ message: 'Không tìm thấy bác sĩ' });
         }
 
-        res.json(doctor);
+        res.status(200).json(doctor);
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Lỗi server', error: error.message });
     }
 };
+
 
 const updateDoctor = async (req, res) => {
     try {

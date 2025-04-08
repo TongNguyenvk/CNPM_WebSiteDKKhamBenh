@@ -68,7 +68,7 @@ export default function DoctorDetailPage() {
     const id = params?.id;
 
     // State để lưu trạng thái đăng nhập, mặc định là chưa đăng nhập
-    const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+    const [isLoggedIn, setIsLogin] = useState<boolean>(false);
 
     const [doctor, setDoctor] = useState<Doctor | null>(null);
     const [schedules, setSchedules] = useState<Schedule[]>([]);
@@ -82,11 +82,10 @@ export default function DoctorDetailPage() {
 
     // Effect để kiểm tra trạng thái đăng nhập khi component mount
     useEffect(() => {
-        // Kiểm tra token trong Local Storage (hoặc Session Storage)
-        // Thay 'authToken' bằng tên key bạn dùng để lưu token
-        const token = localStorage.getItem('authToken');
-        setIsLoggedIn(!!token); // Set true nếu token tồn tại, false nếu không
-    }, []); // Chạy một lần duy nhất khi component được tải
+        const token = localStorage.getItem("token");
+        if (token) setIsLogin(true);
+    }, []);
+    // Chạy một lần duy nhất khi component được tải
 
     // Effect để tạo danh sách ngày và fetch dữ liệu ban đầu
     useEffect(() => {
@@ -155,7 +154,7 @@ export default function DoctorDetailPage() {
     const handleBookingClick = async (scheduleItem: Schedule) => {
         setBookingError(null);
         setBookingSuccess(null);
-
+    
         // Kiểm tra trạng thái đăng nhập từ state
         if (!isLoggedIn) {
             setBookingError("Vui lòng đăng nhập để đặt lịch.");
@@ -163,39 +162,14 @@ export default function DoctorDetailPage() {
             router.push(`/login?redirect=/doctor/${id}`);
             return;
         }
-
+    
         if (!doctor) {
             setBookingError("Không tìm thấy thông tin bác sĩ.");
             return;
         }
-
-        const reason = prompt(`Xác nhận đặt lịch:\nBác sĩ: ${doctor.firstName} ${doctor.lastName}\nNgày: ${selectedDate}\nGiờ: ${scheduleItem.timeTypeData?.valueVi}\n\nNhập lý do khám (không bắt buộc):`);
-        if (reason === null) {
-            return;
-        }
-
-        setIsBooking(true);
-
-        try {
-            const payload = {
-                doctorId: doctor.id,
-                scheduleId: scheduleItem.id,
-                date: scheduleItem.date,
-                timeType: scheduleItem.timeType,
-                reason: reason || undefined,
-            };
-            // Hàm createBooking trong api.ts đã tự lấy token từ localStorage rồi
-            const newBooking = await createBooking(payload);
-            console.log('Booking successful:', newBooking);
-            setBookingSuccess(`Đặt lịch thành công! Mã đặt lịch của bạn là: ${newBooking.id}.`);
-            // Cân nhắc: Fetch lại lịch để cập nhật số lượng còn lại
-            // await fetchSchedulesForDate(); // Hoặc cập nhật state trực tiếp nếu API trả về đủ thông tin
-        } catch (err: any) {
-            console.error("Lỗi khi đặt lịch:", err);
-            setBookingError(err.message || "Đã xảy ra lỗi trong quá trình đặt lịch.");
-        } finally {
-            setIsBooking(false);
-        }
+    
+        // Chuyển hướng đến trang BookingCare với các thông tin cần thiết
+        router.push(`/bookingcare?doctorId=${doctor.id}&scheduleId=${scheduleItem.id}&date=${scheduleItem.date}&timeType=${scheduleItem.timeType}`);
     };
 
 
@@ -290,8 +264,8 @@ export default function DoctorDetailPage() {
                                             onClick={() => handleBookingClick(item)}
                                             disabled={!isAvailable || isLoadingSchedules || isBooking}
                                             className={`px-3 py-1 text-sm font-medium rounded-md transition-colors duration-150 w-full ${isAvailable
-                                                    ? 'bg-blue-500 hover:bg-blue-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'
-                                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                                ? 'bg-blue-500 hover:bg-blue-600 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50'
+                                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                                                 } disabled:opacity-70 disabled:cursor-wait`}
                                         >
                                             {isBooking ? 'Đang xử lý...' : (isAvailable ? 'Đặt lịch' : 'Hết chỗ')}
@@ -301,7 +275,7 @@ export default function DoctorDetailPage() {
                                             onClick={() => router.push(`/login?redirect=/doctor/${id}`)}
                                             className="px-3 py-1 text-sm font-medium rounded-md bg-gray-500 hover:bg-gray-600 text-white transition-colors duration-150 w-full"
                                         >
-                                            Đăng nhập
+                                            Đăng ký
                                         </button>
                                     )}
                                 </div>
