@@ -30,8 +30,11 @@ jobs:
 
       - name: 🐞 Verify Docker login
         run: |
-          docker info --format '{{.LoggedIn}}' | grep -q "true" || (echo "Not logged in to Docker Hub" && exit 1)
-          echo "Logged in to Docker Hub successfully"
+          # Kiểm tra thông tin đăng nhập trong docker info
+          docker info --format '{{json .}}' | grep -q '"RegistryConfig":.*"auth"' && echo "Logged in to Docker Hub successfully" || (echo "Not logged in to Docker Hub" && exit 1)
+          # In thêm thông tin để debug
+          echo "Docker Hub username in config:"
+          docker info --format '{{range .RegistryConfig.IndexConfigs}}{{.Name}}: {{.Auth.User}}{{end}}'
 
       - name: 🧪 Prepare Backend tags
         id: backend_tags
