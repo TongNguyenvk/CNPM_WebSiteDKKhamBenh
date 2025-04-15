@@ -50,7 +50,7 @@ export default function Home() {
         {/* Menu */}
         <ul style={{ display: "flex", listStyle: "none", gap: "40px", margin: 0, padding: 0, fontSize: "110%" }}>
           <li ><a href="/apointment">Lịch hẹn</a></li>
-          <li ><a href="/book-appointment">Đặt lịch khám</a></li>
+          <li ><a href="/book_appointment">Đặt lịch khám</a></li>
           <li ><a href="/contact">Liên hệ</a></li>
           <li style={{ marginRight: "100px" }}><a href="/profile">Tôi</a></li>
         </ul>

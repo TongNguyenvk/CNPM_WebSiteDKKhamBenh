@@ -2,12 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { jwtDecode } from 'jwt-decode'; // Cài đặt: npm install jwt-decode
+import { jwtDecode } from 'jwt-decode';
 
 interface DecodedToken {
   userId: number;
   email: string;
-  [key: string]: unknown; // Cho phép các trường khác
+  role?: string;
+  exp?: number;
+  [key: string]: unknown;
 }
 
 function HomePage() {
@@ -20,10 +22,13 @@ function HomePage() {
     if (token) {
       try {
         const decodedToken: DecodedToken = jwtDecode(token);
-        console.log('Decoded JWT Token:', decodedToken); // Log để kiểm tra
+        console.log('Decoded JWT Token:', decodedToken);
 
-        // Kiểm tra token hết hạn
-        const isExpired = (decodedToken.exp !== undefined && typeof decodedToken.exp === 'number' ? decodedToken.exp : 0) * 1000 < Date.now();
+        const isExpired =
+          (decodedToken.exp !== undefined && typeof decodedToken.exp === 'number'
+            ? decodedToken.exp
+            : 0) * 1000 < Date.now();
+
         if (isExpired) {
           localStorage.removeItem('token');
           router.push('/login');
@@ -37,31 +42,40 @@ function HomePage() {
         router.push('/login');
       }
     } else {
-      // Nếu không có token, điều hướng đến trang đăng nhập
       router.push('/login');
     }
   }, [router]);
 
   if (!user) {
-    return <div>Đang chuyển hướng...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-100">
+        <p className="text-gray-600 text-lg animate-pulse">Đang chuyển hướng...</p>
+      </div>
+    );
   }
 
   return (
-    <div>
-      <h1>Trang chủ</h1>
-      {user && (
-        <>
-          <p>Chào mừng, {user.email}!</p>
-          <p>User ID: {user.userId}</p>
-          {/* In ra object user để kiểm tra */}
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-100 to-purple-200 p-4">
+      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md w-full">
+        <h1 className="text-2xl font-bold text-gray-800 mb-4 text-center">Trang chủ</h1>
+        <p className="text-gray-700 mb-2">👋 Chào mừng, <span className="font-medium text-blue-600">{user.email}</span></p>
+        <p className="text-gray-700 mb-2">🆔 Mã người dùng: <span className="font-medium">{user.userId}</span></p>
+        {user.role && (
+          <p className="text-gray-700 mb-4">🎓 Vai trò: <span className="font-medium capitalize">{user.role}</span></p>
+        )}
+        <div className="bg-gray-100 rounded-md p-3 text-sm text-gray-600 mb-6">
           <pre>{JSON.stringify(user, null, 2)}</pre>
-          {user.role !== undefined && typeof user.role === 'string' && <p>Vai trò: {user.role}</p>}
-          <button onClick={() => {
+        </div>
+        <button
+          onClick={() => {
             localStorage.removeItem('token');
             router.push('/login');
-          }}>Đăng xuất</button>
-        </>
-      )}
+          }}
+          className="w-full bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg transition duration-300"
+        >
+          Đăng xuất
+        </button>
+      </div>
     </div>
   );
 }
