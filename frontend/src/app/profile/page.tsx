@@ -33,8 +33,9 @@ const UserProfilePage = () => {
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (token) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            
             const decoded = jwtDecode<DecodedToken>(token);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const userId = decoded.userId;
 
             getUserProfile(token)

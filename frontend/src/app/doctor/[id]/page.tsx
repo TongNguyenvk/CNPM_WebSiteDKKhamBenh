@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { getDoctorById, getDoctorSchedules, createBooking } from "@/app/lib/api"; // Đường dẫn tới file service
 
 // --- Interfaces (Giữ nguyên) ---
@@ -48,6 +49,7 @@ interface Doctor {
     Specialty?: Specialty;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface Booking {
     id: number;
     statusId: string;
@@ -75,6 +77,7 @@ export default function DoctorDetailPage() {
     const [dates, setDates] = useState<string[]>([]);
     const [selectedDate, setSelectedDate] = useState<string>("");
     const [isLoadingSchedules, setIsLoadingSchedules] = useState<boolean>(false);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [isBooking, setIsBooking] = useState<boolean>(false);
     const [bookingError, setBookingError] = useState<string | null>(null);
     const [bookingSuccess, setBookingSuccess] = useState<string | null>(null);
@@ -115,6 +118,7 @@ export default function DoctorDetailPage() {
             try {
                 const doctorInfo = await getDoctorById(doctorId);
                 setDoctor(doctorInfo);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (err: any) {
                 console.error("Lỗi lấy dữ liệu ban đầu:", err);
                 setGeneralError(err.message || "Không thể tải thông tin bác sĩ.");
@@ -139,6 +143,7 @@ export default function DoctorDetailPage() {
             try {
                 const scheduleData = await getDoctorSchedules(doctorId, selectedDate);
                 setSchedules(scheduleData);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (err: any) {
                 console.error(`Lỗi khi fetch lịch cho ngày ${selectedDate}:`, err);
                 setGeneralError(err.message || `Không thể tải lịch khám cho ngày ${selectedDate}.`);

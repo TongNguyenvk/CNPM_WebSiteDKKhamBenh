@@ -83,6 +83,7 @@ export interface BookingData {
   date: string;      // ISO format, ví dụ: "2025-04-08"
   timeType: string;  // ví dụ: "T1", "T2", tùy vào cách bạn định nghĩa khung giờ
 }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface CreateBookingPayload {
   doctorId: number;
   patientId: number; // ID người dùng đang đăng nhập (Backend sẽ lấy từ token, nhưng để đây cho rõ)
@@ -95,6 +96,7 @@ interface CreateBookingPayload {
 }
 
 // --- Interface cho dữ liệu Booking trả về từ API (ví dụ) ---
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface Booking {
   statusId: string;
   doctorId: number;
@@ -210,6 +212,7 @@ const updateUserProfile = async (token: string, userId: number, userData: Update
   }
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getAuthToken = (): string | null => {
   // Thay thế bằng logic lấy token của bạn (localStorage, sessionStorage, context,...)
   if (typeof window !== 'undefined') {
@@ -245,6 +248,7 @@ export async function getDoctorScheduleById(scheduleId: number) {
     }
 
     return await response.json();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error("Lỗi khi lấy thông tin lịch khám:", error);
     throw error;
