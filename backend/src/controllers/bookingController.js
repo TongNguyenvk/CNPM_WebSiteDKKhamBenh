@@ -43,16 +43,49 @@ exports.getBookingsByDoctor = async (req, res) => {
 // 🏥 3. Lấy danh sách lịch khám theo bệnh nhân
 exports.getBookingsByPatient = async (req, res) => {
     try {
-        const { patientId } = req.params;
+        // Lấy patientId từ req.params và chuyển thành số
+        const patientId = parseInt(req.params.patientId, 10);
+        console.log('Patient ID nhận được:', patientId); // Log để kiểm tra
 
+        // Kiểm tra patientId hợp lệ
+        if (isNaN(patientId) || patientId <= 0) {
+            return res.status(400).json({ success: false, message: 'Patient ID không hợp lệ' });
+        }
+
+        // Tìm danh sách đặt lịch, bao gồm thông tin bệnh nhân và bác sĩ
         const bookings = await Booking.findAll({
-            where: { patientId },
-            order: [["date", "ASC"]],
+            where: { patient_id: patientId }, // Sử dụng patient_id thay vì patientId
+            include: [
+                {
+                    model: sequelize.models.User,
+                    as: 'Patient',
+                    attributes: ['name'], // Lấy tên bệnh nhân
+                },
+                {
+                    model: sequelize.models.User,
+                    as: 'Doctor',
+                    attributes: ['name'], // Lấy tên bác sĩ
+                },
+            ],
+            order: [['date', 'ASC']],
         });
+
+        // Log kết quả truy vấn
+        console.log('Danh sách bookings tìm thấy:', bookings);
+
+        // Kiểm tra nếu không có dữ liệu
+        if (!bookings || bookings.length === 0) {
+            return res.status(200).json({
+                success: true,
+                data: [],
+                message: 'Không có đặt lịch nào cho bệnh nhân này',
+            });
+        }
 
         res.status(200).json({ success: true, data: bookings });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Lỗi server", error });
+        console.error('Lỗi khi lấy danh sách đặt lịch:', error);
+        res.status(500).json({ success: false, message: 'Lỗi server', error: error.message });
     }
 };
 

@@ -80,23 +80,23 @@ export default function BookingCarePage() {
         const userProfile = await getUserProfile(token);
         setUser(userProfile);
         localStorage.setItem("userData", JSON.stringify(userProfile)); // nếu muốn lưu lại
-      
+
         if (!doctorId || !scheduleId || !date || !timeType) {
           setError("Thiếu thông tin cần thiết để đặt lịch");
           setLoading(false);
           return;
         }
-      
+
         const [doctorData, scheduleData] = await Promise.all([
           getDoctorById(Number(doctorId)),
           getDoctorScheduleById(Number(scheduleId)),
         ]);
-      
+
         setDoctor(doctorData);
         setSchedule(scheduleData);
       } catch (err: unknown) {
         console.error("Lỗi khi fetch:", err);
-      
+
         if (err instanceof Error) {
           setError(err.message);
         } else {
@@ -105,7 +105,7 @@ export default function BookingCarePage() {
       } finally {
         setLoading(false);
       }
-      
+
     };
 
     fetchData();
@@ -143,7 +143,10 @@ export default function BookingCarePage() {
     try {
       const response = await createBooking(bookingData);
       if (response.success) {
-        alert("Đặt lịch thành công!");
+        setSuccess("Đặt lịch thành công!");
+        setTimeout(() => {
+          router.push("/book_apointment"); // <-- Trang xem thông tin đặt lịch
+        }); // đợi 3 giây trước khi điều hướng
       } else {
         alert("Đặt lịch thất bại!");
       }

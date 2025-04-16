@@ -1,98 +1,122 @@
 "use client";
+
 import { useEffect, useState } from "react";
-import axios from "axios";
 import { useRouter } from "next/navigation";
-import Cookies from "js-cookie"; // Import js-cookie để làm việc với cookies
+import Cookies from "js-cookie";
+import { getBookingsByPatientId, getUserProfile, Booking } from "../lib/api"; // Import Booking từ lib/api
 
-const API_URL = "http://localhost:8080/api";
-
-interface DoctorSchedule {
-    id: number;
-    doctorName: string;
-    date: string;
-    time: string;
-}
-
-const BookAppointmentPage = () => {
-    const [schedules, setSchedules] = useState<DoctorSchedule[]>([]);
-    const [selectedSchedule, setSelectedSchedule] = useState<number | null>(null);
+const BookingListPage = () => {
     const router = useRouter();
+    const [bookings, setBookings] = useState<Booking[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [user, setUser] = useState<any>(null);
 
     useEffect(() => {
-        const token = Cookies.get("token"); // Lấy token từ cookies
-        if (!token) {
-            alert("Vui lòng đăng nhập để xem lịch bác sĩ.");
-            router.push("/login");
-            return;
-        }
+        const fetchBookings = async () => {
+            const token = Cookies.get("token") || localStorage.getItem("token");
 
-        axios
-            .get(`${API_URL}/schedules`, {
-                headers: { Authorization: `Bearer ${token}` },
-            })
-            .then((res) => {
-                setSchedules(res.data);
-            })
-            .catch((err) => {
-                console.error("Lỗi lấy lịch bác sĩ:", err);
-                alert("Không thể lấy lịch bác sĩ. Vui lòng thử lại sau.");
-            });
-    }, [router]);
+            console.log("Token:", token);
 
-    const handleBook = async () => {
-        const token = Cookies.get("token"); // Lấy token từ cookies
-        if (!token || !selectedSchedule) {
-            alert("Vui lòng đăng nhập và chọn lịch trước khi đặt.");
-            if (!token) router.push("/login");
-            return;
-        }
+            if (!token) {
+                console.log("Không tìm thấy token, chuyển hướng đến trang login");
+                router.push("/login?redirect=/bookings");
+                return;
+            }
 
-        try {
-            await axios.post(
-                `${API_URL}/appointments`,
-                { scheduleId: selectedSchedule },
-                { headers: { Authorization: `Bearer ${token}` } }
-            );
-            alert("Đặt lịch thành công!");
-            router.push("/appointments");
-        } catch (error) {
-            console.error("Lỗi đặt lịch:", error);
-            alert("Đặt lịch thất bại.");
-        }
-    };
+            try {
+                const profile = await getUserProfile(token);
+                console.log("Profile:", profile);
+                setUser(profile);
+
+                if (!profile.id) {
+                    throw new Error("Không tìm thấy ID người dùng trong profile");
+                }
+
+                const data = await getBookingsByPatientId(profile.id);
+                console.log("Bookings:", data);
+                setBookings(data);
+            } catch (err: any) {
+                console.error("Lỗi khi lấy lịch đặt:", err);
+                setError(err.message || "Đã xảy ra lỗi khi tải dữ liệu.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchBookings();
+    }, []);
+
+    if (loading) {
+        return (
+            <div className="p-6 text-center">
+                <p>Đang tải lịch khám...</p>
+            </div>
+        );
+    }
+
+    if (error) {
+        return (
+            <div className="p-6 text-center text-red-500">
+                <p>{error}</p>
+            </div>
+        );
+    }
+
+    if (bookings.length === 0) {
+        return (
+            <div className="p-6 text-center text-gray-500">
+                <p>Chưa có lịch khám nào.</p>
+            </div>
+        );
+    }
 
     return (
-        <div className="p-6 min-h-screen bg-gray-100">
-            <h2 className="text-2xl font-bold text-center mb-4">Đặt lịch khám</h2>
+        <div className="p-6 min-h-screen bg-gray-50">
+            <h2 className="text-2xl font-bold mb-4 text-center">Lịch hẹn của bạn</h2>
             <div className="grid gap-4">
-                {schedules.map((sch) => (
+                {bookings.map((booking) => (
                     <div
-                        key={sch.id}
-                        onClick={() => setSelectedSchedule(sch.id)}
-                        className={`p-4 bg-white rounded-lg shadow-md cursor-pointer hover:bg-blue-100 transition-all ${
-                            selectedSchedule === sch.id ? "border-2 border-blue-500" : ""
-                        }`}
+                        key={booking.booking_id}
+                        className="p-4 bg-white rounded-lg shadow hover:shadow-md transition-all"
                     >
-                        <p><strong>Bác sĩ:</strong> {sch.doctorName}</p>
-                        <p><strong>Ngày:</strong> {sch.date}</p>
-                        <p><strong>Giờ:</strong> {sch.time}</p>
+                        <p>
+                            <strong>Mã lịch:</strong> {booking.booking_id}
+                        </p>
+                        <p>
+                            <strong>Ngày:</strong>{" "}
+                            {new Date(booking.date).toLocaleString("vi-VN", {
+                                dateStyle: "medium",
+                                timeStyle: "short",
+                            })}
+                        </p>
+                        {booking.timeType && (
+                            <p>
+                                <strong>Giờ:</strong> {booking.timeType}
+                            </p>
+                        )}
+                        {booking.doctorId && (
+                            <p>
+                                <strong>Bác sĩ ID:</strong> {booking.doctorId}
+                            </p>
+                        )}
+                        {booking.status && (
+                            <p>
+                                <strong>Trạng thái:</strong> {booking.status}
+                            </p>
+                        )}
                     </div>
                 ))}
             </div>
 
             <button
-                onClick={handleBook}
-                disabled={!selectedSchedule}
-                className="mt-6 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50"
+                onClick={() => router.back()}
+                className="mt-6 px-4 py-2 bg-gray-300 rounded-lg"
             >
-                Xác nhận đặt lịch
-            </button>
-
-            <button onClick={() => router.back()} className="ml-4 px-4 py-2 bg-gray-300 rounded-lg">
                 ← Quay lại
             </button>
         </div>
     );
 };
 
-export default BookAppointmentPage;
+export default BookingListPage;

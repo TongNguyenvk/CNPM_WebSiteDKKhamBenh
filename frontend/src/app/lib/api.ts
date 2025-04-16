@@ -97,17 +97,13 @@ interface CreateBookingPayload {
 
 // --- Interface cho dữ liệu Booking trả về từ API (ví dụ) ---
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-interface Booking {
-  statusId: string;
-  doctorId: number;
-  patientId: number;
+export interface Booking {
+  booking_id: number;
+  patient_id: number;
   date: string;
-  timeType: string;
-  token?: string; // Token xác nhận/hủy lịch qua email (nếu có)
-  reason?: string;
-  createdAt: string;
-  updatedAt: string;
-  // Có thể bao gồm thông tin patientData, doctorData, timeTypeData nếu API trả về
+  timeType?: string;
+  doctorId?: number;
+  status?: string;
 }
 
 export interface BookingPayload {
@@ -248,7 +244,7 @@ export async function getDoctorScheduleById(scheduleId: number) {
     }
 
     return await response.json();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error("Lỗi khi lấy thông tin lịch khám:", error);
     throw error;
@@ -256,9 +252,54 @@ export async function getDoctorScheduleById(scheduleId: number) {
 }
 
 export const createBooking = async (bookingData: BookingData) => {
-  const response = await apiClient.post('/booking', bookingData);
+  const response = await apiClient.post('/bookings', bookingData);
   return response.data;
 };
+
+export const getBookingsByPatientId = async (patientId: number): Promise<Booking[]> => {
+  try {
+    // Kiểm tra patientId hợp lệ
+    if (!Number.isInteger(patientId) || patientId <= 0) {
+      throw new Error('Patient ID không hợp lệ');
+    }
+
+    console.log('Gọi API với patientId:', patientId); // Log để kiểm tra
+
+    const response = await apiClient.get(`/bookings/patient/${patientId}`);
+
+    console.log('Response từ API:', response.data); // Log để kiểm tra
+
+    // Kiểm tra response
+    if (response.data.success && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+
+    // Nếu không có dữ liệu, trả về mảng rỗng
+    return [];
+  } catch (error) {
+    console.error(`Lỗi khi lấy danh sách đặt lịch của bệnh nhân có ID ${patientId}:`, error);
+
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const message = error.response?.data?.message || error.message;
+      throw new Error(`API Error: ${status} - ${message}`);
+    }
+
+    throw new Error('Đã xảy ra lỗi không xác định khi lấy danh sách đặt lịch.');
+  }
+};
+
+export async function getUserBookings(userId: number, token: string) {
+  const res = await fetch(`/bookings/patient/${userId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!res.ok) throw new Error("Không thể lấy lịch hẹn của bạn");
+  return res.json();
+}
+
 export { loginUser, getUserProfile, updateUserProfile };
 
 
@@ -496,8 +537,8 @@ export { loginUser, getUserProfile, updateUserProfile };
 // // Có thể thêm các hàm API khác ở đây (register, getBookings, cancelBooking, etc.)
 
 // // Export tất cả các hàm cần thiết
-// export {
-//     // loginUser, // Đã export ở trên
+//export {
+//   // loginUser, // Đã export ở trên
 //     // getUserProfile, // Đã export ở trên
 //     // updateUserProfile, // Đã export ở trên
 //     // getAllDoctors, // Đã export ở trên

@@ -28,15 +28,4 @@ db.Sequelize = sequelize.Sequelize;
 
 module.exports = db;
 
-// Đồng bộ CSDL: tạo bảng từ model nếu chưa có
-const initDB = async () => {
-    try {
-      await sequelize.sync({ alter: true }); // hoặc { force: true } nếu muốn xóa bảng cũ
-      console.log('✅ Database synced successfully!');
-    } catch (err) {
-      console.error('❌ Failed to sync DB:', err);
-    }
-  };
-  
-  initDB(); // Gọi hàm khi load models
-  
+
