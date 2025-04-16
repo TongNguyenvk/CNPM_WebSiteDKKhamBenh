@@ -77,8 +77,8 @@ export default function Home() {
             }}>
             <Image src={`/${specialty.image}`} alt={specialty.name} width={400} height={200} style={{ objectFit: "cover" }} />
             <h3 style={{ marginTop: "20px", fontSize: "18px" }}>{specialty.name}</h3><br></br>
-            <div style={{ width: "80%", height: "0px", border: "0.5px solid #00F0FF" }}></div><br></br>
-            {<p style={{ alignItems: "center", gap: "8px", padding: "10px 20px", border: "2px solid cyan", borderRadius: "30px", textDecoration: "none", color: "black", fontSize: "16px", transition: "all 0.3s ease", display: "inline-flex" }}>Xem thêm
+            <div style={{ width: "80%", height: "0px", border: "0.5px solid #306CD4" }}></div><br></br>
+            {<p style={{ alignItems: "center", gap: "8px", padding: "10px 20px", border: "2px solid #306CD4", borderRadius: "30px", textDecoration: "none", color: "black", fontSize: "16px", transition: "all 0.3s ease", display: "inline-flex" }}>Xem thêm
               <span style={{ color: "blue", fontSize: "20px" }}>→</span>
             </p>}
           </Link>

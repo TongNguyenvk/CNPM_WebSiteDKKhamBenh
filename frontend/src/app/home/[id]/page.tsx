@@ -61,12 +61,22 @@ export default function SpecialtyDetailPage() {
 
     return (
         <div className="max-w-6xl mx-auto p-6">
+            {/* 🔙 Nút Quay lại */}
             <button
-                onClick={() => router.back()}
-                className="mb-6 px-4 py-2 border border-cyan-500 rounded-full text-black"
-            >
+                style={{
+                    color: "black",
+                    backgroundColor: "#f5f5f5", // 👈 màu nền nhạt hơn
+                    padding: "10px 20px",
+                    borderRadius: "100px",
+                    border: "2px solid #306CD4",
+                    cursor: "pointer",
+                    marginBottom: "20px",
+                    marginTop: "30px"
+                }}
+                onClick={() => router.back()}>
                 ← Quay lại
             </button>
+
 
             {specialty && (
                 <>
@@ -85,18 +95,8 @@ export default function SpecialtyDetailPage() {
             <h2 className="text-2xl font-semibold mb-4">Danh sách bác sĩ</h2>
             <ul className="space-y-4">
                 {doctors.map((doctor) => (
-                    <li
-                        key={doctor.id}
-                        className="flex items-center gap-4 p-4 border rounded-lg cursor-pointer hover:bg-gray-100"
-                        onClick={() => router.push(`/doctor/${doctor.id}`)}
-                    >
-                        <Image
-                            src={`/${doctor.image}`}
-                            alt={doctor.firstName}
-                            width={100}
-                            height={100}
-                            className="rounded-full"
-                        />
+                    <li key={doctor.id} className="flex items-center gap-4 p-4 border rounded-lg cursor-pointer hover:bg-gray-100" onClick={() => router.push(`/doctor/${doctor.id}`)}>
+                        <Image src={`/${doctor.image}`} alt={doctor.firstName} width={100} height={100} className="rounded-full"/>
                         <div>
                             <p className="text-lg font-medium">
                                 {doctor.firstName} {doctor.lastName}

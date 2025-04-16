@@ -133,10 +133,21 @@ const UserProfilePage = () => {
             </div>
 
             {/* 🔙 Nút Quay lại */}
-            <button style={{ color: "black", padding: "10px 20px ", borderRadius: "100px", border: "2px solid cyan", cursor: "pointer", marginBottom: "20px", marginTop: "30px" }}
-                onClick={() => router.back()} > ← Quay lại
+            <button
+                style={{
+                    color: "black",
+                    backgroundColor: "#f5f5f5", // 👈 màu nền nhạt hơn
+                    padding: "10px 20px",
+                    borderRadius: "100px",
+                    border: "2px solid #306CD4",
+                    cursor: "pointer",
+                    marginBottom: "20px",
+                    marginTop: "30px"
+                }}
+                onClick={() => router.back()}
+            >
+                ← Quay lại
             </button>
-
         </div>
     );
 };

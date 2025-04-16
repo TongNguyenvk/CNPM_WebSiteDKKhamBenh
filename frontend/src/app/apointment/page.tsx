@@ -82,15 +82,29 @@ const AppointmentsPage = () => {
                         {selectedAppointment.status === "scheduled" && (
                             <button
                                 onClick={() => handleCancel(selectedAppointment.id)}
-                                className="mt-4 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all"
-                            >
+                                className="mt-4 p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all">
                                 Hủy lịch khám
                             </button>
                         )}
                     </div>
                 )}
             </div>
-            <button onClick={() => router.back()} className="mt-6 p-2 bg-gray-300 rounded-lg">← Quay lại</button>
+            {/* 🔙 Nút Quay lại */}
+            <button
+                style={{
+                    color: "black",
+                    backgroundColor: "#f5f5f5", // 👈 màu nền nhạt hơn
+                    padding: "10px 20px",
+                    borderRadius: "100px",
+                    border: "2px solid #306CD4",
+                    cursor: "pointer",
+                    marginBottom: "20px",
+                    marginTop: "30px"
+                }}
+                onClick={() => router.back()} >
+                ← Quay lại
+            </button>
+
         </div>
     );
 };

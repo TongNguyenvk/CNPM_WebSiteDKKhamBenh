@@ -96,7 +96,6 @@ interface CreateBookingPayload {
 }
 
 // --- Interface cho dữ liệu Booking trả về từ API (ví dụ) ---
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export interface Booking {
   booking_id: number;
   patient_id: number;

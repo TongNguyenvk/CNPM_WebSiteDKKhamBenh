@@ -10,6 +10,7 @@ const BookingListPage = () => {
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
     const [user, setUser] = useState<any>(null);
 
     useEffect(() => {
@@ -36,6 +37,7 @@ const BookingListPage = () => {
                 const data = await getBookingsByPatientId(profile.id);
                 console.log("Bookings:", data);
                 setBookings(data);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (err: any) {
                 console.error("Lỗi khi lấy lịch đặt:", err);
                 setError(err.message || "Đã xảy ra lỗi khi tải dữ liệu.");
@@ -45,7 +47,7 @@ const BookingListPage = () => {
         };
 
         fetchBookings();
-    }, []);
+    }, [router]);
 
     if (loading) {
         return (

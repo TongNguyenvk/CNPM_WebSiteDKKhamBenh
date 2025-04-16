@@ -63,7 +63,6 @@ export default function BookingCarePage() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [bookingLoading, setBookingLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {

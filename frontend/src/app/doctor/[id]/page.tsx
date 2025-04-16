@@ -181,6 +181,22 @@ export default function DoctorDetailPage() {
     // --- Phần Render JSX (giữ nguyên logic hiển thị dựa trên isLoggedIn) ---
     return (
         <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
+            {/* 🔙 Nút Quay lại */}
+            <button
+                style={{
+                    color: "black",
+                    backgroundColor: "#f5f5f5", // 👈 màu nền nhạt hơn
+                    padding: "10px 20px",
+                    borderRadius: "100px",
+                    border: "2px solid #306CD4",
+                    cursor: "pointer",
+                    marginBottom: "20px",
+                    marginTop: "30px"
+                }}
+                onClick={() => router.back()} >
+                ← Quay lại
+            </button>
+
             {/* Thông tin bác sĩ */}
             {doctor && ( /* ... */
                 <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 p-4 border rounded-lg shadow-sm bg-white">
