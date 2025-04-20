@@ -111,10 +111,19 @@ const BookingListPage = () => {
                 ))}
             </div>
 
+            {/* 🔙 Nút Quay lại */}
             <button
-                onClick={() => router.back()}
-                className="mt-6 px-4 py-2 bg-gray-300 rounded-lg"
-            >
+                style={{
+                    color: "black",
+                    backgroundColor: "#f5f5f5", // 👈 màu nền nhạt hơn
+                    padding: "10px 20px",
+                    borderRadius: "100px",
+                    border: "2px solid #306CD4",
+                    cursor: "pointer",
+                    marginBottom: "20px",
+                    marginTop: "30px"
+                }}
+                onClick={() => router.back()} >
                 ← Quay lại
             </button>
         </div>

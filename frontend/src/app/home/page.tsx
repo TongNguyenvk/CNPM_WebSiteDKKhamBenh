@@ -37,24 +37,37 @@ export default function Home() {
 
   return (
     <div style={{ fontFamily: "Montserrat, sans-serif", maxWidth: "1700px", margin: "auto", padding: "20px", color: "black" }}>
-      {/* Navbar */}
-      <nav style={{
-        position: "fixed",  // 🔥 Giữ navbar cố định trên top
-        top: 0, left: 0, width: "100%", height: "8%", display: "flex", justifyContent: "space-between",
-        alignItems: "center", padding: "10px 20px", backgroundColor: "#fff", boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
-        zIndex: 1000 // 🔥 Giữ navbar luôn ở trên các thành phần khác
-      }}>
-        {/* Logo */}
-        <Image src="https://phuongnamvina.com/img_data/images/logo-benh-vien.jpg" alt="Logo" width={100} height={50} />
+      <nav className="fixed top-0 left-0 w-full bg-white shadow-md z-50 px-6 py-4 flex items-center justify-between">
+            {/* Logo */}
+            <div className="flex items-center">
+                <Image src="https://phuongnamvina.com/img_data/images/logo-benh-vien.jpg" alt="Logo" width={100} height={50} className="rounded-md shadow-sm" />
+            </div>
 
-        {/* Menu */}
-        <ul style={{ display: "flex", listStyle: "none", gap: "40px", margin: 0, padding: 0, fontSize: "110%" }}>
-          <li ><a href="/book_apointment">Lịch hẹn</a></li>
-          <li ><a href="/book_appointment">Đặt lịch khám</a></li>
-          <li ><a href="/contact">Liên hệ</a></li>
-          <li style={{ marginRight: "100px" }}><a href="/profile">Tôi</a></li>
-        </ul>
-      </nav>
+            {/* Menu */}
+            <ul className="flex space-x-20 text-lg font-medium">
+                <li style={{ marginRight: "50px" }}>
+                    <Link href="/apointment" className="hover:text-blue-600 transition-colors duration-200">
+                        Lịch hẹn
+                    </Link>
+                </li>
+                <li style={{ marginRight: "50px" }}>
+                    <Link href="/book_appointment" className="hover:text-blue-600 transition-colors duration-200">
+                        Đặt lịch khám
+                    </Link>
+                </li>
+                <li style={{ marginRight: "50px" }}>
+                    <Link href="/contact" className="hover:text-blue-600 transition-colors duration-200">
+                        Liên hệ
+                    </Link>
+                </li>
+                <li style={{ marginRight: "100px" }}>
+                  <Link href="/profile" className="hover:text-blue-600 transition-colors duration-200">
+                      Tôi
+                  </Link>
+                </li>
+
+            </ul>
+        </nav>
 
       {/* 📌 Tạo khoảng trống để nội dung không bị che */}
       <div style={{ marginTop: "100px" }}></div>
