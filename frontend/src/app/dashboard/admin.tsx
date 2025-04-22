@@ -1,11 +1,28 @@
 // src/app/dashboard/admin/page.tsx
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { getUserProfile } from "../lib/api";
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const [roleId, setRoleId] = useState<string>("");
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      router.push("/login?redirect=/dashboard/admin");
+      return;
+    }
+    getUserProfile(token).then(profile => {
+      setRoleId(profile.roleId);
+    });
+  }, [router]);
+
+  if (roleId && roleId !== 'R3') {
+    return <div className="p-6 text-center text-red-500">Bạn không có quyền truy cập trang này.</div>;
+  }
 
   const users = [
     { id: 1, username: 'benhnhan1', role: 'benhnhan' },

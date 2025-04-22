@@ -97,12 +97,38 @@ interface CreateBookingPayload {
 
 // --- Interface cho dữ liệu Booking trả về từ API (ví dụ) ---
 export interface Booking {
-  booking_id: number;
-  patient_id: number;
+  id: number;
   date: string;
   timeType?: string;
-  doctorId?: number;
-  status?: string;
+  doctorData?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    image?: string;
+    doctorDetail?: {
+      descriptionMarkdown?: string;
+      descriptionHTML?: string;
+    };
+    Specialty?: {
+      id: number;
+      name: string;
+      image?: string;
+      description?: string;
+    };
+  };
+  patientData?: {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    image?: string;
+  };
+  statusData?: {
+    keyMap: string;
+    valueVi: string;
+    valueEn: string;
+  };
 }
 
 export interface BookingPayload {
@@ -301,6 +327,23 @@ export async function getUserBookings(userId: number, token: string) {
 
 export { loginUser, getUserProfile, updateUserProfile };
 
+export const getBookingById = async (id: number, token?: string): Promise<Booking> => {
+  if (!id) throw new Error("Thiếu id lịch khám");
+  try {
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const response = await axios.get(`http://localhost:8080/api/bookings/${id}`, { headers });
+    // Nếu backend trả về { success, data }, lấy data; nếu trả về trực tiếp object thì lấy luôn
+    return response.data.data || response.data;
+  } catch (error: any) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      const message = error.response?.data?.message || error.message;
+      throw new Error(`API Error: ${status} - ${message}`);
+    }
+    throw new Error('Đã xảy ra lỗi khi lấy chi tiết lịch khám.');
+  }
+};
 
 // // src/app/lib/api.ts
 // import axios, { AxiosError } from 'axios'; // Import thêm AxiosError

@@ -46,7 +46,7 @@ export default function Home() {
             {/* Menu */}
             <ul className="flex space-x-20 text-lg font-medium">
                 <li style={{ marginRight: "50px" }}>
-                    <Link href="/apointment" className="hover:text-blue-600 transition-colors duration-200">
+                    <Link href="/book_appointment" className="hover:text-blue-600 transition-colors duration-200">
                         Lịch hẹn
                     </Link>
                 </li>

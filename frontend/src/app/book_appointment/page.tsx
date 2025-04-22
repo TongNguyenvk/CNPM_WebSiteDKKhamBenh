@@ -12,10 +12,11 @@ const BookingListPage = () => {
     const [error, setError] = useState<string | null>(null);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
     const [user, setUser] = useState<any>(null);
+    const [roleId, setRoleId] = useState<string>("");
 
     useEffect(() => {
         const fetchBookings = async () => {
-            const token = Cookies.get("token") || localStorage.getItem("token");
+            const token = localStorage.getItem("token");
 
             console.log("Token:", token);
 
@@ -29,6 +30,7 @@ const BookingListPage = () => {
                 const profile = await getUserProfile(token);
                 console.log("Profile:", profile);
                 setUser(profile);
+                setRoleId(profile.roleId);
 
                 if (!profile.id) {
                     throw new Error("Không tìm thấy ID người dùng trong profile");
@@ -37,7 +39,7 @@ const BookingListPage = () => {
                 const data = await getBookingsByPatientId(profile.id);
                 console.log("Bookings:", data);
                 setBookings(data);
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (err: any) {
                 console.error("Lỗi khi lấy lịch đặt:", err);
                 setError(err.message || "Đã xảy ra lỗi khi tải dữ liệu.");
@@ -55,6 +57,10 @@ const BookingListPage = () => {
                 <p>Đang tải lịch khám...</p>
             </div>
         );
+    }
+
+    if (roleId && roleId !== 'R2' && roleId !== 'R3') {
+        return <div className="p-6 text-center text-red-500">Bạn không có quyền truy cập trang này.</div>;
     }
 
     if (error) {
@@ -79,11 +85,12 @@ const BookingListPage = () => {
             <div className="grid gap-4">
                 {bookings.map((booking) => (
                     <div
-                        key={booking.booking_id}
-                        className="p-4 bg-white rounded-lg shadow hover:shadow-md transition-all"
+                        key={booking.id}
+                        className="p-4 bg-white rounded-lg shadow hover:shadow-md transition-all cursor-pointer"
+                        onClick={() => router.push(`/book_appointment/${booking.id}`)}
                     >
                         <p>
-                            <strong>Mã lịch:</strong> {booking.booking_id}
+                            <strong>Mã lịch:</strong> {booking.id}
                         </p>
                         <p>
                             <strong>Ngày:</strong>{" "}
@@ -94,19 +101,31 @@ const BookingListPage = () => {
                         </p>
                         {booking.timeType && (
                             <p>
-                                <strong>Giờ:</strong> {booking.timeType}
+                                <strong>Khung giờ:</strong> {booking.timeType}
                             </p>
                         )}
-                        {booking.doctorId && (
+                        {booking.doctorData && (
                             <p>
-                                <strong>Bác sĩ ID:</strong> {booking.doctorId}
+                                <strong>Bác sĩ:</strong> {booking.doctorData.firstName} {booking.doctorData.lastName}
+                                {booking.doctorData.Specialty && (
+                                    <> - <span className="italic">{booking.doctorData.Specialty.name}</span></>
+                                )}
                             </p>
                         )}
-                        {booking.status && (
+                        {booking.statusData && (
                             <p>
-                                <strong>Trạng thái:</strong> {booking.status}
+                                <strong>Trạng thái:</strong> {booking.statusData.valueVi}
                             </p>
                         )}
+                        <button
+                            className="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                            onClick={e => {
+                                e.stopPropagation();
+                                router.push(`/book_appointment/${booking.id}`);
+                            }}
+                        >
+                            Xem chi tiết
+                        </button>
                     </div>
                 ))}
             </div>

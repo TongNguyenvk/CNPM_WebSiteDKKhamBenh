@@ -1,4 +1,5 @@
-const { Booking } = require("../models"); // Import model booking
+const db = require("../models"); // Import toàn bộ models
+//const { Booking } = db;
 const { Op } = require("sequelize");
 
 // 🏥 1. Tạo lịch đặt khám mới
@@ -9,7 +10,7 @@ exports.createBooking = async (req, res) => {
         // Tạo mã token (UUID) cho booking
         const token = require("crypto").randomUUID();
 
-        const newBooking = await Booking.create({
+        const newBooking = await db.Booking.create({
             statusId,
             doctorId,
             patientId,
@@ -29,8 +30,46 @@ exports.getBookingsByDoctor = async (req, res) => {
     try {
         const { doctorId } = req.params;
 
-        const bookings = await Booking.findAll({
+        const bookings = await db.Booking.findAll({
             where: { doctorId },
+            include: [
+                {
+                    model: db.User,
+                    as: 'doctorData',
+                    attributes: ['id', 'firstName', 'lastName', 'email', 'address', 'gender', 'phoneNumber', 'image'],
+                    include: [
+                        {
+                            model: db.DoctorDetail,
+                            as: 'doctorDetail',
+                            attributes: ['descriptionMarkdown', 'descriptionHTML']
+                        },
+                        {
+                            model: db.Specialty,
+                            attributes: ['id', 'name', 'image', 'description']
+                        },
+                        {
+                            model: db.Allcode,
+                            as: 'roleData',
+                            attributes: ['keyMap', 'valueVi', 'valueEn']
+                        },
+                        {
+                            model: db.Allcode,
+                            as: 'positionData',
+                            attributes: ['keyMap', 'valueVi', 'valueEn']
+                        }
+                    ]
+                },
+                {
+                    model: db.User,
+                    as: 'patientData',
+                    attributes: ['id', 'firstName', 'lastName', 'email', 'address', 'gender', 'phoneNumber', 'image']
+                },
+                {
+                    model: db.Allcode,
+                    as: 'statusData',
+                    attributes: ['keyMap', 'valueVi', 'valueEn']
+                }
+            ],
             order: [["date", "ASC"]],
         });
 
@@ -53,19 +92,45 @@ exports.getBookingsByPatient = async (req, res) => {
         }
 
         // Tìm danh sách đặt lịch, bao gồm thông tin bệnh nhân và bác sĩ
-        const bookings = await Booking.findAll({
-            where: { patient_id: patientId }, // Sử dụng patient_id thay vì patientId
+        const bookings = await db.Booking.findAll({
+            where: { patientId: patientId },
             include: [
                 {
-                    model: sequelize.models.User,
-                    as: 'Patient',
-                    attributes: ['name'], // Lấy tên bệnh nhân
+                    model: db.User,
+                    as: 'patientData',
+                    attributes: ['id', 'firstName', 'lastName', 'email', 'address', 'gender', 'phoneNumber', 'image']
                 },
                 {
-                    model: sequelize.models.User,
-                    as: 'Doctor',
-                    attributes: ['name'], // Lấy tên bác sĩ
+                    model: db.User,
+                    as: 'doctorData',
+                    attributes: ['id', 'firstName', 'lastName', 'email', 'address', 'gender', 'phoneNumber', 'image'],
+                    include: [
+                        {
+                            model: db.DoctorDetail,
+                            as: 'doctorDetail',
+                            attributes: ['descriptionMarkdown', 'descriptionHTML']
+                        },
+                        {
+                            model: db.Specialty,
+                            attributes: ['id', 'name', 'image', 'description']
+                        },
+                        {
+                            model: db.Allcode,
+                            as: 'roleData',
+                            attributes: ['keyMap', 'valueVi', 'valueEn']
+                        },
+                        {
+                            model: db.Allcode,
+                            as: 'positionData',
+                            attributes: ['keyMap', 'valueVi', 'valueEn']
+                        }
+                    ]
                 },
+                {
+                    model: db.Allcode,
+                    as: 'statusData',
+                    attributes: ['keyMap', 'valueVi', 'valueEn']
+                }
             ],
             order: [['date', 'ASC']],
         });
@@ -94,7 +159,7 @@ exports.cancelBooking = async (req, res) => {
     try {
         const { id } = req.params;
 
-        const booking = await Booking.findByPk(id);
+        const booking = await db.Booking.findByPk(id);
         if (!booking) {
             return res.status(404).json({ success: false, message: "Không tìm thấy lịch khám" });
         }
@@ -115,7 +180,7 @@ exports.deleteOldCancelledBookings = async (req, res) => {
         const oneWeekAgo = new Date();
         oneWeekAgo.setDate(oneWeekAgo.getDate() - 7); // Lấy thời gian cách đây 7 ngày
 
-        const deleted = await Booking.destroy({
+        const deleted = await db.Booking.destroy({
             where: {
                 statusId: "S2",
                 updatedAt: { [Op.lt]: oneWeekAgo },
@@ -125,5 +190,61 @@ exports.deleteOldCancelledBookings = async (req, res) => {
         res.status(200).json({ success: true, message: `Đã xóa ${deleted} lịch đã hủy quá 1 tuần` });
     } catch (error) {
         res.status(500).json({ success: false, message: "Lỗi server", error });
+    }
+};
+
+// Lấy chi tiết lịch khám theo id
+exports.getBookingById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!id) {
+            return res.status(400).json({ success: false, message: 'Thiếu id lịch khám' });
+        }
+        const booking = await db.Booking.findByPk(id, {
+            include: [
+                {
+                    model: db.User,
+                    as: 'patientData',
+                    attributes: ['id', 'firstName', 'lastName', 'email', 'address', 'gender', 'phoneNumber', 'image']
+                },
+                {
+                    model: db.User,
+                    as: 'doctorData',
+                    attributes: ['id', 'firstName', 'lastName', 'email', 'address', 'gender', 'phoneNumber', 'image'],
+                    include: [
+                        {
+                            model: db.DoctorDetail,
+                            as: 'doctorDetail',
+                            attributes: ['descriptionMarkdown', 'descriptionHTML']
+                        },
+                        {
+                            model: db.Specialty,
+                            attributes: ['id', 'name', 'image', 'description']
+                        },
+                        {
+                            model: db.Allcode,
+                            as: 'roleData',
+                            attributes: ['keyMap', 'valueVi', 'valueEn']
+                        },
+                        {
+                            model: db.Allcode,
+                            as: 'positionData',
+                            attributes: ['keyMap', 'valueVi', 'valueEn']
+                        }
+                    ]
+                },
+                {
+                    model: db.Allcode,
+                    as: 'statusData',
+                    attributes: ['keyMap', 'valueVi', 'valueEn']
+                }
+            ]
+        });
+        if (!booking) {
+            return res.status(404).json({ success: false, message: 'Không tìm thấy lịch khám' });
+        }
+        res.status(200).json({ success: true, data: booking });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Lỗi server', error: error.message });
     }
 };
