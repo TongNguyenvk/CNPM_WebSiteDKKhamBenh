@@ -40,4 +40,14 @@ const protect = async (req, res, next) => {
   }
 };
 
-module.exports = { protect };
+// Middleware kiểm tra quyền truy cập
+const authorizeRoles = (...roles) => {
+  return (req, res, next) => {
+    if (!req.user || !roles.includes(req.user.roleId)) {
+      return res.status(403).json({ message: 'Bạn không có quyền truy cập chức năng này' });
+    }
+    next();
+  };
+};
+
+module.exports = { protect, authorizeRoles };

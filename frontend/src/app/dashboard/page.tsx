@@ -1,79 +1,92 @@
 "use client";
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getUserProfile } from "../lib/api";
+import { useUser } from "../lib/UserContext";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 
 export default function DashboardPage() {
     const router = useRouter();
-    const [roleId, setRoleId] = useState<string>("");
-    const [loading, setLoading] = useState(true);
+    const { roleId, loading, user } = useUser();
+    const [ready, setReady] = useState(false);
 
     useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (!token) {
-            router.push("/login?redirect=/dashboard");
-            return;
+        if (!loading) {
+            if (!roleId) {
+                router.replace("/login?redirect=/dashboard");
+                return;
+            }
+            if (roleId === "R2") {
+                router.replace("/dashboard/bacsi");
+                return;
+            }
+            if (roleId === "R3") {
+                router.replace("/dashboard/admin");
+                return;
+            }
+            if (roleId === "R4") {
+                router.replace("/dashboard/staff");
+                return;
+            }
+            if (roleId === "R1") {
+                router.replace("/dashboard/patient");
+                return;
+            }
+            setReady(true); // Chỉ R1 (bệnh nhân) mới được render dashboard này
         }
-        getUserProfile(token).then(profile => {
-            setRoleId(profile.roleId);
-            setLoading(false);
-        }).catch(() => {
-            router.push("/login?redirect=/dashboard");
-        });
-    }, [router]);
+    }, [roleId, loading, router]);
 
-    if (loading) return <div className="p-6 text-center">Đang tải dashboard...</div>;
+    if (loading || !ready) {
+        return <div className="p-6 text-center">Đang tải dashboard...</div>;
+    }
 
+    // Chỉ render UI cho bệnh nhân (R1)
     return (
-        <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-            <div className="bg-white shadow-xl rounded-lg p-8 w-full max-w-lg text-center">
-                <h1 className="text-2xl font-bold mb-6">Dashboard</h1>
-                {roleId === 'R3' && (
+        <div style={{ fontFamily: "Montserrat, sans-serif", minHeight: "100vh", background: "#f5f7fa" }}>
+            {/* NavBar */}
+            <nav className="fixed top-0 left-0 w-full bg-white shadow-md z-50 px-6 py-4 flex items-center justify-between">
+                {/* Logo */}
+                <div className="flex items-center">
+                    <Image src="https://phuongnamvina.com/img_data/images/logo-benh-vien.jpg" alt="Logo" width={100} height={50} className="rounded-md shadow-sm" />
+                </div>
+                {/* Menu */}
+                <ul className="flex space-x-12 text-lg font-medium items-center">
+                    <li>
+                        <button onClick={() => router.push("/dashboard")} className="hover:text-blue-600 transition-colors duration-200 bg-transparent border-none">Dashboard</button>
+                    </li>
+                    <li>
+                        <button onClick={() => router.push("/contact")} className="hover:text-blue-600 transition-colors duration-200 bg-transparent border-none">Liên hệ</button>
+                    </li>
+                    <li>
+                        <button onClick={() => router.push("/profile")} className="hover:text-blue-600 transition-colors duration-200 bg-transparent border-none">Tôi</button>
+                    </li>
+
+                    <li>
+                        <div className="flex items-center space-x-2">
+                            <Image src={user?.image ? `/${user.image}` : "/default-avatar.png"} alt="avatar" width={40} height={40} className="rounded-full border" />
+                            <span className="text-base font-semibold">{user?.firstName || "User"}</span>
+                        </div>
+                    </li>
+                </ul>
+            </nav>
+            {/* Khoảng trống cho nav */}
+            <div style={{ marginTop: "100px" }}></div>
+
+            <div className="flex flex-col items-center justify-center min-h-[80vh] px-4">
+                <div className="bg-white shadow-xl rounded-2xl p-10 w-full max-w-2xl text-center">
+                    <h1 className="text-3xl font-bold mb-8 text-blue-700">Dashboard</h1>
                     <button
-                        className="w-full p-3 mb-4 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700"
-                        onClick={() => router.push("/dashboard/admin")}
+                        className="p-6 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-semibold text-lg shadow hover:scale-105 transition-transform mb-6"
+                        onClick={() => router.push("/home")}
                     >
-                        Quản lý hệ thống (Admin)
+                        Trang chủ (Bệnh nhân)
                     </button>
-                )}
-                {roleId === 'R2' && (
                     <button
-                        className="w-full p-3 mb-4 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700"
-                        onClick={() => router.push("/dashboard/bacsi")}
+                        className="w-full p-3 mt-4 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-gray-300"
+                        onClick={() => router.push("/logout")}
                     >
-                        Quản lý lịch hẹn (Bác sĩ)
+                        Đăng xuất
                     </button>
-                )}
-                {roleId === 'R1' && (
-                    <>
-                        <button
-                            className="w-full p-3 mb-4 rounded-lg bg-purple-600 text-white font-medium hover:bg-purple-700"
-                            onClick={() => router.push("/book_appointment")}
-                        >
-                            Xem lịch khám của bạn
-                        </button>
-                        <button
-                            className="w-full p-3 mb-4 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700"
-                            onClick={() => router.push("/bookingcare")}
-                        >
-                            Đặt lịch khám mới
-                        </button>
-                    </>
-                )}
-                {roleId === 'R4' && (
-                    <button
-                        className="w-full p-3 mb-4 rounded-lg bg-yellow-600 text-white font-medium hover:bg-yellow-700"
-                        onClick={() => router.push("/dashboard/staff")}
-                    >
-                        Xác nhận lịch khám (Nhân viên)
-                    </button>
-                )}
-                <button
-                    className="w-full p-3 mt-4 rounded-lg bg-gray-200 text-gray-800 font-medium hover:bg-gray-300"
-                    onClick={() => router.push("/home")}
-                >
-                    Quay lại trang chủ
-                </button>
+                </div>
             </div>
         </div>
     );

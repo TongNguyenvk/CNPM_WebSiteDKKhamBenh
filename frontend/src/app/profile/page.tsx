@@ -33,7 +33,7 @@ const UserProfilePage = () => {
     useEffect(() => {
         const token = localStorage.getItem("token");
         if (token) {
-            
+
             const decoded = jwtDecode<DecodedToken>(token);
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const userId = decoded.userId;
@@ -147,6 +147,28 @@ const UserProfilePage = () => {
                 onClick={() => router.back()}
             >
                 ← Quay lại
+            </button>
+
+            {/* 🚪 Nút Đăng xuất */}
+            <button
+                style={{
+                    color: "white",
+                    background: "linear-gradient(90deg, #e53e3e, #f56565)",
+                    padding: "12px 32px",
+                    borderRadius: "100px",
+                    border: "none",
+                    fontWeight: 600,
+                    fontSize: "1.1rem",
+                    boxShadow: "0 2px 8px rgba(229,62,62,0.15)",
+                    cursor: "pointer",
+                    marginBottom: "30px"
+                }}
+                onClick={() => {
+                    localStorage.removeItem("token");
+                    router.replace("/login");
+                }}
+            >
+                Đăng xuất
             </button>
         </div>
     );

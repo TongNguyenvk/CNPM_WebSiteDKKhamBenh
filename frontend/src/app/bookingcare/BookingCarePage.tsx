@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { getDoctorById, getDoctorScheduleById, createBooking, getUserProfile } from "@/app/lib/api";
+import { useUser } from "../lib/UserContext";
 
 interface User {
   id: number;
@@ -64,7 +65,7 @@ export default function BookingCarePage() {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [roleId, setRoleId] = useState<string>("");
+  const { roleId } = useUser();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -80,7 +81,6 @@ export default function BookingCarePage() {
         const userProfile = await getUserProfile(token);
         setUser(userProfile);
         localStorage.setItem("userData", JSON.stringify(userProfile)); // nếu muốn lưu lại
-        setRoleId(userProfile.roleId);
 
         if (!doctorId || !scheduleId || !date || !timeType) {
           setError("Thiếu thông tin cần thiết để đặt lịch");
@@ -166,10 +166,6 @@ export default function BookingCarePage() {
     });
   };
 
-  if (roleId && roleId !== 'R1' && roleId !== 'R3') {
-    return <div className="p-6 text-center text-red-500">Bạn không có quyền truy cập trang này.</div>;
-  }
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -179,6 +175,10 @@ export default function BookingCarePage() {
         </div>
       </div>
     );
+  }
+
+  if (roleId && roleId !== 'R1' && roleId !== 'R3') {
+    return <div className="p-6 text-center text-red-500">Bạn không có quyền truy cập trang này.</div>;
   }
 
   return (

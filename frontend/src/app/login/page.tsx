@@ -34,7 +34,7 @@ const LoginPage: React.FC = () => {
     try {
       const response: LoginResponse = await loginUser({ email, password });
       localStorage.setItem('token', response.token);
-      router.push('/home');
+      router.push('/dashboard');
     } catch (error) {
       let errorMessage = 'Đăng nhập thất bại';
 
@@ -107,11 +107,10 @@ const LoginPage: React.FC = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className={`w-full py-3 text-white rounded-xl font-semibold transition-all ${
-              isLoading
-                ? 'bg-gray-400 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700 shadow-md'
-            }`}
+            className={`w-full py-3 text-white rounded-xl font-semibold transition-all ${isLoading
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-blue-600 hover:bg-blue-700 shadow-md'
+              }`}
           >
             {isLoading ? 'Đang xử lý...' : 'Đăng nhập'}
           </button>
