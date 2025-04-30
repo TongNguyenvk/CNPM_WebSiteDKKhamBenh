@@ -1,19 +1,21 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { getBookingsByPatientId } from '@/lib/api';
 
 export default function PatientAppointmentsPage() {
     const [patientId, setPatientId] = useState<number>(0);
     const [bookings, setBookings] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleLoad = async () => {
         setLoading(true);
         try {
-            const data = await getBookingsByPatientId(patientId);
-            setBookings(data);
-        } catch (err: any) {
-            alert('Lỗi tải lịch: ' + err.message);
+            const response = await getBookingsByPatientId(patientId);
+            setBookings(response);
+        } catch (error: unknown) {
+            const err = error as Error;
+            setError(err.message || 'Lỗi khi tải lịch hẹn');
         }
         setLoading(false);
     };
@@ -30,6 +32,7 @@ export default function PatientAppointmentsPage() {
             <button onClick={handleLoad} disabled={loading}>
                 {loading ? 'Đang tải...' : 'Xem lịch'}
             </button>
+            {error && <p>{error}</p>}
             <ul>
                 {bookings.map(b => (
                     <li key={b.id}>

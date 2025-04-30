@@ -11,20 +11,6 @@ interface Specialty {
     image: string;
 }
 
-// Map các chuyên khoa với hình ảnh tương ứng
-const specialtyImages: { [key: string]: string } = {
-    'Nội tổng quát': '/images/specialties/noi-tong-quat.jpg',
-    'Ngoại tổng quát': '/images/specialties/ngoai-tong-quat.jpg',
-    'Sản phụ khoa': '/images/specialties/san-phu-khoa.jpg',
-    'Nhi khoa': '/images/specialties/nhi-khoa.jpg',
-    'Da liễu': '/images/specialties/da-lieu.jpg',
-    'Răng hàm mặt': '/images/specialties/rang-ham-mat.jpg',
-    'Tai mũi họng': '/images/specialties/tai-mui-hong.jpg',
-    'Mắt': '/images/specialties/mat.jpg',
-    'Xương khớp': '/images/specialties/xuong-khop.jpg',
-    'Thần kinh': '/images/specialties/than-kinh.jpg',
-};
-
 export default function SpecialtiesPage() {
     const [specialties, setSpecialties] = useState<Specialty[]>([]);
     const [loading, setLoading] = useState(true);
@@ -37,9 +23,9 @@ export default function SpecialtiesPage() {
                 setError('');
                 const data = await getAllSpecialties();
                 setSpecialties(data);
-            } catch (err: any) {
-                console.error('Error fetching specialties:', err);
-                setError(err.message || 'Có lỗi xảy ra khi tải danh sách chuyên khoa');
+            } catch (error: unknown) {
+                const err = error as Error;
+                setError(err.message || 'Lỗi khi tải danh sách chuyên khoa');
             } finally {
                 setLoading(false);
             }

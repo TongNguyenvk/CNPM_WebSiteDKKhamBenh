@@ -34,8 +34,9 @@ export default function LoginPage() {
         default:
           router.push('/');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (error: unknown) {
+      const err = error as Error;
+      setError(err.message || 'Đăng nhập thất bại');
     } finally {
       setLoading(false);
     }

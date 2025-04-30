@@ -20,11 +20,6 @@ interface Schedule {
     };
 }
 
-interface Specialty {
-    id?: number;
-    name: string;
-}
-
 interface Doctor {
     id: number;
     email?: string;
@@ -104,14 +99,11 @@ export default function DoctorDetailPage() {
         const fetchInitialData = async () => {
             setGeneralError(null);
             try {
-                const doctorInfo = await getDoctorById(doctorId);
-                console.log('Doctor Info:', doctorInfo);
-                console.log('Doctor Detail:', doctorInfo.doctorDetail);
-                console.log('Doctor Info Keys:', Object.keys(doctorInfo));
-                setDoctor(doctorInfo);
-            } catch (err: any) {
-                console.error("Lỗi lấy dữ liệu ban đầu:", err);
-                setGeneralError(err.message || "Không thể tải thông tin bác sĩ.");
+                const response = await getDoctorById(id);
+                setDoctor(response);
+            } catch (error: unknown) {
+                const err = error as Error;
+                setGeneralError(err.message || 'Lỗi khi tải thông tin bác sĩ');
                 setDoctor(null);
                 setSchedules([]);
             }

@@ -7,14 +7,16 @@ export default function PatientSchedulePage() {
     const [date, setDate] = useState('');
     const [schedules, setSchedules] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleSearch = async () => {
         setLoading(true);
         try {
             const data = await getDoctorSchedules(doctorId, date);
             setSchedules(data);
-        } catch (err: any) {
-            alert('Lỗi tải lịch: ' + err.message);
+        } catch (error: unknown) {
+            const err = error as Error;
+            setError(err.message || 'Lỗi khi tải lịch khám');
         }
         setLoading(false);
     };
@@ -36,6 +38,7 @@ export default function PatientSchedulePage() {
             <button onClick={handleSearch} disabled={loading}>
                 {loading ? 'Đang tải...' : 'Xem lịch'}
             </button>
+            {error && <p>{error}</p>}
             <ul>
                 {schedules.map(s => (
                     <li key={s.id}>

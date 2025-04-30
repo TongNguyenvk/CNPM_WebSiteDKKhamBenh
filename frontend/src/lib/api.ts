@@ -20,13 +20,9 @@ interface RegisterData {
     lastName: string;
 }
 
-interface ApiError { // Di chuyển interface ApiError vào đây
-    response?: {
-        data?: {
-            message?: string;
-        };
-    };
-    message?: string;
+interface ApiError extends Error {
+    status?: number;
+    data?: unknown;
 }
 
 export interface LoginResponse {
@@ -412,8 +408,9 @@ export const getDoctorsBySpecialty = async (specialtyId: number): Promise<Doctor
     try {
         const response = await apiClient.get(`/doctor/specialty/${specialtyId}`);
         return response.data || [];
-    } catch (error: any) {
-        throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách bác sĩ theo chuyên khoa');
+    } catch (error: unknown) {
+        const err = error as ApiError;
+        throw new Error(err.message || 'Failed to fetch doctors');
     }
 };
 
@@ -431,8 +428,9 @@ export const getSpecialtyById = async (id: number): Promise<Specialty> => {
     try {
         const response = await apiClient.get(`/specialties/${id}`);
         return response.data;
-    } catch (error: any) {
-        throw new Error(error.response?.data?.message || 'Lỗi khi lấy thông tin chuyên khoa');
+    } catch (error: unknown) {
+        const err = error as ApiError;
+        throw new Error(err.message || 'Failed to fetch specialty');
     }
 };
 

@@ -64,9 +64,9 @@ export default function DoctorDashboard() {
                 setTodayAppointments(todayData);
                 setSchedules(schedulesData);
                 setAllAppointments(allAppointmentsData);
-            } catch (err: any) {
-                console.error('Error fetching data:', err);
-                setError(err.message || 'Có lỗi xảy ra khi tải dữ liệu');
+            } catch (error: unknown) {
+                const err = error as Error;
+                setError(err.message || 'Lỗi khi tải lịch hẹn');
             } finally {
                 setLoading(false);
             }

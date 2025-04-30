@@ -1,7 +1,5 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import Image from 'next/image';
 import { getUserProfile, updateUserProfile, uploadProfileImage } from '@/lib/api';
 
 interface UserProfile {
@@ -17,7 +15,6 @@ interface UserProfile {
 }
 
 export default function PatientProfilePage() {
-    const router = useRouter();
     const [profile, setProfile] = useState<UserProfile | null>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true);
@@ -79,8 +76,9 @@ export default function PatientProfilePage() {
             setProfile(updatedProfile);
             setSuccess('Cập nhật thông tin thành công');
             setIsEditing(false);
-        } catch (err: any) {
-            setError(err.message);
+        } catch (error: unknown) {
+            const err = error as Error;
+            setError(err.message || 'Cập nhật thông tin thất bại');
         }
     };
 

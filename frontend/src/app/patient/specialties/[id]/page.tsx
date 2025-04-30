@@ -21,14 +21,19 @@ interface Doctor {
     };
 }
 
-export default function SpecialtyDetailPage({ params }: { params: { id: string } }) {
+interface PageProps {
+    params: {
+        id: string;
+    };
+}
+
+export default function SpecialtyDetailPage({ params }: PageProps) {
     const [specialty, setSpecialty] = useState<Specialty | null>(null);
     const [doctors, setDoctors] = useState<Doctor[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    // Unwrap params outside of try/catch
-    const specialtyId = parseInt(React.use(params).id);
+    const specialtyId = parseInt(params.id);
 
     useEffect(() => {
         const fetchData = async () => {
@@ -43,7 +48,7 @@ export default function SpecialtyDetailPage({ params }: { params: { id: string }
 
                 setSpecialty(specialtyData);
                 setDoctors(doctorsData);
-            } catch (err: any) {
+            } catch (err: Error) {
                 console.error('Error fetching data:', err);
                 setError(err.message || 'Có lỗi xảy ra khi tải thông tin chuyên khoa');
             } finally {

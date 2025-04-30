@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { getPatientAppointments } from '@/lib/api';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface Appointment {
     id: number;
@@ -40,9 +41,9 @@ export default function PatientDashboard() {
                 setError('');
                 const data = await getPatientAppointments(user.userId);
                 setAppointments(data);
-            } catch (err: any) {
-                console.error('Error fetching appointments:', err);
-                setError(err.message || 'Có lỗi xảy ra khi tải lịch khám');
+            } catch (error: unknown) {
+                const err = error as Error;
+                setError(err.message || 'Lỗi khi tải lịch hẹn');
             }
         };
 
@@ -102,9 +103,11 @@ export default function PatientDashboard() {
                             <div key={appointment.id} className="border-b pb-4">
                                 <div className="flex items-center gap-4">
                                     {appointment.doctorData?.image && (
-                                        <img
+                                        <Image
                                             src={appointment.doctorData.image}
                                             alt={`${appointment.doctorData.firstName} ${appointment.doctorData.lastName}`}
+                                            width={48}
+                                            height={48}
                                             className="w-12 h-12 rounded-full"
                                         />
                                     )}

@@ -10,6 +10,7 @@ export default function NewAppointmentPage() {
     const [timeType, setTimeType] = useState('');
     const [statusId] = useState('S1'); // Trạng thái mặc định
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -17,8 +18,9 @@ export default function NewAppointmentPage() {
         try {
             await createBooking({ doctorId, patientId, date, timeType, statusId });
             alert('Đặt lịch thành công!');
-        } catch (err: any) {
-            alert('Lỗi đặt lịch: ' + err.message);
+        } catch (error: unknown) {
+            const err = error as Error;
+            setError(err.message || 'Lỗi khi tạo lịch hẹn');
         }
         setLoading(false);
     };
@@ -58,6 +60,7 @@ export default function NewAppointmentPage() {
                     {loading ? 'Đang đặt...' : 'Đặt lịch'}
                 </button>
             </form>
+            {error && <p>{error}</p>}
         </div>
     );
 } 
