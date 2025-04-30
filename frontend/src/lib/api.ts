@@ -263,9 +263,23 @@ export const getDoctorSchedules = async (doctorId: number, date: string): Promis
 
         // Kiểm tra cấu trúc response và trả về dữ liệu phù hợp
         if (response.data && response.data.data) {
-            return response.data.data;
+            return response.data.data.map((schedule: any) => ({
+                ...schedule,
+                timeTypeData: schedule.timeTypeData || {
+                    valueVi: schedule.timeType === 'T1' ? 'Buổi sáng' :
+                        schedule.timeType === 'T2' ? 'Buổi chiều' :
+                            schedule.timeType === 'T3' ? 'Buổi tối' : schedule.timeType
+                }
+            }));
         } else if (Array.isArray(response.data)) {
-            return response.data;
+            return response.data.map((schedule: any) => ({
+                ...schedule,
+                timeTypeData: schedule.timeTypeData || {
+                    valueVi: schedule.timeType === 'T1' ? 'Buổi sáng' :
+                        schedule.timeType === 'T2' ? 'Buổi chiều' :
+                            schedule.timeType === 'T3' ? 'Buổi tối' : schedule.timeType
+                }
+            }));
         }
         return [];
     } catch (error) {
@@ -389,21 +403,6 @@ export const cancelBooking = async (bookingId: number): Promise<Appointment> => 
     }
 };
 
-export const updateBookingStatus = async (bookingId: number, statusId: string): Promise<Appointment> => {
-    try {
-        const token = localStorage.getItem('token');
-        const response = await apiClient.put(`/bookings/${bookingId}/status`, { statusId }, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
-        return response.data.data;
-    } catch (error: any) {
-        console.error('Error updating booking status:', error);
-        throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật trạng thái lịch khám');
-    }
-};
-
 // Schedule APIs
 export const createSchedule = async (data: {
     doctorId: number;
@@ -434,39 +433,6 @@ export const getScheduleById = async (id: number): Promise<Schedule> => {
             throw new Error(`API Error: ${error.response?.status} - ${error.response?.data?.message || error.message}`);
         }
         throw new Error('An unexpected error occurred while fetching schedule details.');
-    }
-};
-
-export const updateDoctorSchedule = async (scheduleId: number, data: {
-    maxNumber?: number;
-    timeType?: string;
-    date?: string;
-}): Promise<Schedule> => {
-    try {
-        const token = localStorage.getItem('token');
-        const response = await apiClient.put(`/schedule/${scheduleId}`, data, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
-        return response.data.data;
-    } catch (error: any) {
-        console.error('Error updating doctor schedule:', error);
-        throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật lịch phân công');
-    }
-};
-
-export const deleteDoctorSchedule = async (scheduleId: number): Promise<void> => {
-    try {
-        const token = localStorage.getItem('token');
-        await apiClient.delete(`/schedule/${scheduleId}`, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
-    } catch (error: any) {
-        console.error('Error deleting doctor schedule:', error);
-        throw new Error(error.response?.data?.message || 'Lỗi khi xóa lịch phân công');
     }
 };
 
@@ -628,4 +594,19 @@ export const uploadProfileImage = async (file: File): Promise<{ imageUrl: string
         }
         throw new Error(error.response?.data?.message || 'Lỗi khi tải lên ảnh đại diện');
     }
-}; 
+};
+
+export const updateBookingStatus = async (bookingId: number, statusId: string): Promise<Appointment> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.put(`/bookings/${bookingId}/status`, { statusId }, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data.data;
+    } catch (error: any) {
+        console.error('Error updating booking status:', error);
+        throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật trạng thái lịch khám');
+    }
+};
