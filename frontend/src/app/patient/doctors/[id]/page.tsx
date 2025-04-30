@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { getDoctorById, getDoctorSchedules } from "@/lib/api";
+import { getDoctorById, getDoctorSchedulesPT } from "@/lib/api";
 
 interface Schedule {
     id: number;
@@ -99,7 +99,7 @@ export default function DoctorDetailPage() {
         const fetchInitialData = async () => {
             setGeneralError(null);
             try {
-                const response = await getDoctorById(id);
+                const response = await getDoctorById(Number(id));
                 setDoctor(response);
             } catch (error: unknown) {
                 const err = error as Error;
@@ -123,7 +123,7 @@ export default function DoctorDetailPage() {
             setIsLoadingSchedules(true);
             setGeneralError(null);
             try {
-                const scheduleData = await getDoctorSchedules(doctorId, selectedDate);
+                const scheduleData = await getDoctorSchedulesPT(doctorId, selectedDate);
                 setSchedules(scheduleData);
             } catch (err: any) {
                 console.error(`Lỗi khi fetch lịch cho ngày ${selectedDate}:`, err);
@@ -143,7 +143,7 @@ export default function DoctorDetailPage() {
 
         if (!isLoggedIn) {
             setBookingError("Vui lòng đăng nhập để đặt lịch.");
-            router.push(`/auth/login?redirect=/doctor/${id}`);
+            router.push(`/auth/login?redirect=/patient/doctors/${id}`);
             return;
         }
 
@@ -152,7 +152,7 @@ export default function DoctorDetailPage() {
             return;
         }
 
-        router.push(`/book_appointment?doctorId=${doctor.id}&scheduleId=${scheduleItem.id}&date=${scheduleItem.date}&timeType=${scheduleItem.timeType}`);
+        router.push(`/patient/book_appointment?doctorId=${doctor.id}&scheduleId=${scheduleItem.id}&date=${scheduleItem.date}&timeType=${scheduleItem.timeType}`);
     };
 
     return (

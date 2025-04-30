@@ -230,7 +230,8 @@ exports.getBookingById = async (req, res) => {
                             model: db.Allcode,
                             as: 'positionData',
                             attributes: ['keyMap', 'valueVi', 'valueEn']
-                        }
+                        },
+                        
                     ]
                 },
                 {

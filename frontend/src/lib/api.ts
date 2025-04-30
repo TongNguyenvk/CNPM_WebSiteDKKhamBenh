@@ -227,12 +227,12 @@ export const getDoctorAppointments = async (doctorId: number): Promise<Appointme
     }
 };
 
-export const getDoctorSchedules = async (doctorId: number, date: string): Promise<Schedule[]> => {
+export const getDoctorSchedulesPT = async (doctorId: number, date: string): Promise<Schedule[]> => {
     try {
-        const response = await apiClient.get<ApiResponse<Schedule[]>>(`/schedule/doctor/${doctorId}`, {
+        const response = await apiClient.get<Schedule[]>(`/schedule/doctor/${doctorId}`, {
             params: { date }
         });
-        return response.data.data || [];
+        return response.data || [];
     } catch (error) {
         console.error(`Error fetching schedules for doctor ${doctorId} on ${date}:`, error);
         if (axios.isAxiosError(error) && error.response?.status === 404) {
@@ -243,6 +243,47 @@ export const getDoctorSchedules = async (doctorId: number, date: string): Promis
             throw new Error(`API Error: ${error.response?.status} - ${error.response?.data?.message || error.message}`);
         }
         throw new Error('An unexpected error occurred while fetching schedules.');
+    }
+};
+
+export const getDoctorSchedules = async (doctorId: number, date: string): Promise<Schedule[]> => {
+    try {
+        const token = localStorage.getItem('token');
+        console.log('Fetching schedules with token:', token ? 'Token exists' : 'No token');
+        console.log('Doctor ID:', doctorId, 'Date:', date);
+
+        const response = await apiClient.get(`/schedule/doctor/${doctorId}`, {
+            params: { date },
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        console.log('Schedule API Response:', response.data);
+
+        // Kiểm tra cấu trúc response và trả về dữ liệu phù hợp
+        if (response.data && response.data.data) {
+            return response.data.data;
+        } else if (Array.isArray(response.data)) {
+            return response.data;
+        }
+        return [];
+    } catch (error) {
+        console.error(`Error fetching schedules for doctor ${doctorId} on ${date}:`, error);
+        if (axios.isAxiosError(error)) {
+            console.error('Axios error details:', {
+                status: error.response?.status,
+                data: error.response?.data,
+                message: error.message
+            });
+
+            if (error.response?.status === 404) {
+                console.warn(`No schedules found (404) for doctor ${doctorId} on ${date}. Returning empty array.`);
+                return [];
+            }
+            throw new Error(error.response?.data?.message || 'Lỗi khi lấy lịch phân công');
+        }
+        throw new Error('Có lỗi xảy ra khi lấy lịch phân công');
     }
 };
 
@@ -334,6 +375,35 @@ export const getBookingById = async (id: number): Promise<Appointment> => {
     }
 };
 
+export const cancelBooking = async (bookingId: number): Promise<Appointment> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.put(`/bookings/cancel/${bookingId}`, {}, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi hủy lịch khám');
+    }
+};
+
+export const updateBookingStatus = async (bookingId: number, statusId: string): Promise<Appointment> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.put(`/bookings/${bookingId}/status`, { statusId }, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data.data;
+    } catch (error: any) {
+        console.error('Error updating booking status:', error);
+        throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật trạng thái lịch khám');
+    }
+};
+
 // Schedule APIs
 export const createSchedule = async (data: {
     doctorId: number;
@@ -351,6 +421,52 @@ export const createSchedule = async (data: {
         return response.data;
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi tạo lịch phân công');
+    }
+};
+
+export const getScheduleById = async (id: number): Promise<Schedule> => {
+    try {
+        const response = await apiClient.get<Schedule>(`/schedule/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error(`Error fetching schedule ${id}:`, error);
+        if (axios.isAxiosError(error)) {
+            throw new Error(`API Error: ${error.response?.status} - ${error.response?.data?.message || error.message}`);
+        }
+        throw new Error('An unexpected error occurred while fetching schedule details.');
+    }
+};
+
+export const updateDoctorSchedule = async (scheduleId: number, data: {
+    maxNumber?: number;
+    timeType?: string;
+    date?: string;
+}): Promise<Schedule> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.put(`/schedule/${scheduleId}`, data, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data.data;
+    } catch (error: any) {
+        console.error('Error updating doctor schedule:', error);
+        throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật lịch phân công');
+    }
+};
+
+export const deleteDoctorSchedule = async (scheduleId: number): Promise<void> => {
+    try {
+        const token = localStorage.getItem('token');
+        await apiClient.delete(`/schedule/${scheduleId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+    } catch (error: any) {
+        console.error('Error deleting doctor schedule:', error);
+        throw new Error(error.response?.data?.message || 'Lỗi khi xóa lịch phân công');
     }
 };
 

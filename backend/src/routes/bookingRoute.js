@@ -11,6 +11,8 @@ router.get('/doctor/:doctorId', protect, authorizeRoles('R2', 'R3'), bookingCont
 router.get('/patient/:patientId', protect, authorizeRoles('R1', 'R3'), bookingController.getBookingsByPatient);
 // Hủy lịch: bác sĩ, bệnh nhân, admin
 router.put('/cancel/:id', protect, authorizeRoles('R1', 'R2', 'R3'), bookingController.cancelBooking);
+// Cập nhật trạng thái lịch khám: bác sĩ, admin
+//router.put('/:id/status', protect, authorizeRoles('R2', 'R3'), bookingController.updateBookingStatus);
 // Lấy chi tiết booking: bác sĩ, bệnh nhân, admin
 router.get('/:id', protect, authorizeRoles('R1', 'R2', 'R3'), bookingController.getBookingById);
 //router.delete('/cleanup', bookingController.cleanupOldBookings);
