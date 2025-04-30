@@ -18,6 +18,7 @@ interface RegisterData {
     password: string;
     firstName: string;
     lastName: string;
+    roleId?: string;
 }
 
 interface ApiError extends Error {
