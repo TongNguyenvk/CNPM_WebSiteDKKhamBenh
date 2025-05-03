@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { getAllSpecialties } from '../../../lib/api';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useParams } from 'next/navigation';
 
 interface Specialty {
     id: number;
@@ -63,8 +64,8 @@ export default function SpecialtiesPage() {
     }
 
     return (
-        <div className="mt-12 px-4"> {/* Thêm mt-12 để tạo khoảng cách và px-4 để có padding ngang */}
-            <h1 className="text-2xl font-bold mb-6">Danh Sách Chuyên Khoa</h1>
+        <div className="mt-14 px-4"> {/* Thêm mt-12 để tạo khoảng cách và px-4 để có padding ngang */}
+            <h1 className="text-2xl font-bold text-center text-blue-600 mb-8">Danh Sách Chuyên Khoa</h1>
     
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {specialties.map((specialty) => (
