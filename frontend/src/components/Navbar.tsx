@@ -26,10 +26,10 @@ export default function Navbar({ role, userName, navItems }: NavbarProps) {
     };
 
     return (
-        <nav className="bg-white shadow-md">
+        <nav className="bg-white shadow-md fixed top-0 w-full">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between h-16">
-                    <div className="flex">
+                    <div className="flex items-center space-x-8">
                         <div className="flex-shrink-0 flex items-center">
                             <Link href="/" className="text-xl font-bold text-blue-600">
                                 Phòng Khám
@@ -40,14 +40,14 @@ export default function Navbar({ role, userName, navItems }: NavbarProps) {
                                 <Link
                                     key={item.href}
                                     href={item.href}
-                                    className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900 hover:text-blue-600"
+                                    className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-900 hover:text-blue-600"
                                 >
                                     {item.label}
                                 </Link>
                             ))}
                         </div>
                     </div>
-                    <div className="flex items-center">
+                    <div className="flex items-center space-x-4">
                         <span className="text-gray-700 mr-4">
                             Xin chào, {userName}
                         </span>

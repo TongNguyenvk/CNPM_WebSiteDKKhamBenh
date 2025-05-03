@@ -98,7 +98,7 @@ export default function SpecialtyDetailPage({ params }: PageProps) {
     }
 
     return (
-        <div className="p-6">
+        <div className="p-6 mt-12">
             <div className="max-w-4xl mx-auto">
                 {/* Thông tin chuyên khoa */}
                 <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
@@ -153,4 +153,4 @@ export default function SpecialtyDetailPage({ params }: PageProps) {
             </div>
         </div>
     );
-} 
+}

@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { getUserProfile, updateUserProfile, uploadProfileImage } from '@/lib/api';
+import Image from 'next/image';
 
 interface UserProfile {
     id: number;
@@ -98,7 +99,7 @@ export default function PatientProfilePage() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div className="min-h-screen flex items-center justify-center">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
                     <p className="mt-4 text-gray-600">Đang tải thông tin...</p>
@@ -108,38 +109,27 @@ export default function PatientProfilePage() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto p-4 md:p-6">
-            <div className="bg-white rounded-lg shadow-md p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <h1 className="text-2xl font-bold text-gray-800">Thông tin cá nhân</h1>
-                    <button
-                        onClick={() => setIsEditing(!isEditing)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-                    >
-                        {isEditing ? 'Hủy' : 'Chỉnh sửa'}
-                    </button>
-                </div>
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center py-10 px-4 pt-16">
+            <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6">
+                <h1 className="text-2xl font-bold text-center text-blue-600 mb-6">Thông tin cá nhân</h1>
 
                 {error && (
-                    <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-md">
-                        {error}
-                    </div>
+                    <p className="mt-4 text-red-600 text-sm text-center">{error}</p>
                 )}
 
                 {success && (
-                    <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-md">
-                        {success}
-                    </div>
+                    <p className="mt-4 text-green-600 text-sm text-center">{success}</p>
                 )}
 
-                <div className="flex flex-col md:flex-row gap-6">
+                <div className="flex flex-col items-center gap-6">
                     {/* Ảnh đại diện */}
                     <div className="flex-shrink-0">
-                        <div className="relative w-32 h-32 mx-auto">
+                        <div className="relative w-32 h-32">
                             <Image
                                 src={profile?.image ? `http://localhost:8080/images/${profile.image}` : "/images/default-avatar.png"}
                                 alt="Profile"
-                                fill
+                                width={128}
+                                height={128}
                                 className="rounded-full object-cover border-2 border-gray-200"
                             />
                             {isEditing && (
@@ -159,10 +149,10 @@ export default function PatientProfilePage() {
                     </div>
 
                     {/* Form thông tin */}
-                    <div className="flex-1">
+                    <div className="w-full">
                         {isEditing ? (
                             <form onSubmit={handleSubmit} className="space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700">Họ</label>
                                         <input
@@ -171,6 +161,7 @@ export default function PatientProfilePage() {
                                             value={formData.lastName}
                                             onChange={handleInputChange}
                                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                            required
                                         />
                                     </div>
                                     <div>
@@ -181,71 +172,67 @@ export default function PatientProfilePage() {
                                             value={formData.firstName}
                                             onChange={handleInputChange}
                                             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                            required
                                         />
                                     </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Email</label>
-                                    <input
-                                        type="email"
-                                        value={profile?.email}
-                                        disabled
-                                        className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Số điện thoại</label>
-                                    <input
-                                        type="tel"
-                                        name="phoneNumber"
-                                        value={formData.phoneNumber}
-                                        onChange={handleInputChange}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Địa chỉ</label>
-                                    <textarea
-                                        name="address"
-                                        value={formData.address}
-                                        onChange={handleInputChange}
-                                        rows={3}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Giới tính</label>
-                                    <div className="mt-2 space-x-4">
-                                        <label className="inline-flex items-center">
-                                            <input
-                                                type="radio"
-                                                name="gender"
-                                                value="true"
-                                                checked={formData.gender === true}
-                                                onChange={handleGenderChange}
-                                                className="form-radio text-blue-600"
-                                            />
-                                            <span className="ml-2">Nam</span>
-                                        </label>
-                                        <label className="inline-flex items-center">
-                                            <input
-                                                type="radio"
-                                                name="gender"
-                                                value="false"
-                                                checked={formData.gender === false}
-                                                onChange={handleGenderChange}
-                                                className="form-radio text-blue-600"
-                                            />
-                                            <span className="ml-2">Nữ</span>
-                                        </label>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Email</label>
+                                        <input
+                                            type="email"
+                                            value={profile?.email || ''}
+                                            disabled
+                                            className="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Số điện thoại</label>
+                                        <input
+                                            type="tel"
+                                            name="phoneNumber"
+                                            value={formData.phoneNumber}
+                                            onChange={handleInputChange}
+                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Địa chỉ</label>
+                                        <textarea
+                                            name="address"
+                                            value={formData.address}
+                                            onChange={handleInputChange}
+                                            rows={3}
+                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Giới tính</label>
+                                        <div className="mt-2 space-x-6">
+                                            <label className="inline-flex items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="gender"
+                                                    value="true"
+                                                    checked={formData.gender === true}
+                                                    onChange={handleGenderChange}
+                                                    className="form-radio text-blue-600"
+                                                />
+                                                <span className="ml-2">Nam</span>
+                                            </label>
+                                            <label className="inline-flex items-center">
+                                                <input
+                                                    type="radio"
+                                                    name="gender"
+                                                    value="false"
+                                                    checked={formData.gender === false}
+                                                    onChange={handleGenderChange}
+                                                    className="form-radio text-blue-600"
+                                                />
+                                                <span className="ml-2">Nữ</span>
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
-
-                                <div className="flex justify-end space-x-4">
+                                <div className="flex justify-end space-x-4 mt-6">
                                     <button
                                         type="button"
                                         onClick={() => setIsEditing(false)}
@@ -263,35 +250,39 @@ export default function PatientProfilePage() {
                             </form>
                         ) : (
                             <div className="space-y-4">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 gap-4">
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700">Họ</label>
-                                        <p className="mt-1 text-gray-900">{profile?.lastName}</p>
+                                        <p className="mt-1 text-gray-900">{profile?.lastName || 'Chưa cập nhật'}</p>
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700">Tên</label>
-                                        <p className="mt-1 text-gray-900">{profile?.firstName}</p>
+                                        <p className="mt-1 text-gray-900">{profile?.firstName || 'Chưa cập nhật'}</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Email</label>
+                                        <p className="mt-1 text-gray-900">{profile?.email || 'Chưa cập nhật'}</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Số điện thoại</label>
+                                        <p className="mt-1 text-gray-900">{profile?.phoneNumber || 'Chưa cập nhật'}</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Địa chỉ</label>
+                                        <p className="mt-1 text-gray-900">{profile?.address || 'Chưa cập nhật'}</p>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Giới tính</label>
+                                        <p className="mt-1 text-gray-900">{profile?.gender ? 'Nam' : profile?.gender === false ? 'Nữ' : 'Chưa cập nhật'}</p>
                                     </div>
                                 </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Email</label>
-                                    <p className="mt-1 text-gray-900">{profile?.email}</p>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Số điện thoại</label>
-                                    <p className="mt-1 text-gray-900">{profile?.phoneNumber || 'Chưa cập nhật'}</p>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Địa chỉ</label>
-                                    <p className="mt-1 text-gray-900">{profile?.address || 'Chưa cập nhật'}</p>
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Giới tính</label>
-                                    <p className="mt-1 text-gray-900">{profile?.gender ? 'Nam' : 'Nữ'}</p>
+                                <div className="text-right">
+                                    <button
+                                        onClick={() => setIsEditing(true)}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                                    >
+                                        Chỉnh sửa
+                                    </button>
                                 </div>
                             </div>
                         )}
@@ -300,4 +291,4 @@ export default function PatientProfilePage() {
             </div>
         </div>
     );
-} 
+}

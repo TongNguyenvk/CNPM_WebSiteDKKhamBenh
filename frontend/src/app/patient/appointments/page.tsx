@@ -113,82 +113,84 @@ export default function AppointmentsPage() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto p-4 md:p-6">
-            <h1 className="text-2xl font-bold mb-8">Danh sách lịch khám</h1>
-
-            {error && (
-                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-                    {error}
-                </div>
-            )}
-
-            {success && (
-                <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
-                    {success}
-                </div>
-            )}
-
-            {appointments.length === 0 ? (
-                <div className="text-center py-8">
-                    <p className="text-gray-500">Bạn chưa có lịch khám nào</p>
-                    <button
-                        onClick={() => router.push('/patient/specialties')}
-                        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                    >
-                        Đặt lịch khám
-                    </button>
-                </div>
-            ) : (
-                <div className="space-y-4">
-                    {appointments.map((appointment) => (
-                        <div
-                            key={appointment.id}
-                            className="bg-white rounded-lg shadow-md p-6"
+        <div className="min-h-screen bg-gray-50 pt-16 flex flex-col items-center">
+            <div className="max-w-4xl w-full mx-auto p-4 md:p-6">
+                <h1 className="text-2xl font-bold text-center text-blue-600 mb-8">Danh sách lịch khám</h1>
+    
+                {error && (
+                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                        {error}
+                    </div>
+                )}
+    
+                {success && (
+                    <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+                        {success}
+                    </div>
+                )}
+    
+                {appointments.length === 0 ? (
+                    <div className="text-center py-8">
+                        <p className="text-gray-500">Bạn chưa có lịch khám nào</p>
+                        <button
+                            onClick={() => router.push('/patient/specialties')}
+                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                         >
-                            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                                <div className="flex items-start space-x-4">
-                                    <img
-                                        src={appointment.doctorData?.image ? `http://localhost:8080/images/${appointment.doctorData.image}` : "/images/default-doctor.jpg"}
-                                        alt={`${appointment.doctorData?.firstName} ${appointment.doctorData?.lastName}`}
-                                        className="w-16 h-16 rounded-full object-cover"
-                                    />
-                                    <div>
-                                        <h3 className="font-semibold text-lg">
-                                            {appointment.doctorData?.firstName} {appointment.doctorData?.lastName}
-                                        </h3>
-                                        <p className="text-gray-600">
-                                            {appointment.doctorData?.specialtyData?.name}
-                                        </p>
-                                        <div className="mt-2 space-y-1">
-                                            <p>
-                                                <span className="font-medium">Ngày khám:</span>{' '}
-                                                {new Date(appointment.date).toLocaleDateString('vi-VN')}
+                            Đặt lịch khám
+                        </button>
+                    </div>
+                ) : (
+                    <div className="space-y-4">
+                        {appointments.map((appointment) => (
+                            <div
+                                key={appointment.id}
+                                className="bg-white rounded-lg shadow-lg p-6"
+                            >
+                                <div className="flex flex-col md:flex-row md:items-center md:justify-between">
+                                    <div className="flex items-start space-x-4">
+                                        <img
+                                            src={appointment.doctorData?.image ? `http://localhost:8080/images/${appointment.doctorData.image}` : "/images/default-doctor.jpg"}
+                                            alt={`${appointment.doctorData?.firstName} ${appointment.doctorData?.lastName}`}
+                                            className="w-16 h-16 rounded-full object-cover"
+                                        />
+                                        <div>
+                                            <h3 className="font-semibold text-lg">
+                                                {appointment.doctorData?.firstName} {appointment.doctorData?.lastName}
+                                            </h3>
+                                            <p className="text-gray-600">
+                                                {appointment.doctorData?.specialtyData?.name}
                                             </p>
-                                            <p>
-                                                <span className="font-medium">Giờ khám:</span>{' '}
-                                                {appointment.timeTypeData?.valueVi}
-                                            </p>
+                                            <div className="mt-2 space-y-1">
+                                                <p>
+                                                    <span className="font-medium">Ngày khám:</span>{' '}
+                                                    {new Date(appointment.date).toLocaleDateString('vi-VN')}
+                                                </p>
+                                                <p>
+                                                    <span className="font-medium">Giờ khám:</span>{' '}
+                                                    {appointment.timeTypeData?.valueVi}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div className="mt-4 md:mt-0 flex flex-col items-end space-y-2">
-                                    <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(appointment.statusId)}`}>
-                                        {appointment.statusData?.valueVi}
-                                    </span>
-                                    {appointment.statusId === 'S1' && (
-                                        <button
-                                            onClick={() => handleCancelAppointment(appointment.id)}
-                                            className="px-4 py-2 text-red-600 border border-red-600 rounded-md hover:bg-red-50"
-                                        >
-                                            Hủy lịch
-                                        </button>
-                                    )}
+                                    <div className="mt-4 md:mt-0 flex flex-col items-end space-y-2">
+                                        <span className={`px-3 py-1 rounded-full text-sm ${getStatusColor(appointment.statusId)}`}>
+                                            {appointment.statusData?.valueVi}
+                                        </span>
+                                        {appointment.statusId === 'S1' && (
+                                            <button
+                                                onClick={() => handleCancelAppointment(appointment.id)}
+                                                className="px-4 py-2 text-red-600 border border-red-600 rounded-md hover:bg-red-50"
+                                            >
+                                                Hủy lịch
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
-                </div>
-            )}
+                        ))}
+                    </div>
+                )}
+            </div>
         </div>
     );
 } 

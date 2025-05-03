@@ -1,6 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { getUserProfile, updateUserProfile, uploadProfileImage } from '@/lib/api';
+import Image from 'next/image';
 
 interface UserProfile {
     id: number;
@@ -150,7 +151,8 @@ export default function DoctorProfilePage() {
                             <Image
                                 src={profile?.image ? `http://localhost:8080/images/${profile.image}` : "/images/default-avatar.png"}
                                 alt="Profile"
-                                fill
+                                width={128}
+                                height={128}
                                 className="rounded-full object-cover border-2 border-gray-200"
                             />
                             {isEditing && (

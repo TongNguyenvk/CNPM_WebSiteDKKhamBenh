@@ -76,6 +76,7 @@ interface Schedule {
     timeTypeData?: {
         valueVi: string;
         valueEn?: string;
+        keyMap: string;
     };
 }
 
@@ -609,4 +610,26 @@ export const updateBookingStatus = async (bookingId: number, statusId: string): 
         console.error('Error updating booking status:', error);
         throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật trạng thái lịch khám');
     }
+};
+
+export const updateDoctorSchedule = async (id: number, data: any) => {
+    const response = await apiClient.put(`/schedule/${id}`, data);
+    return response.data;
+  };
+  
+  export const deleteDoctorSchedule = async (id: number) => {
+    const response = await apiClient.delete(`/schedule/${id}`);
+    return response.data;
+  };
+
+  // ✅ Thêm const updatedSchedules đảm bảo kiểu Schedule đúng định dạng
+export const getUpdatedSchedules = (schedules: any[]): Schedule[] => {
+    return schedules.map((schedule: any): Schedule => ({
+        ...schedule,
+        timeTypeData: {
+            keyMap: schedule?.timeTypeData?.keyMap || schedule?.timeType || 'UNKNOWN',
+            valueVi: schedule?.timeTypeData?.valueVi || 'Không rõ',
+            valueEn: schedule?.timeTypeData?.valueEn || 'Unknown',
+        }
+    }));
 };
