@@ -33,7 +33,7 @@ export interface LoginResponse {
     email: string;
     firstName: string;
     lastName: string;
-    role: string;  // roleId từ database
+    role: string; // roleId từ database
 }
 
 interface Appointment {
@@ -80,9 +80,13 @@ export interface Schedule {
     currentNumber?: number;
     createdAt?: string;
     updatedAt?: string;
-    timeTypeData?: {
-        valueVi: string;
-        valueEn?: string;
+    timeTypeData?: TimeState;
+    User?: {
+        firstName: string;
+        lastName: string;
+        Specialty?: {
+            name: string;
+        };
     };
 }
 
@@ -150,6 +154,57 @@ interface UpdateUserProfileData {
     gender?: boolean;
 }
 
+interface CreateUserData {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    roleId: string;
+    phoneNumber?: string;
+    address?: string;
+    gender?: boolean;
+}
+
+interface UpdateUserData {
+    firstName?: string;
+    lastName?: string;
+    roleId?: string;
+    phoneNumber?: string;
+    address?: string;
+    gender?: boolean;
+    isActive?: boolean;
+}
+
+interface CreateDoctorData {
+    email: string;
+    password?: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber?: string;
+    address?: string;
+    gender?: boolean;
+    specialtyId?: number;
+    positionId?: string;
+    roleId?: string;
+    image?: string;
+    descriptionMarkdown?: string;
+    descriptionHTML?: string;
+}
+
+interface UpdateDoctorData {
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+    address?: string;
+    gender?: boolean;
+    specialtyId?: number;
+    positionId?: string;
+    roleId?: string;
+    image?: string;
+    descriptionMarkdown?: string;
+    descriptionHTML?: string;
+}
+
 interface TimeType {
     keyMap: string;
     valueVi: string;
@@ -163,7 +218,6 @@ export const loginUser = async (data: LoginData): Promise<LoginResponse> => {
         const response = await apiClient.post<LoginResponse>('/auth/login', data);
         console.log('Login response:', response.data);
 
-        // Lưu token và user info vào localStorage
         if (typeof window !== 'undefined') {
             localStorage.setItem('token', response.data.token);
             localStorage.setItem('user', JSON.stringify({
@@ -191,7 +245,6 @@ export const loginUser = async (data: LoginData): Promise<LoginResponse> => {
 export const registerUser = async (data: RegisterData): Promise<LoginResponse> => {
     try {
         const response = await apiClient.post<LoginResponse>('/auth/register', data);
-        // Lưu token và user info vào localStorage
         if (typeof window !== 'undefined') {
             localStorage.setItem('token', response.data.token);
             localStorage.setItem('user', JSON.stringify({
@@ -274,23 +327,28 @@ export const getDoctorSchedules = async (doctorId: number, date: string): Promis
 
         console.log('Schedule API Response:', response.data);
 
-        // Kiểm tra cấu trúc response và trả về dữ liệu phù hợp
         if (response.data && response.data.data) {
             return response.data.data.map((schedule: any) => ({
                 ...schedule,
                 timeTypeData: schedule.timeTypeData || {
+                    keyMap: schedule.timeType,
+                    type: 'TIME',
                     valueVi: schedule.timeType === 'T1' ? 'Buổi sáng' :
                         schedule.timeType === 'T2' ? 'Buổi chiều' :
-                            schedule.timeType === 'T3' ? 'Buổi tối' : schedule.timeType
+                            schedule.timeType === 'T3' ? 'Buổi tối' : schedule.timeType,
+                    valueEn: ''
                 }
             }));
         } else if (Array.isArray(response.data)) {
             return response.data.map((schedule: any) => ({
                 ...schedule,
                 timeTypeData: schedule.timeTypeData || {
+                    keyMap: schedule.timeType,
+                    type: 'TIME',
                     valueVi: schedule.timeType === 'T1' ? 'Buổi sáng' :
                         schedule.timeType === 'T2' ? 'Buổi chiều' :
-                            schedule.timeType === 'T3' ? 'Buổi tối' : schedule.timeType
+                            schedule.timeType === 'T3' ? 'Buổi tối' : schedule.timeType,
+                    valueEn: ''
                 }
             }));
         }
@@ -436,6 +494,35 @@ export const createSchedule = async (data: {
     }
 };
 
+export const createDoctorSchedule = async (data: {
+    doctorId: number;
+    date: string;
+    timeType: string;
+    maxNumber: number;
+}): Promise<Schedule> => {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('Vui lòng đăng nhập để thực hiện chức năng này');
+        }
+
+        const response = await apiClient.post<{ message: string; data: Schedule }>('/schedule', data, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        if (!response.data.data) {
+            throw new Error('Không nhận được dữ liệu từ server');
+        }
+
+        return response.data.data;
+    } catch (error: any) {
+        console.error('Error creating doctor schedule:', error);
+        throw new Error(error.response?.data?.message || 'Lỗi khi tạo lịch khám');
+    }
+};
+
 export const getScheduleById = async (id: number): Promise<Schedule> => {
     try {
         const response = await apiClient.get<Schedule>(`/schedule/${id}`);
@@ -446,6 +533,51 @@ export const getScheduleById = async (id: number): Promise<Schedule> => {
             throw new Error(`API Error: ${error.response?.status} - ${error.response?.data?.message || error.message}`);
         }
         throw new Error('An unexpected error occurred while fetching schedule details.');
+    }
+};
+
+export const getAllSchedules = async (): Promise<Schedule[]> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.get<{ data: Schedule[] }>('/schedule', {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data.data || [];
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách lịch khám');
+    }
+};
+
+export const updateDoctorSchedule = async (scheduleId: number, data: {
+    date?: string;
+    timeType?: string;
+    maxNumber?: number;
+}): Promise<Schedule> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.put<{ data: Schedule }>(`/schedule/${scheduleId}`, data, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật lịch khám');
+    }
+};
+
+export const deleteDoctorSchedule = async (scheduleId: number): Promise<void> => {
+    try {
+        const token = localStorage.getItem('token');
+        await apiClient.delete(`/schedule/${scheduleId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi xóa lịch khám');
     }
 };
 
@@ -510,6 +642,47 @@ export const getDoctorsBySpecialty = async (specialtyId: number): Promise<Doctor
     }
 };
 
+export const createDoctor = async (data: CreateDoctorData): Promise<Doctor> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.post('/doctor', data, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi tạo bác sĩ');
+    }
+};
+
+export const updateDoctor = async (doctorId: number, data: UpdateDoctorData): Promise<Doctor> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.put<Doctor>(`/doctor/${doctorId}`, data, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật thông tin bác sĩ');
+    }
+};
+
+export const deleteDoctor = async (doctorId: number): Promise<void> => {
+    try {
+        const token = localStorage.getItem('token');
+        await apiClient.delete(`/doctor/${doctorId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi xóa bác sĩ');
+    }
+};
+
 // Specialty APIs
 export const getAllSpecialties = async (): Promise<Specialty[]> => {
     try {
@@ -538,7 +711,6 @@ export const getUserProfile = async (): Promise<UserProfile> => {
             throw new Error('Vui lòng đăng nhập để xem thông tin cá nhân');
         }
 
-        // Lấy userId từ localStorage
         const userStr = localStorage.getItem('user');
         if (!userStr) {
             throw new Error('Không tìm thấy thông tin người dùng');
@@ -621,5 +793,94 @@ export const updateBookingStatus = async (bookingId: number, statusId: string): 
     } catch (error: any) {
         console.error('Error updating booking status:', error);
         throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật trạng thái lịch khám');
+    }
+};
+
+// Admin APIs
+export const createUser = async (data: CreateUserData): Promise<UserProfile> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.post('/users', data, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi tạo người dùng');
+    }
+};
+
+export const getAllUsers = async (): Promise<UserProfile[]> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.get('/users', {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách người dùng');
+    }
+};
+
+export const updateUser = async (userId: number, data: UpdateUserData): Promise<UserProfile> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.put(`/users/${userId}`, data, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật người dùng');
+    }
+};
+
+// Time State and Type APIs
+export const getTimeStates = async (): Promise<TimeState[]> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.get<{ data: TimeState[] }>('/allcode/type', {
+            params: { type: 'TIME' },
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data.data || [];
+    } catch (error: any) {
+        console.error('Error fetching time states:', error);
+        throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách thời gian');
+    }
+};
+
+export const getTimeTypes = async (): Promise<TimeType[]> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.get<{ data: TimeType[] }>('/allcode', {
+            params: { type: 'TIME' },
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data.data || [];
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách thời gian');
+    }
+};
+
+export const getAllAppointments = async (): Promise<Appointment[]> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.get<{ data: Appointment[] }>('/bookings', {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data.data || [];
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách lịch hẹn');
     }
 };

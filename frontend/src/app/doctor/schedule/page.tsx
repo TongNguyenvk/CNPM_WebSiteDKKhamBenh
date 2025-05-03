@@ -166,7 +166,7 @@ export default function SchedulePage() {
 
     return (
         <div className="container mx-auto px-4 py-8">
-            <h1 className="text-2xl font-bold mb-6">Quản lý lịch phân công</h1>
+            <h1 className="text-2xl font-bold mb-8 text-blue-600 text-center">Quản lý lịch phân công</h1>
 
             {error && (
                 <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">

@@ -104,70 +104,72 @@ export default function DoctorDashboard() {
     }
 
     return (
-        <div className="p-6">
-            <h1 className="text-2xl font-bold mb-6">Dashboard Bác Sĩ</h1>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {/* Lịch Khám Hôm Nay */}
-                <div className="bg-white p-6 rounded-lg shadow-md">
-                    <h2 className="text-lg font-semibold mb-4">Lịch Khám Hôm Nay</h2>
-                    {todayAppointments.length > 0 ? (
+        <div className="min-h-screen bg-gray-50 flex flex-col items-center">
+            <div className="max-w-4xl w-full mx-auto p-4 md:p-6">
+                <h1 className="text-2xl font-bold text-center text-blue-600 mb-8">Dashboard Bác Sĩ</h1>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {/* Lịch Khám Hôm Nay */}
+                    <div className="bg-white p-6 rounded-lg shadow-lg">
+                        <h2 className="text-lg font-semibold mb-4 text-gray-800">Lịch Khám Hôm Nay</h2>
+                        {todayAppointments.length > 0 ? (
+                            <div className="space-y-4">
+                                {todayAppointments.map((appointment) => (
+                                    <div key={appointment.id} className="border-b pb-2">
+                                        <p className="font-medium text-gray-800">
+                                            {appointment.patientData?.firstName} {appointment.patientData?.lastName}
+                                        </p>
+                                        <p className="text-sm text-gray-600">
+                                            Thời gian: {appointment.timeType}
+                                        </p>
+                                        <p className="text-sm text-gray-600">
+                                            Trạng thái: {appointment.statusData?.valueVi || appointment.statusId}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-gray-600">Chưa có lịch khám</p>
+                        )}
+                    </div>
+    
+                    {/* Lịch Phân Công */}
+                    <div className="bg-white p-6 rounded-lg shadow-lg">
+                        <h2 className="text-lg font-semibold mb-4 text-gray-800">Lịch Phân Công</h2>
+                        {schedules.length > 0 ? (
+                            <div className="space-y-4">
+                                {schedules.map((schedule) => (
+                                    <div key={schedule.id} className="border-b pb-2">
+                                        <p className="font-medium text-gray-800">Ngày: {schedule.date}</p>
+                                        <p className="text-sm text-gray-600">
+                                            Khung giờ: {schedule.timeTypeData?.valueVi || schedule.timeType}
+                                        </p>
+                                        <p className="text-sm text-gray-600">
+                                            Số lượng: {schedule.currentNumber}/{schedule.maxNumber}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-gray-600">Chưa có lịch phân công</p>
+                        )}
+                    </div>
+    
+                    {/* Thống Kê */}
+                    <div className="bg-white p-6 rounded-lg shadow-lg">
+                        <h2 className="text-lg font-semibold mb-4 text-gray-800">Thống Kê</h2>
                         <div className="space-y-4">
-                            {todayAppointments.map((appointment) => (
-                                <div key={appointment.id} className="border-b pb-2">
-                                    <p className="font-medium">
-                                        {appointment.patientData?.firstName} {appointment.patientData?.lastName}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                        Thời gian: {appointment.timeType}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                        Trạng thái: {appointment.statusData?.valueVi || appointment.statusId}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-gray-600">Chưa có lịch khám</p>
-                    )}
-                </div>
-
-                {/* Lịch Phân Công */}
-                <div className="bg-white p-6 rounded-lg shadow-md">
-                    <h2 className="text-lg font-semibold mb-4">Lịch Phân Công</h2>
-                    {schedules.length > 0 ? (
-                        <div className="space-y-4">
-                            {schedules.map((schedule) => (
-                                <div key={schedule.id} className="border-b pb-2">
-                                    <p className="font-medium">Ngày: {schedule.date}</p>
-                                    <p className="text-sm text-gray-600">
-                                        Khung giờ: {schedule.timeTypeData?.valueVi || schedule.timeType}
-                                    </p>
-                                    <p className="text-sm text-gray-600">
-                                        Số lượng: {schedule.currentNumber}/{schedule.maxNumber}
-                                    </p>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <p className="text-gray-600">Chưa có lịch phân công</p>
-                    )}
-                </div>
-
-                {/* Thống Kê */}
-                <div className="bg-white p-6 rounded-lg shadow-md">
-                    <h2 className="text-lg font-semibold mb-4">Thống Kê</h2>
-                    <div className="space-y-4">
-                        <div>
-                            <p className="font-medium">Tổng số lịch khám</p>
-                            <p className="text-2xl font-bold text-blue-600">{allAppointments.length}</p>
-                        </div>
-                        <div>
-                            <p className="font-medium">Lịch khám hôm nay</p>
-                            <p className="text-2xl font-bold text-green-600">{todayAppointments.length}</p>
-                        </div>
-                        <div>
-                            <p className="font-medium">Lịch phân công</p>
-                            <p className="text-2xl font-bold text-purple-600">{schedules.length}</p>
+                            <div>
+                                <p className="font-medium text-gray-700">Tổng số lịch khám</p>
+                                <p className="text-2xl font-bold text-blue-600">{allAppointments.length}</p>
+                            </div>
+                            <div>
+                                <p className="font-medium text-gray-700">Lịch khám hôm nay</p>
+                                <p className="text-2xl font-bold text-green-600">{todayAppointments.length}</p>
+                            </div>
+                            <div>
+                                <p className="font-medium text-gray-700">Lịch phân công</p>
+                                <p className="text-2xl font-bold text-purple-600">{schedules.length}</p>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -47,9 +47,9 @@ export default function DoctorLayout({
                 userName={`${user.firstName} ${user.lastName}`}
                 navItems={navItems}
             />
-            <main className="container mx-auto px-4 py-8">
+            <main className="container mx-auto px-4 py-8 pt-20"> {/* Increased padding-top */}
                 {children}
             </main>
         </div>
     );
-} 
+}
