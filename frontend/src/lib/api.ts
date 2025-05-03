@@ -64,18 +64,27 @@ interface Appointment {
     };
 }
 
-interface Schedule {
+export interface TimeState {
+    keyMap: string;
+    type: string;
+    valueVi: string;
+    valueEn: string;
+}
+
+export interface Schedule {
     id: number;
-    date: string;
     doctorId: number;
+    date: string;
     timeType: string;
     maxNumber: number;
     currentNumber?: number;
-    createdAt?: string;
-    updatedAt?: string;
-    timeTypeData?: {
-        valueVi: string;
-        valueEn?: string;
+    timeTypeData?: TimeState;
+    User?: {
+        firstName: string;
+        lastName: string;
+        Specialty?: {
+            name: string;
+        };
     };
 }
 
@@ -141,6 +150,12 @@ interface UpdateUserProfileData {
     phoneNumber?: string;
     address?: string;
     gender?: boolean;
+}
+
+interface TimeType {
+    keyMap: string;
+    valueVi: string;
+    valueEn: string;
 }
 
 // API Functions
@@ -608,5 +623,250 @@ export const updateBookingStatus = async (bookingId: number, statusId: string): 
     } catch (error: any) {
         console.error('Error updating booking status:', error);
         throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật trạng thái lịch khám');
+    }
+};
+
+// Admin APIs
+export const createUser = async (data: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    roleId: string;
+    phoneNumber?: string;
+    address?: string;
+    gender?: boolean;
+}): Promise<UserProfile> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.post<UserProfile>('/users', data, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi tạo người dùng');
+    }
+};
+
+export const getAllUsers = async (): Promise<UserProfile[]> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.get<UserProfile[]>('/users', {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách người dùng');
+    }
+};
+
+export const updateUser = async (userId: number, data: {
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+    address?: string;
+    gender?: boolean;
+    roleId?: string;
+    isActive?: boolean;
+}): Promise<UserProfile> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.put<UserProfile>(`/users/${userId}`, data, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật người dùng');
+    }
+};
+
+export const createDoctor = async (data: {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    specialtyId: number;
+    positionId: string;
+    phoneNumber?: string;
+    address?: string;
+    gender?: boolean;
+    image?: string;
+    descriptionMarkdown?: string;
+    descriptionHTML?: string;
+}): Promise<Doctor> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.post<Doctor>('/doctor', data, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi tạo bác sĩ');
+    }
+};
+
+export const updateDoctor = async (doctorId: number, data: {
+    firstName?: string;
+    lastName?: string;
+    specialtyId?: number;
+    positionId?: string;
+    phoneNumber?: string;
+    address?: string;
+    gender?: boolean;
+    image?: string;
+    descriptionMarkdown?: string;
+    descriptionHTML?: string;
+}): Promise<Doctor> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.put<Doctor>(`/doctor/${doctorId}`, data, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật thông tin bác sĩ');
+    }
+};
+
+export const deleteDoctor = async (doctorId: number): Promise<void> => {
+    try {
+        const token = localStorage.getItem('token');
+        await apiClient.delete(`/doctor/${doctorId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi xóa bác sĩ');
+    }
+};
+
+export const createDoctorSchedule = async (data: {
+    doctorId: number;
+    date: string;
+    timeType: string;
+    maxNumber: number;
+}): Promise<Schedule> => {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('Vui lòng đăng nhập để thực hiện chức năng này');
+        }
+
+        const response = await apiClient.post<{ message: string; data: Schedule }>('/schedule', data, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        if (!response.data.data) {
+            throw new Error('Không nhận được dữ liệu từ server');
+        }
+
+        return response.data.data;
+    } catch (error: any) {
+        console.error('Error creating doctor schedule:', error);
+        throw new Error(error.response?.data?.message || 'Lỗi khi tạo lịch khám');
+    }
+};
+
+export const updateDoctorSchedule = async (scheduleId: number, data: {
+    date?: string;
+    timeType?: string;
+    maxNumber?: number;
+}): Promise<Schedule> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.put<{ data: Schedule }>(`/schedule/${scheduleId}`, data, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật lịch khám');
+    }
+};
+
+export const deleteDoctorSchedule = async (scheduleId: number): Promise<void> => {
+    try {
+        const token = localStorage.getItem('token');
+        await apiClient.delete(`/schedule/${scheduleId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi xóa lịch khám');
+    }
+};
+
+export const getAllAppointments = async (): Promise<Appointment[]> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.get<{ data: Appointment[] }>('/bookings', {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data.data || [];
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách lịch hẹn');
+    }
+};
+
+export const getAllSchedules = async (): Promise<Schedule[]> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.get<{ data: Schedule[] }>('/schedule', {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data.data || [];
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách lịch khám');
+    }
+};
+
+export const getTimeTypes = async (): Promise<TimeType[]> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.get<{ data: TimeType[] }>('/allcode', {
+            params: { type: 'TIME' },
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data.data || [];
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách thời gian');
+    }
+};
+
+// API cho Time State
+export const getTimeStates = async (): Promise<TimeState[]> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.get<{ data: TimeState[] }>('/allcode/type', {
+            params: { type: 'TIME' },
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data.data || [];
+    } catch (error: any) {
+        console.error('Error fetching time states:', error);
+        throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách thời gian');
     }
 };
