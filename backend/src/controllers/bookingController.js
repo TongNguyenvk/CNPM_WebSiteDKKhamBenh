@@ -68,6 +68,11 @@ exports.getBookingsByDoctor = async (req, res) => {
                     model: db.Allcode,
                     as: 'statusData',
                     attributes: ['keyMap', 'valueVi', 'valueEn']
+                },
+                {
+                    model: db.Allcode,
+                    as: 'timeTypeData',
+                    attributes: ['keyMap', 'valueVi', 'valueEn']
                 }
             ],
             order: [["date", "ASC"]],
@@ -75,23 +80,26 @@ exports.getBookingsByDoctor = async (req, res) => {
 
         res.status(200).json({ success: true, data: bookings });
     } catch (error) {
-        res.status(500).json({ success: false, message: "Lỗi server", error });
+        console.error('Error in getBookingsByDoctor:', error);
+        res.status(500).json({
+            success: false,
+            message: "Lỗi server",
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 };
 
 // 🏥 3. Lấy danh sách lịch khám theo bệnh nhân
 exports.getBookingsByPatient = async (req, res) => {
     try {
-        // Lấy patientId từ req.params và chuyển thành số
         const patientId = parseInt(req.params.patientId, 10);
-        console.log('Patient ID nhận được:', patientId); // Log để kiểm tra
+        console.log('Patient ID nhận được:', patientId);
 
-        // Kiểm tra patientId hợp lệ
         if (isNaN(patientId) || patientId <= 0) {
             return res.status(400).json({ success: false, message: 'Patient ID không hợp lệ' });
         }
 
-        // Tìm danh sách đặt lịch, bao gồm thông tin bệnh nhân và bác sĩ
         const bookings = await db.Booking.findAll({
             where: { patientId: patientId },
             include: [
@@ -130,15 +138,16 @@ exports.getBookingsByPatient = async (req, res) => {
                     model: db.Allcode,
                     as: 'statusData',
                     attributes: ['keyMap', 'valueVi', 'valueEn']
+                },
+                {
+                    model: db.Allcode,
+                    as: 'timeTypeData',
+                    attributes: ['keyMap', 'valueVi', 'valueEn']
                 }
             ],
             order: [['date', 'ASC']],
         });
 
-        // Log kết quả truy vấn
-        console.log('Danh sách bookings tìm thấy:', bookings);
-
-        // Kiểm tra nếu không có dữ liệu
         if (!bookings || bookings.length === 0) {
             return res.status(200).json({
                 success: true,
@@ -150,7 +159,12 @@ exports.getBookingsByPatient = async (req, res) => {
         res.status(200).json({ success: true, data: bookings });
     } catch (error) {
         console.error('Lỗi khi lấy danh sách đặt lịch:', error);
-        res.status(500).json({ success: false, message: 'Lỗi server', error: error.message });
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi server',
+            error: error.message,
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 };
 

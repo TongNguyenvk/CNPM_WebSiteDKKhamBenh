@@ -121,8 +121,92 @@ const deleteUser = async (req, res) => {
     }
 };
 
+// Đăng ký bệnh nhân (ai cũng có thể gọi)
+const registerPatient = async (req, res) => {
+    try {
+        const { email, password, firstName, lastName, gender, phoneNumber, address } = req.body;
+
+        // Kiểm tra email đã tồn tại chưa
+        const userExists = await User.findOne({ where: { email } });
+        if (userExists) {
+            return res.status(400).json({ message: 'Email đã được sử dụng' });
+        }
+
+        // Tạo user với roleId = "R1" (Patient)
+        const user = await User.create({
+            email,
+            password,
+            firstName,
+            lastName,
+            gender,
+            phoneNumber,
+            address,
+            roleId: "R1"
+        });
+
+        res.status(201).json({
+            message: 'Đăng ký bệnh nhân thành công',
+            userId: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            role: user.roleId
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Lỗi server', error: error.message });
+    }
+};
+
+// Đăng ký bác sĩ (chỉ admin mới được gọi)
+const registerDoctor = async (req, res) => {
+    try {
+        // Kiểm tra quyền admin (giả sử req.user đã có thông tin user sau khi xác thực JWT)
+        if (!req.user || req.user.roleId !== "R3") {
+            return res.status(403).json({ message: 'Chỉ admin mới có quyền tạo bác sĩ' });
+        }
+
+        const { email, password, firstName, lastName, gender, phoneNumber, address, positionId, image, specialtyId } = req.body;
+
+        // Kiểm tra email đã tồn tại chưa
+        const userExists = await User.findOne({ where: { email } });
+        if (userExists) {
+            return res.status(400).json({ message: 'Email đã được sử dụng' });
+        }
+
+        // Tạo user với roleId = "R2" (Doctor)
+        const user = await User.create({
+            email,
+            password,
+            firstName,
+            lastName,
+            gender,
+            phoneNumber,
+            address,
+            roleId: "R2",
+            positionId,
+            image,
+            specialtyId
+        });
+
+        res.status(201).json({
+            message: 'Đăng ký bác sĩ thành công',
+            userId: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            role: user.roleId
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Lỗi server', error: error.message });
+    }
+};
+
 module.exports = {
     registerUser,
+    registerPatient,
+    registerDoctor,
     updateUser,
     deleteUser,
     getUser

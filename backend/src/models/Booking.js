@@ -15,6 +15,7 @@ const Booking = sequelize.define('Booking', {
 
 Booking.associate = function (models) {
   Booking.belongsTo(models.Allcode, { foreignKey: 'statusId', targetKey: 'keyMap', as: 'statusData' });
+  Booking.belongsTo(models.Allcode, { foreignKey: 'timeType', targetKey: 'keyMap', as: 'timeTypeData' });
   Booking.belongsTo(models.User, { foreignKey: 'doctorId', as: 'doctorData' });
   Booking.belongsTo(models.User, { foreignKey: 'patientId', as: 'patientData' });
 };

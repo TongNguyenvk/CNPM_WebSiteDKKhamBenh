@@ -11,6 +11,11 @@ const loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
+        // Kiểm tra đầu vào
+        if (!email || !password) {
+            return res.status(400).json({ message: 'Vui lòng nhập email và mật khẩu' });
+        }
+
         const user = await User.findOne({ where: { email } });
 
         if (user && (await bcrypt.compare(password, user.password))) {
