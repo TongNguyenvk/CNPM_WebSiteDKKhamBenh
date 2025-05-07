@@ -164,24 +164,40 @@ export const getDoctorById = async (id: number): Promise<Doctor> => {
 
 export const getDoctorSchedules = async (doctorId: number, date: string): Promise<Schedule[]> => {
   try {
-    // Sử dụng params để Axios tự động thêm vào query string
-    const response = await apiClient.get<Schedule[]>(`/schedule/doctor/${doctorId}`, {
-      params: { date } // Sẽ tạo ra URL: /schedule/doctor/:doctorId?date=YYYY-MM-DD
+    const token = localStorage.getItem('token');
+    console.log('Fetching schedules with token:', token ? 'Token exists' : 'No token');
+    console.log('Doctor ID:', doctorId, 'Date:', date);
+
+    const response = await apiClient.get<{ success: boolean; data: Schedule[] }>(`/schedule/doctor/${doctorId}`, {
+      params: { date },
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     });
-    // Đảm bảo luôn trả về một mảng
-    return Array.isArray(response.data) ? response.data : [];
+
+    console.log('Schedule API Response:', response.data);
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Lỗi khi lấy lịch phân công');
+    }
+
+    return response.data.data || [];
   } catch (error) {
     console.error(`Error fetching schedules for doctor ${doctorId} on ${date}:`, error);
-    // Có thể trả về mảng rỗng thay vì ném lỗi để UI không bị vỡ nếu chỉ là không tìm thấy lịch
-    if (axios.isAxiosError(error) && error.response?.status === 404) {
-      console.warn(`No schedules found (404) for doctor ${doctorId} on ${date}. Returning empty array.`);
-      return []; // Trả về mảng rỗng nếu 404 nghĩa là không có lịch
-    }
-    // Ném lỗi cho các trường hợp lỗi khác
     if (axios.isAxiosError(error)) {
-      throw new Error(`API Error: ${error.response?.status} - ${error.response?.data?.message || error.message}`);
+      console.error('Axios error details:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        message: error.message
+      });
+
+      if (error.response?.status === 404) {
+        console.warn(`No schedules found (404) for doctor ${doctorId} on ${date}. Returning empty array.`);
+        return [];
+      }
+      throw new Error(error.response?.data?.message || 'Lỗi khi lấy lịch phân công');
     }
-    throw new Error('An unexpected error occurred while fetching schedules.');
+    throw new Error('Có lỗi xảy ra khi lấy lịch phân công');
   }
 };
 
@@ -380,5 +396,61 @@ export const registerUser = async (userData: {
       throw error;
     }
     throw new Error('Đã có lỗi xảy ra trong quá trình đăng ký');
+  }
+};
+
+export const createSchedule = async (data: {
+  doctorId: number;
+  date: string;
+  timeType: string;
+  maxNumber: number;
+}): Promise<Schedule> => {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      throw new Error('Vui lòng đăng nhập để thực hiện chức năng này');
+    }
+
+    // Validate input data
+    if (!data.doctorId) {
+      throw new Error('Vui lòng chọn bác sĩ');
+    }
+
+    if (!data.date) {
+      throw new Error('Vui lòng chọn ngày khám');
+    }
+
+    if (!data.timeType || data.timeType.trim() === '') {
+      throw new Error('Vui lòng chọn khung giờ khám');
+    }
+
+    // Validate date format
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(data.date)) {
+      throw new Error('Định dạng ngày không hợp lệ. Vui lòng sử dụng YYYY-MM-DD');
+    }
+
+    // Validate maxNumber
+    if (!data.maxNumber || data.maxNumber < 1) {
+      throw new Error('Số lượng bệnh nhân tối đa phải lớn hơn 0');
+    }
+
+    const response = await apiClient.post<{ success: boolean; message: string; data: Schedule }>('/schedule', data, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Lỗi khi tạo lịch khám');
+    }
+
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Error creating schedule:', error);
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.message || 'Lỗi khi tạo lịch khám');
+    }
+    throw error;
   }
 };

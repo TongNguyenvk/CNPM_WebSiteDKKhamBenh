@@ -66,7 +66,7 @@ export default function SpecialtiesPage() {
     return (
         <div className="mt-14 px-4"> {/* Thêm mt-12 để tạo khoảng cách và px-4 để có padding ngang */}
             <h1 className="text-2xl font-bold text-center text-blue-600 mb-8">Danh Sách Chuyên Khoa</h1>
-    
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {specialties.map((specialty) => (
                     <Link
@@ -76,10 +76,11 @@ export default function SpecialtiesPage() {
                     >
                         <div className="relative h-48">
                             <Image
-                                src={`/image/${specialty.image}`}
+                                src={`/${specialty.image}`}
                                 alt={specialty.name}
                                 fill
                                 className="object-cover"
+                                priority
                             />
                         </div>
                         <div className="p-4">
@@ -91,5 +92,5 @@ export default function SpecialtiesPage() {
             </div>
         </div>
     );
-    
+
 } 

@@ -104,7 +104,7 @@ export default function SpecialtyDetailPage({ params }: PageProps) {
                 <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
                     <div className="relative h-64">
                         <Image
-                            src={`/image/${specialty.image}`}
+                            src={`/${specialty.image}`}
                             alt={specialty.name}
                             fill
                             className="object-cover"
