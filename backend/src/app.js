@@ -1,6 +1,7 @@
 // src/app.js
 const express = require('express');
 const cors = require('cors');
+const swagger = require('./api/swagger');
 const authRoutes = require('./routes/authRoute')
 const userRoutes = require('./routes/userRoute')
 const doctorRoutes = require('./routes/doctorRoute')
@@ -18,6 +19,9 @@ const corsOptions = {
 // Middleware
 app.use(cors(corsOptions));
 app.use(express.json());
+
+// Swagger Documentation
+app.use('/api-docs', swagger.serve, swagger.setup);
 
 // Routes
 app.use('/api/users', userRoutes);
