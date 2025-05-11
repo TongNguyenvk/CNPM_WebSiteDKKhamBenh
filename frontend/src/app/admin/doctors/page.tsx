@@ -305,16 +305,16 @@ export default function DoctorsPage() {
                 {/* Edit Doctor Modal */}
                 {isEditModalOpen && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                        <div className="bg-white p-6 rounded-xl w-96 shadow-2xl">
-                            <h2 className="text-xl font-bold text-gray-800 mb-6">Cập nhật thông tin bác sĩ</h2>
-                            <div className="space-y-6">
+                        <div className="bg-white p-8 rounded-xl w-full max-w-md shadow-2xl transform transition-all duration-300 ease-in-out hover:shadow-3xl">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-6 border-b-2 border-blue-500 pb-2">Cập nhật thông tin bác sĩ</h2>
+                            <div className="space-y-5">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700">Email</label>
                                     <input
                                         type="email"
                                         value={formData.email}
                                         disabled
-                                        className="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm"
+                                        className="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3" // Added text-lg and py-3
                                     />
                                 </div>
                                 <div>
@@ -323,7 +323,7 @@ export default function DoctorsPage() {
                                         type="text"
                                         value={formData.firstName}
                                         onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3" // Added text-lg and py-3
                                     />
                                 </div>
                                 <div>
@@ -332,7 +332,7 @@ export default function DoctorsPage() {
                                         type="text"
                                         value={formData.lastName}
                                         onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3" // Added text-lg and py-3
                                     />
                                 </div>
                                 <div>
@@ -340,7 +340,7 @@ export default function DoctorsPage() {
                                     <select
                                         value={formData.specialtyId}
                                         onChange={(e) => setFormData({ ...formData, specialtyId: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3" // Added text-lg and py-3
                                     >
                                         <option value="">Chọn chuyên khoa</option>
                                         {specialties.map((specialty) => (
@@ -355,7 +355,7 @@ export default function DoctorsPage() {
                                     <select
                                         value={formData.positionId}
                                         onChange={(e) => setFormData({ ...formData, positionId: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3" // Added text-lg and py-3
                                     >
                                         <option value="">Chọn vị trí</option>
                                         <option value="P0">Bác sĩ</option>
@@ -371,7 +371,7 @@ export default function DoctorsPage() {
                                         type="text"
                                         value={formData.phoneNumber}
                                         onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3" // Added text-lg and py-3
                                     />
                                 </div>
                                 <div>
@@ -380,19 +380,19 @@ export default function DoctorsPage() {
                                         type="text"
                                         value={formData.address}
                                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3" // Added text-lg and py-3
                                     />
                                 </div>
                                 <div className="flex justify-end gap-4 mt-6">
                                     <button
                                         onClick={() => setIsEditModalOpen(false)}
-                                        className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-200"
+                                        className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition duration-200 shadow-md hover:shadow-lg"
                                     >
                                         Hủy
                                     </button>
                                     <button
                                         onClick={handleUpdateDoctor}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200"
+                                        className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition duration-200 shadow-md hover:shadow-lg"
                                     >
                                         Cập nhật
                                     </button>

@@ -48,9 +48,9 @@ export default function PatientLayout({
                 userName={`${user.firstName} ${user.lastName}`}
                 navItems={navItems}
             />
-            <main className="container mx-auto px-4 py-8">
+            <main className="container mx-auto px-4 pt-16 pb-8"> {/* Changed py-8 to pt-16 pb-8 */}
                 {children}
             </main>
         </div>
     );
-} 
+}

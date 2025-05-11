@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { getSpecialtyById, getDoctorsBySpecialty } from '../../../../lib/api';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useParams, useRouter } from 'next/navigation';
 
 interface Specialty {
     id: number;
@@ -22,9 +23,7 @@ interface Doctor {
 }
 
 interface PageProps {
-    params: {
-        id: string;
-    };
+    params: Promise<{ id: string }>; // Update type to reflect that params is a Promise
 }
 
 export default function SpecialtyDetailPage({ params }: PageProps) {
@@ -33,7 +32,12 @@ export default function SpecialtyDetailPage({ params }: PageProps) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    const specialtyId = parseInt(params.id);
+    // Unwrap the params Promise using React.use()
+    const resolvedParams = React.use(params);
+    const specialtyId = parseInt(resolvedParams.id);
+
+    // Initialize the router
+    const router = useRouter();
 
     useEffect(() => {
         const fetchData = async () => {
@@ -98,10 +102,17 @@ export default function SpecialtyDetailPage({ params }: PageProps) {
     }
 
     return (
-        <div className="p-6 mt-12">
+        <div className="p-6 mt-6">
             <div className="max-w-4xl mx-auto">
+                {/* Nút Quay lại */}
+            <button
+                className="flex items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-full border-2 border-blue-500 hover:bg-gray-200 transition-colors"
+                onClick={() => router.back()}
+            >
+                ← Quay lại
+            </button>
                 {/* Thông tin chuyên khoa */}
-                <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
+                <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8 mt-6">
                     <div className="relative h-64">
                         <Image
                             src={`/${specialty.image}`}
