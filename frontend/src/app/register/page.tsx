@@ -66,6 +66,7 @@ const RegisterPage: React.FC = () => {
       // const response = await registerUser(formData);
       // localStorage.setItem('token', response.token);
       router.push('/login'); // Chuyển về trang login sau khi đăng ký thành công
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       setError(error.response?.data?.message || 'Đăng ký thất bại');
     } finally {
@@ -123,7 +124,7 @@ const RegisterPage: React.FC = () => {
               {/* Name fields */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="relative">
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2 border border-gray-700 p-2 rounded">
                     Họ
                   </label>
                   <div className="relative">
@@ -141,7 +142,7 @@ const RegisterPage: React.FC = () => {
                 </div>
 
                 <div className="relative">
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2 border border-gray-700 p-2 rounded">
                     Tên
                   </label>
                   <div className="relative">
@@ -161,7 +162,7 @@ const RegisterPage: React.FC = () => {
 
               {/* Email field */}
               <div className="relative">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2 border border-gray-700 p-2 rounded">
                   Email
                 </label>
                 <div className="relative">
@@ -181,7 +182,7 @@ const RegisterPage: React.FC = () => {
 
               {/* Phone field */}
               <div className="relative">
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2 border border-gray-700 p-2 rounded">
                   Số điện thoại
                 </label>
                 <div className="relative">
@@ -201,7 +202,7 @@ const RegisterPage: React.FC = () => {
 
               {/* Password fields */}
               <div className="relative">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2 border border-gray-700 p-2 rounded">
                   Mật khẩu
                 </label>
                 <div className="relative">

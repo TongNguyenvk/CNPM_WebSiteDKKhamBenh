@@ -351,6 +351,7 @@ export const getBookingById = async (id: number, token?: string): Promise<Bookin
     const response = await axios.get(`http://localhost:8080/api/bookings/${id}`, { headers });
     // Nếu backend trả về { success, data }, lấy data; nếu trả về trực tiếp object thì lấy luôn
     return response.data.data || response.data;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     if (axios.isAxiosError(error)) {
       const status = error.response?.status;
@@ -371,6 +372,7 @@ export const getBookingsByDoctorId = async (doctorId: number, token?: string) =>
       return response.data.data;
     }
     return [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     if (axios.isAxiosError(error)) {
       const status = error.response?.status;
@@ -446,6 +448,7 @@ export const createSchedule = async (data: {
     }
 
     return response.data.data;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error('Error creating schedule:', error);
     if (axios.isAxiosError(error)) {
@@ -454,3 +457,21 @@ export const createSchedule = async (data: {
     throw error;
   }
 };
+
+export async function getMedicalRecords() {
+  const res = await fetch('/api/medical-records'); 
+  if (!res.ok) {
+    throw new Error('Failed to fetch medical records');
+  }
+  return res.json();
+}
+
+// src/lib/api.ts
+
+export async function getDoctorPatients() {
+  const res = await fetch('/api/doctor/patients'); 
+  if (!res.ok) {
+    throw new Error('Failed to fetch doctor patients');
+  }
+  return res.json(); // trả về data JSON
+}

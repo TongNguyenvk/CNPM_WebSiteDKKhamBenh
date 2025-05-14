@@ -40,6 +40,7 @@ export default function UsersPage() {
         try {
             const data = await getAllUsers();
             setUsers(data);
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             toast.error('Lỗi khi tải danh sách người dùng');
         }
@@ -61,6 +62,7 @@ export default function UsersPage() {
                 gender: true
             });
             loadUsers();
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             toast.error('Lỗi khi tạo người dùng');
         }
@@ -73,6 +75,7 @@ export default function UsersPage() {
             toast.success('Cập nhật người dùng thành công');
             setIsEditModalOpen(false);
             loadUsers();
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             toast.error('Lỗi khi cập nhật người dùng');
         }

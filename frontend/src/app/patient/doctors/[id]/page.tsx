@@ -125,6 +125,7 @@ export default function DoctorDetailPage() {
             try {
                 const scheduleData = await getDoctorSchedulesPT(doctorId, selectedDate);
                 setSchedules(scheduleData);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (err: any) {
                 console.error(`Lỗi khi fetch lịch cho ngày ${selectedDate}:`, err);
                 setGeneralError(err.message || `Không thể tải lịch khám cho ngày ${selectedDate}.`);

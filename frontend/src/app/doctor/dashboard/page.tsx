@@ -2,6 +2,8 @@
 import React, { useEffect, useState } from 'react';
 import { getTodayAppointments, getDoctorSchedules, getDoctorAppointments } from '../../../lib/api';
 import { useAuth } from '../../../hooks/useAuth';
+import { getMaxAge } from 'next/dist/server/image-optimizer';
+import { getMedicalRecords } from '../../lib/api';
 
 interface Appointment {
     id: number;
@@ -54,7 +56,7 @@ export default function DoctorDashboard() {
                 const [todayData, schedulesData, allAppointmentsData] = await Promise.all([
                     getTodayAppointments(user.userId),
                     getDoctorSchedules(user.userId),
-                    getDoctorAppointments(user.userId)
+                    getDoctorAppointments(user.userId),
                 ]);
 
                 console.log('Today Appointments:', todayData);

@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { useState, useEffect } from 'react';
 import { getUserProfile, updateUserProfile, uploadProfileImage } from '@/lib/api';
 import { toast } from 'react-hot-toast';
@@ -46,6 +47,7 @@ export default function AdminProfilePage() {
             if (data.image) {
                 setImagePreview(data.image);
             }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             toast.error(error.message || 'Lỗi khi tải thông tin cá nhân');
         }
@@ -57,6 +59,7 @@ export default function AdminProfilePage() {
             setProfile(updatedProfile);
             setIsEditModalOpen(false);
             toast.success('Cập nhật thông tin thành công');
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             toast.error(error.message || 'Lỗi khi cập nhật thông tin');
         }
@@ -84,6 +87,7 @@ export default function AdminProfilePage() {
             setImagePreview(response.imageUrl);
             toast.success('Tải ảnh đại diện thành công');
             loadProfile(); // Refresh profile to ensure consistency
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             toast.error(error.message || 'Lỗi khi tải ảnh đại diện');
         }
@@ -100,11 +104,13 @@ export default function AdminProfilePage() {
                     <div className="space-y-6">
                         <div className="flex justify-center mb-6">
                             <div className="relative">
-                                <img
+                                <Image
                                     src={imagePreview || 'https://via.placeholder.com/150'}
                                     alt="Profile"
-                                    className="w-32 h-32 rounded-full object-cover border-4 border-gray-200"
-                                />
+                                    width={128}
+                                    height={128}
+                                    className="rounded-full object-cover border-4 border-gray-200"
+                                    />
                                 <label
                                     htmlFor="imageUpload"
                                     className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 transition duration-200"

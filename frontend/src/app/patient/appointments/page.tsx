@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getPatientAppointments, cancelBooking } from "@/lib/api";
@@ -52,6 +53,7 @@ export default function AppointmentsPage() {
 
                 const data = await getPatientAppointments(patientId);
                 setAppointments(data);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (err: any) {
                 setError(err.message || "Có lỗi xảy ra khi tải danh sách lịch khám");
             } finally {
@@ -81,6 +83,7 @@ export default function AppointmentsPage() {
                 const data = await getPatientAppointments(patientId);
                 setAppointments(data);
             }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             setError(err.message || "Có lỗi xảy ra khi hủy lịch khám");
         }
@@ -148,10 +151,17 @@ export default function AppointmentsPage() {
                             >
                                 <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                                     <div className="flex items-start space-x-4">
-                                        <img
-                                            src={appointment.doctorData?.image ? `http://localhost:8080/images/${appointment.doctorData.image}` : "/images/default-doctor.jpg"}
-                                            alt={`${appointment.doctorData?.firstName} ${appointment.doctorData?.lastName}`}
-                                            className="w-16 h-16 rounded-full object-cover"
+                                        <Image
+                                        src={
+                                            appointment.doctorData?.image
+                                            ? `http://localhost:8080/images/${appointment.doctorData.image}`
+                                            : '/images/default-doctor.jpg'
+                                        }
+                                        alt={`${appointment.doctorData?.firstName || ''} ${appointment.doctorData?.lastName || ''}`}
+                                        width={64}
+                                        height={64}
+                                        className="rounded-full object-cover"
+                                        unoptimized
                                         />
                                         <div>
                                             <h3 className="font-semibold text-lg">

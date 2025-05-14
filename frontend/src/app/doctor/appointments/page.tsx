@@ -59,6 +59,7 @@ export default function DoctorAppointmentsPage() {
                 const doctorId = user.userId;
                 const data = await getDoctorAppointments(doctorId);
                 setAppointments(data);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (err: any) {
                 console.error('Error fetching appointments:', err);
                 setError(err.message || "Có lỗi xảy ra khi tải lịch khám");
@@ -87,6 +88,7 @@ export default function DoctorAppointmentsPage() {
                 setAppointments(updatedAppointments);
                 setSelectedAppointment(null);
             }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             console.error('Error updating appointment status:', err);
             setError(err.message || "Có lỗi xảy ra khi cập nhật trạng thái lịch khám");
