@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { getDoctorSchedules, updateDoctorSchedule, deleteDoctorSchedule, createSchedule } from '@/lib/api';
+import { getDoctorSchedules, updateDoctorSchedule, deleteDoctorSchedule, createSchedule, getAllDoctors, getAllSchedules } from '@/lib/api';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
@@ -18,15 +18,38 @@ interface Schedule {
         valueVi: string;
         valueEn: string;
     };
+    doctorData?: {
+        id: number;
+        firstName: string;
+        lastName: string;
+        Specialty?: {
+            id: number;
+            name: string;
+        };
+        email?: string;
+        image?: string;
+    };
 }
 
 interface Doctor {
     id: number;
-    userId: number;
-    specialtyId: number;
-    user: {
-        firstName: string;
-        lastName: string;
+    email?: string;
+    firstName: string;
+    lastName: string;
+    specialtyId?: number;
+    positionId?: string;
+    phoneNumber?: string;
+    address?: string;
+    gender?: boolean;
+    image?: string;
+    Specialty?: {
+        id: number;
+        name: string;
+    };
+    positionData?: {
+        keyMap: string;
+        valueVi: string;
+        valueEn: string;
     };
 }
 
@@ -43,6 +66,7 @@ const timeSlots = [
 
 export default function AdminSchedulePage() {
     const [schedules, setSchedules] = useState<Schedule[]>([]);
+    const [filteredSchedules, setFilteredSchedules] = useState<Schedule[]>([]);
     const [doctors, setDoctors] = useState<Doctor[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState(new Date());
@@ -51,63 +75,82 @@ export default function AdminSchedulePage() {
     const [maxNumber, setMaxNumber] = useState(1);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+    const [formData, setFormData] = useState({
+        doctorId: '',
+        date: '',
+        timeType: '',
+        maxNumber: 1,
+    });
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     useEffect(() => {
-        fetchDoctors();
+        const loadData = async () => {
+            setLoading(true);
+            try {
+                const doctorsData = await getAllDoctors();
+                setDoctors(doctorsData);
+
+                const allSchedulesData = await getAllSchedules();
+                setSchedules(allSchedulesData);
+
+                setLoading(false);
+
+            } catch (error: any) {
+                console.error('Error loading initial data:', error);
+                toast.error(error.message || 'Lỗi khi tải dữ liệu ban đầu');
+                setLoading(false);
+            }
+        };
+
+        loadData();
     }, []);
 
     useEffect(() => {
+        let currentFilteredSchedules = schedules;
+
         if (selectedDoctor) {
-            fetchSchedules(selectedDoctor);
+            currentFilteredSchedules = schedules.filter(schedule => schedule.doctorId === Number(selectedDoctor));
         }
-    }, [selectedDate, selectedDoctor]);
 
-    const fetchDoctors = async () => {
-        try {
-            const response = await fetch('/api/doctor');
-            const data = await response.json();
-            setDoctors(data);
-        } catch (error) {
-            console.error('Error fetching doctors:', error);
-            toast.error('Không thể tải danh sách bác sĩ');
-        }
-    };
-
-    const fetchSchedules = async (doctorId: number) => {
-        try {
-            setLoading(true);
-            const formattedDate = format(selectedDate, 'yyyy-MM-dd');
-            const data = await getDoctorSchedules(doctorId, formattedDate);
-            setSchedules(data);
-        } catch (error) {
-            console.error('Error fetching schedules:', error);
-            toast.error('Không thể tải lịch phân công');
-        } finally {
-            setLoading(false);
-        }
-    };
+        setFilteredSchedules(currentFilteredSchedules);
+    }, [schedules, selectedDoctor, selectedDate]);
 
     const handleCreateSchedule = async () => {
-        if (!selectedDoctor || !selectedTime) {
-            toast.error('Vui lòng chọn bác sĩ và thời gian');
+        if (!formData.doctorId || !formData.timeType || !formData.date) {
+            toast.error('Vui lòng chọn bác sĩ, ngày và thời gian');
             return;
         }
 
         try {
-            const formattedDate = format(selectedDate, 'yyyy-MM-dd');
             await createSchedule({
-                doctorId: selectedDoctor,
-                date: formattedDate,
-                timeType: selectedTime,
-                maxNumber
+                doctorId: Number(formData.doctorId),
+                date: formData.date,
+                timeType: formData.timeType,
+                maxNumber: Number(formData.maxNumber)
             });
             toast.success('Tạo lịch phân công thành công');
-            fetchSchedules(selectedDoctor);
-            setSelectedTime('');
-            setMaxNumber(1);
-        } catch (error) {
+            setLoading(true);
+            try {
+                const allSchedulesData = await getAllSchedules();
+                setSchedules(allSchedulesData);
+            } catch (error: any) {
+                console.error('Error re-fetching schedules after creation:', error);
+                toast.error('Lỗi khi tải lại danh sách lịch phân công');
+            } finally {
+                setLoading(false);
+            }
+
+            setIsCreateModalOpen(false);
+            setFormData({
+                doctorId: '',
+                date: '',
+                timeType: '',
+                maxNumber: 1
+            });
+
+        } catch (error: any) {
             console.error('Error creating schedule:', error);
-            toast.error('Không thể tạo lịch phân công');
+            toast.error(error.message || 'Lỗi khi tạo lịch phân công');
         }
     };
 
@@ -129,9 +172,17 @@ export default function AdminSchedulePage() {
             await updateDoctorSchedule(scheduleId, { maxNumber });
             setSuccess("Cập nhật lịch phân công thành công!");
 
-            if (selectedDoctor) {
-                fetchSchedules(selectedDoctor);
+            setLoading(true);
+            try {
+                const allSchedulesData = await getAllSchedules();
+                setSchedules(allSchedulesData);
+            } catch (error: any) {
+                console.error('Error re-fetching schedules after update:', error);
+                toast.error('Lỗi khi tải lại danh sách lịch phân công');
+            } finally {
+                setLoading(false);
             }
+
         } catch (err: any) {
             console.error('Error in handleUpdateSchedule:', err);
             setError(err.message || "Có lỗi xảy ra khi cập nhật lịch phân công");
@@ -150,8 +201,15 @@ export default function AdminSchedulePage() {
             await deleteDoctorSchedule(scheduleId);
             setSuccess("Xóa lịch phân công thành công!");
 
-            if (selectedDoctor) {
-                fetchSchedules(selectedDoctor);
+            setLoading(true);
+            try {
+                const allSchedulesData = await getAllSchedules();
+                setSchedules(allSchedulesData);
+            } catch (error: any) {
+                console.error('Error re-fetching schedules after deletion:', error);
+                toast.error('Lỗi khi tải lại danh sách lịch phân công');
+            } finally {
+                setLoading(false);
             }
         } catch (err: any) {
             console.error('Error in handleDeleteSchedule:', err);
@@ -194,14 +252,14 @@ export default function AdminSchedulePage() {
                             Bác sĩ
                         </label>
                         <select
-                            value={selectedDoctor}
-                            onChange={(e) => setSelectedDoctor(Number(e.target.value))}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            value={formData.doctorId}
+                            onChange={(e) => setFormData({ ...formData, doctorId: e.target.value })}
+                            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="">Chọn bác sĩ</option>
                             {doctors.map((doctor) => (
                                 <option key={doctor.id} value={doctor.id}>
-                                    {doctor.user.firstName} {doctor.user.lastName}
+                                    {doctor.firstName} {doctor.lastName}
                                 </option>
                             ))}
                         </select>
@@ -222,9 +280,9 @@ export default function AdminSchedulePage() {
                             Thời gian
                         </label>
                         <select
-                            value={selectedTime}
-                            onChange={(e) => setSelectedTime(e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            value={formData.timeType}
+                            onChange={(e) => setFormData({ ...formData, timeType: e.target.value })}
+                            className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value="">Chọn thời gian</option>
                             {timeSlots.map((slot) => (
@@ -241,15 +299,30 @@ export default function AdminSchedulePage() {
                         <input
                             type="number"
                             min="1"
-                            value={maxNumber}
-                            onChange={(e) => setMaxNumber(parseInt(e.target.value))}
+                            value={formData.maxNumber}
+                            onChange={(e) => {
+                                const value = parseInt(e.target.value);
+                                if (!isNaN(value)) {
+                                    setFormData({ ...formData, maxNumber: value });
+                                } else if (e.target.value === '') {
+                                    setFormData({ ...formData, maxNumber: 1 });
+                                }
+                            }}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         />
                     </div>
                 </div>
                 <button
-                    onClick={handleCreateSchedule}
-                    className="mt-4 bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onClick={() => {
+                        setFormData({
+                            doctorId: doctors.length > 0 ? doctors[0].id.toString() : '',
+                            date: format(selectedDate, 'yyyy-MM-dd'),
+                            timeType: timeSlots.length > 0 ? timeSlots[0].key : '',
+                            maxNumber: 1
+                        });
+                        setIsCreateModalOpen(true);
+                    }}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                     Tạo lịch phân công
                 </button>
@@ -259,7 +332,7 @@ export default function AdminSchedulePage() {
                 <h2 className="text-xl font-semibold mb-4">Danh sách lịch phân công</h2>
                 {loading ? (
                     <div className="text-center py-4">Đang tải...</div>
-                ) : schedules.length === 0 ? (
+                ) : filteredSchedules.length === 0 ? (
                     <div className="text-center py-4 text-gray-500">
                         Không có lịch phân công nào cho ngày này
                     </div>
@@ -272,10 +345,16 @@ export default function AdminSchedulePage() {
                                         Ngày
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Bác sĩ
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Chuyên khoa
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Thời gian
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                        Số lượng bệnh nhân tối đa
+                                        Số lượng tối đa
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                         Số lượng đã đặt
@@ -286,10 +365,16 @@ export default function AdminSchedulePage() {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {schedules.map((schedule) => (
+                                {filteredSchedules.map((schedule) => (
                                     <tr key={schedule.id}>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             {format(new Date(schedule.date), 'dd/MM/yyyy', { locale: vi })}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {schedule.doctorData ? `${schedule.doctorData.firstName} ${schedule.doctorData.lastName}` : 'N/A'}
+                                        </td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            {schedule.doctorData?.Specialty?.name || 'N/A'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             {getTimeLabel(schedule.timeType)}
@@ -299,20 +384,35 @@ export default function AdminSchedulePage() {
                                                 type="number"
                                                 min="1"
                                                 value={schedule.maxNumber}
-                                                onChange={(e) => handleUpdateSchedule(schedule.id, parseInt(e.target.value))}
+                                                onChange={(e) => {
+                                                    const value = parseInt(e.target.value);
+                                                    if (!isNaN(value) && value >= 1) {
+                                                        setSchedules(prevSchedules =>
+                                                            prevSchedules.map(s => s.id === schedule.id ? { ...s, maxNumber: value } : s)
+                                                        );
+                                                        handleUpdateSchedule(schedule.id, value);
+                                                    } else if (e.target.value === '') {
+                                                        setSchedules(prevSchedules =>
+                                                            prevSchedules.map(s => s.id === schedule.id ? { ...s, maxNumber: 1 } : s)
+                                                        );
+                                                        handleUpdateSchedule(schedule.id, 1);
+                                                    }
+                                                }}
                                                 className="w-20 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                                             />
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             {schedule.currentNumber || 0}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            <button
-                                                onClick={() => handleDeleteSchedule(schedule.id)}
-                                                className="text-red-600 hover:text-red-900"
-                                            >
-                                                Xóa
-                                            </button>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm">
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => handleDeleteSchedule(schedule.id)}
+                                                    className="text-red-600 hover:text-red-900"
+                                                >
+                                                    Xóa
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -321,6 +421,95 @@ export default function AdminSchedulePage() {
                     </div>
                 )}
             </div>
+
+            {/* Create Schedule Modal */}
+            {isCreateModalOpen && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                    <div className="bg-white rounded-lg p-8">
+                        <h2 className="text-xl font-semibold mb-4">Tạo lịch phân công mới</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Bác sĩ
+                                </label>
+                                <select
+                                    value={formData.doctorId}
+                                    onChange={(e) => setFormData({ ...formData, doctorId: e.target.value })}
+                                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="">Chọn bác sĩ</option>
+                                    {doctors.map((doctor) => (
+                                        <option key={doctor.id} value={doctor.id}>
+                                            {doctor.firstName} {doctor.lastName}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Ngày
+                                </label>
+                                <input
+                                    type="date"
+                                    value={format(selectedDate, 'yyyy-MM-dd')}
+                                    onChange={(e) => setSelectedDate(new Date(e.target.value))}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Thời gian
+                                </label>
+                                <select
+                                    value={formData.timeType}
+                                    onChange={(e) => setFormData({ ...formData, timeType: e.target.value })}
+                                    className="w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                >
+                                    <option value="">Chọn thời gian</option>
+                                    {timeSlots.map((slot) => (
+                                        <option key={slot.key} value={slot.key}>
+                                            {slot.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Số lượng bệnh nhân tối đa
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={formData.maxNumber}
+                                    onChange={(e) => {
+                                        const value = parseInt(e.target.value);
+                                        if (!isNaN(value)) {
+                                            setFormData({ ...formData, maxNumber: value });
+                                        } else if (e.target.value === '') {
+                                            setFormData({ ...formData, maxNumber: 1 });
+                                        }
+                                    }}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-2 mt-4">
+                            <button
+                                onClick={() => setIsCreateModalOpen(false)}
+                                className="px-4 py-2 border rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                            >
+                                Hủy
+                            </button>
+                            <button
+                                onClick={handleCreateSchedule}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                Tạo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 } 

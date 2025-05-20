@@ -1,6 +1,6 @@
 // controllers/scheduleController.js
 const db = require('../config/database');
-const { Schedule, Allcode } = require('../models');
+const { Schedule, Allcode, User } = require('../models');
 const { Op } = require('sequelize');
 
 
@@ -60,6 +60,11 @@ const getDoctorSchedules = async (req, res) => {
                     model: Allcode,
                     as: 'timeTypeData',
                     attributes: ['valueVi', 'valueEn']
+                },
+                {
+                    model: User,
+                    as: 'doctorData',
+                    attributes: ['id', 'firstName', 'lastName', 'email', 'address', 'gender', 'phoneNumber', 'image']
                 }
             ],
             order: [['date', 'ASC'], ['timeType', 'ASC']],
@@ -87,7 +92,8 @@ const getAllSchedules = async (req, res) => {
     try {
         const schedules = await Schedule.findAll({
             include: [
-                { model: Allcode, as: 'timeTypeData', attributes: ['valueVi', 'valueEn'] }
+                { model: Allcode, as: 'timeTypeData', attributes: ['valueVi', 'valueEn'] },
+                { model: User, as: 'doctorData', attributes: ['id', 'firstName', 'lastName', 'email', 'address', 'gender', 'phoneNumber', 'image'] }
             ],
             order: [['date', 'ASC'], ['timeType', 'ASC']]
         });

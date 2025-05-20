@@ -54,7 +54,7 @@ const Schedule = sequelize.define('Schedule', {
 });
 
 Schedule.associate = function (models) {
-  Schedule.belongsTo(models.User, { foreignKey: 'doctorId' });
+  Schedule.belongsTo(models.User, { foreignKey: 'doctorId', as: 'doctorData' });
   Schedule.belongsTo(models.Allcode, { foreignKey: 'timeType', targetKey: 'keyMap', as: 'timeTypeData' });
 };
 

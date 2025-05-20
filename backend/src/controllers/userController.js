@@ -2,6 +2,8 @@
 const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { sequelize } = require('../models/User');
+const DoctorDetail = require('../models/DoctorDetail');
 
 // @desc    Đăng ký người dùng mới
 // @route   POST /api/users/register
@@ -158,15 +160,28 @@ const registerPatient = async (req, res) => {
     }
 };
 
-// Đăng ký bác sĩ (chỉ admin mới được gọi)
+// Đăng ký bác sĩ với thông tin chi tiết (chỉ admin mới được gọi)
 const registerDoctor = async (req, res) => {
     try {
-        // Kiểm tra quyền admin (giả sử req.user đã có thông tin user sau khi xác thực JWT)
+        // Kiểm tra quyền admin
         if (!req.user || req.user.roleId !== "R3") {
             return res.status(403).json({ message: 'Chỉ admin mới có quyền tạo bác sĩ' });
         }
 
-        const { email, password, firstName, lastName, gender, phoneNumber, address, positionId, image, specialtyId } = req.body;
+        const {
+            email,
+            password,
+            firstName,
+            lastName,
+            gender,
+            phoneNumber,
+            address,
+            positionId,
+            image,
+            specialtyId,
+            descriptionMarkdown,
+            descriptionHTML
+        } = req.body;
 
         // Kiểm tra email đã tồn tại chưa
         const userExists = await User.findOne({ where: { email } });
@@ -174,7 +189,75 @@ const registerDoctor = async (req, res) => {
             return res.status(400).json({ message: 'Email đã được sử dụng' });
         }
 
-        // Tạo user với roleId = "R2" (Doctor)
+        // Bắt đầu transaction để đảm bảo tính toàn vẹn dữ liệu
+        const result = await sequelize.transaction(async (t) => {
+            // Tạo user với roleId = "R2" (Doctor)
+            const user = await User.create({
+                email,
+                password,
+                firstName,
+                lastName,
+                gender,
+                phoneNumber,
+                address,
+                roleId: "R2",
+                positionId: positionId || "P1", // Mặc định là P1 nếu không có
+                image,
+                specialtyId
+            }, { transaction: t });
+
+            // Tạo thông tin chi tiết cho bác sĩ
+            if (descriptionMarkdown || descriptionHTML) {
+                await DoctorDetail.create({
+                    doctorId: user.id,
+                    descriptionMarkdown: descriptionMarkdown || '',
+                    descriptionHTML: descriptionHTML || ''
+                }, { transaction: t });
+            }
+
+            return user;
+        });
+
+        res.status(201).json({
+            message: 'Đăng ký bác sĩ thành công',
+            userId: result.id,
+            email: result.email,
+            firstName: result.firstName,
+            lastName: result.lastName,
+            role: result.roleId
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Lỗi server', error: error.message });
+    }
+};
+
+// Đăng ký admin mới (chỉ admin hiện tại mới được gọi)
+const registerAdmin = async (req, res) => {
+    try {
+        // Kiểm tra quyền admin
+        if (!req.user || req.user.roleId !== "R3") {
+            return res.status(403).json({ message: 'Chỉ admin mới có quyền tạo admin khác' });
+        }
+
+        const {
+            email,
+            password,
+            firstName,
+            lastName,
+            gender,
+            phoneNumber,
+            address,
+            image
+        } = req.body;
+
+        // Kiểm tra email đã tồn tại chưa
+        const userExists = await User.findOne({ where: { email } });
+        if (userExists) {
+            return res.status(400).json({ message: 'Email đã được sử dụng' });
+        }
+
+        // Tạo user với roleId = "R3" (Admin)
         const user = await User.create({
             email,
             password,
@@ -183,14 +266,13 @@ const registerDoctor = async (req, res) => {
             gender,
             phoneNumber,
             address,
-            roleId: "R2",
-            positionId,
-            image,
-            specialtyId
+            roleId: "R3",
+            positionId: "P0", // Admin không có position
+            image
         });
 
         res.status(201).json({
-            message: 'Đăng ký bác sĩ thành công',
+            message: 'Đăng ký admin thành công',
             userId: user.id,
             email: user.email,
             firstName: user.firstName,
@@ -203,11 +285,72 @@ const registerDoctor = async (req, res) => {
     }
 };
 
+// @desc    Lấy tất cả user và phân loại theo quyền
+// @route   GET /api/users/all
+// @access  Private (Admin)
+const getAllUsersByRole = async (req, res) => {
+    try {
+        // Kiểm tra quyền admin
+        if (!req.user || req.user.roleId !== "R3") {
+            return res.status(403).json({ message: 'Chỉ admin mới có quyền xem danh sách người dùng' });
+        }
+
+        const users = await User.findAll({
+            attributes: { exclude: ['password'] }, // Không trả về password
+            include: [
+                {
+                    model: User.sequelize.models.Allcode,
+                    as: 'roleData',
+                    attributes: ['keyMap', 'valueVi', 'valueEn']
+                },
+                {
+                    model: User.sequelize.models.Allcode,
+                    as: 'positionData',
+                    attributes: ['keyMap', 'valueVi', 'valueEn']
+                },
+                {
+                    model: User.sequelize.models.Specialty,
+                    attributes: ['id', 'name']
+                }
+            ]
+        });
+
+        // Phân loại user theo roleId
+        const groupedUsers = {
+            R1: [], // Bệnh nhân
+            R2: [], // Bác sĩ
+            R3: []  // Admin
+        };
+
+        users.forEach(user => {
+            const userData = user.get({ plain: true });
+            if (groupedUsers[user.roleId]) {
+                groupedUsers[user.roleId].push(userData);
+            }
+        });
+
+        res.json({
+            success: true,
+            data: groupedUsers,
+            message: 'Lấy danh sách người dùng thành công'
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: 'Lỗi server',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     registerUser,
     registerPatient,
     registerDoctor,
+    registerAdmin,
     updateUser,
     deleteUser,
-    getUser
+    getUser,
+    getAllUsersByRole
 };

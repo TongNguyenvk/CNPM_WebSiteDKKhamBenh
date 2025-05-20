@@ -53,7 +53,7 @@ const User = sequelize.define('User', {
 User.associate = function (models) {
   User.belongsTo(models.Allcode, { foreignKey: 'roleId', targetKey: 'keyMap', as: 'roleData' });
   User.belongsTo(models.Allcode, { foreignKey: 'positionId', targetKey: 'keyMap', as: 'positionData' });
-  User.hasMany(models.Schedule, { foreignKey: 'doctorId' });
+  User.hasMany(models.Schedule, { foreignKey: 'doctorId', as: 'doctorData' });
   User.hasMany(models.Booking, { foreignKey: 'patientId' });
   User.hasOne(models.DoctorDetail, { foreignKey: 'doctorId', as: 'doctorDetail' });
   User.belongsTo(models.Specialty, { foreignKey: 'specialtyId' });

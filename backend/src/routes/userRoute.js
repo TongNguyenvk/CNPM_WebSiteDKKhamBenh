@@ -6,6 +6,46 @@ const { protect, authorizeRoles } = require('../middleware/authMiddleware'); // 
 
 /**
  * @swagger
+ * /api/users/all:
+ *   get:
+ *     summary: Lấy tất cả người dùng và phân loại theo quyền
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Danh sách người dùng được phân loại theo quyền
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     R1:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/User'
+ *                     R2:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/User'
+ *                     R3:
+ *                       type: array
+ *                       items:
+ *                         $ref: '#/components/schemas/User'
+ *       401:
+ *         description: Không có quyền truy cập
+ *       403:
+ *         description: Không có quyền admin
+ */
+router.get('/all', protect, authorizeRoles("R3"), userController.getAllUsersByRole);
+
+/**
+ * @swagger
  * /api/users/register:
  *   post:
  *     summary: Đăng ký người dùng mới
@@ -43,6 +83,143 @@ const { protect, authorizeRoles } = require('../middleware/authMiddleware'); // 
  *         description: Dữ liệu không hợp lệ
  */
 router.post('/register', userController.registerUser);
+
+/**
+ * @swagger
+ * /api/users/register-patient:
+ *   post:
+ *     summary: Đăng ký bệnh nhân
+ *     tags: [Users]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - firstName
+ *               - lastName
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 format: password
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               phoneNumber:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Đăng ký thành công
+ *       400:
+ *         description: Dữ liệu không hợp lệ
+ */
+router.post('/register-patient', userController.registerPatient);
+
+/**
+ * @swagger
+ * /api/users/register-doctor:
+ *   post:
+ *     summary: Đăng ký bác sĩ (chỉ admin)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - firstName
+ *               - lastName
+ *               - specialtyId
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 format: password
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               specialtyId:
+ *                 type: integer
+ *               address:
+ *                 type: string
+ *               phoneNumber:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Đăng ký thành công
+ *       400:
+ *         description: Dữ liệu không hợp lệ
+ *       401:
+ *         description: Không có quyền truy cập
+ */
+router.post('/register-doctor', protect, authorizeRoles("R3"), userController.registerDoctor);
+
+/**
+ * @swagger
+ * /api/users/register-admin:
+ *   post:
+ *     summary: Đăng ký admin mới (chỉ admin hiện tại)
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - firstName
+ *               - lastName
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 format: password
+ *               firstName:
+ *                 type: string
+ *               lastName:
+ *                 type: string
+ *               address:
+ *                 type: string
+ *               phoneNumber:
+ *                 type: string
+ *               gender:
+ *                 type: boolean
+ *               image:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Đăng ký thành công
+ *       400:
+ *         description: Dữ liệu không hợp lệ
+ *       401:
+ *         description: Không có quyền truy cập
+ *       403:
+ *         description: Không có quyền admin
+ */
+router.post('/register-admin', protect, authorizeRoles("R3"), userController.registerAdmin);
 
 /**
  * @swagger
@@ -133,92 +310,5 @@ router.put('/:id', protect, userController.updateUser);
  *         description: Không tìm thấy người dùng
  */
 router.delete('/:id', protect, userController.deleteUser);
-
-/**
- * @swagger
- * /api/users/register-patient:
- *   post:
- *     summary: Đăng ký bệnh nhân
- *     tags: [Users]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *               - firstName
- *               - lastName
- *             properties:
- *               email:
- *                 type: string
- *                 format: email
- *               password:
- *                 type: string
- *                 format: password
- *               firstName:
- *                 type: string
- *               lastName:
- *                 type: string
- *               address:
- *                 type: string
- *               phoneNumber:
- *                 type: string
- *     responses:
- *       201:
- *         description: Đăng ký thành công
- *       400:
- *         description: Dữ liệu không hợp lệ
- */
-router.post('/register-patient', userController.registerPatient);
-
-/**
- * @swagger
- * /api/users/register-doctor:
- *   post:
- *     summary: Đăng ký bác sĩ (chỉ admin)
- *     tags: [Users]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - email
- *               - password
- *               - firstName
- *               - lastName
- *               - specialtyId
- *             properties:
- *               email:
- *                 type: string
- *                 format: email
- *               password:
- *                 type: string
- *                 format: password
- *               firstName:
- *                 type: string
- *               lastName:
- *                 type: string
- *               specialtyId:
- *                 type: integer
- *               address:
- *                 type: string
- *               phoneNumber:
- *                 type: string
- *     responses:
- *       201:
- *         description: Đăng ký thành công
- *       400:
- *         description: Dữ liệu không hợp lệ
- *       401:
- *         description: Không có quyền truy cập
- */
-router.post('/register-doctor', protect, authorizeRoles("R3"), userController.registerDoctor);
 
 module.exports = router;

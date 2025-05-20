@@ -1,5 +1,13 @@
 import axios from 'axios';
 
+// Utility function to get token from localStorage
+const getToken = () => {
+    if (typeof window !== 'undefined') {
+        return localStorage.getItem('token') || '';
+    }
+    return '';
+};
+
 const apiClient = axios.create({
     baseURL: 'http://localhost:8080/api/',
     headers: {
@@ -125,8 +133,9 @@ interface Specialty {
 }
 
 interface ApiResponse<T> {
-    message: string;
+    success: boolean;
     data: T;
+    message?: string;
     error?: string;
     errorCode?: string;
 }
@@ -163,6 +172,9 @@ interface CreateUserData {
     phoneNumber?: string;
     address?: string;
     gender?: boolean;
+    positionId?: string;
+    specialtyId?: number;
+    image?: string;
 }
 
 interface UpdateUserData {
@@ -210,6 +222,39 @@ interface TimeType {
     valueVi: string;
     valueEn: string;
 }
+
+// Thêm các interface từ file app/lib/api.ts
+export interface BookingData {
+    statusId: string;
+    doctorId: number;
+    patientId: number;
+    date: string;
+    timeType: string;
+}
+
+export interface BookingPayload {
+    doctorId: number;
+    patientId: number;
+    date: string;
+    timeType: string;
+    reason?: string;
+}
+
+// Thêm interface cho response mới
+export interface UsersByRole {
+    R1: UserProfile[]; // Bệnh nhân
+    R2: UserProfile[]; // Bác sĩ
+    R3: UserProfile[]; // Admin
+}
+
+// Thêm token vào header cho mọi request
+apiClient.interceptors.request.use((config) => {
+    const token = getToken();
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
 
 // API Functions
 export const loginUser = async (data: LoginData): Promise<LoginResponse> => {
@@ -415,15 +460,6 @@ export const getBookingsByPatientId = async (patientId: number): Promise<Appoint
         throw new Error(error.response?.data?.message || 'Lỗi khi lấy lịch khám');
     }
 };
-
-// Thêm token vào header cho mọi request
-apiClient.interceptors.request.use((config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-});
 
 // Booking APIs
 export const createBooking = async (data: {
@@ -642,17 +678,26 @@ export const getDoctorsBySpecialty = async (specialtyId: number): Promise<Doctor
     }
 };
 
-export const createDoctor = async (data: CreateDoctorData): Promise<Doctor> => {
+export const createDoctor = async (userData: any) => {
     try {
-        const token = localStorage.getItem('token');
-        const response = await apiClient.post('/doctor', data, {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        });
+        const token = getToken();
+        if (!token) {
+            throw new Error('Vui lòng đăng nhập để thực hiện chức năng này');
+        }
+
+        // Sử dụng apiClient
+        const response = await apiClient.post('/users/register-doctor', userData);
+
+        // Axios tự động xử lý JSON response và response.ok
         return response.data;
+
     } catch (error: any) {
-        throw new Error(error.response?.data?.message || 'Lỗi khi tạo bác sĩ');
+        console.error('Error creating doctor:', error);
+        // Xử lý lỗi chi tiết hơn từ response của axios
+        if (axios.isAxiosError(error)) {
+            throw new Error(error.response?.data?.message || error.message);
+        }
+        throw new Error('Đã có lỗi xảy ra trong quá trình tạo bác sĩ');
     }
 };
 
@@ -765,19 +810,36 @@ export const uploadProfileImage = async (file: File): Promise<{ imageUrl: string
         const formData = new FormData();
         formData.append('image', file);
 
+        // Sử dụng apiClient để gọi đúng endpoint backend
+        // Giả định endpoint upload ảnh là /users/profile/image
         const response = await apiClient.post<{ imageUrl: string }>('/users/profile/image', formData, {
             headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'multipart/form-data'
+                'Authorization': `Bearer ${token}`,
+                // Axios và apiClient với FormData thường không cần set Content-Type
+                // Browser sẽ tự động set Content-Type là multipart/form-data
+                // 'Content-Type': 'multipart/form-data'
             }
         });
-        return response.data;
+
+        // apiClient tự động xử lý response.ok và parse JSON
+        return response.data; // apiClient trả về data trực tiếp trong response.data
+
     } catch (error: any) {
         console.error('Error uploading profile image:', error);
-        if (error.response?.status === 401) {
-            throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+        // Xử lý lỗi chi tiết hơn từ response của axios
+        if (axios.isAxiosError(error)) {
+            console.error('Axios error details:', {
+                status: error.response?.status,
+                data: error.response?.data,
+                message: error.message
+            });
+            if (error.response?.status === 401) {
+                throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+            }
+            // Sử dụng message từ backend nếu có, ngược lại dùng message mặc định
+            throw new Error(error.response?.data?.message || error.message || 'Lỗi khi tải lên ảnh đại diện');
         }
-        throw new Error(error.response?.data?.message || 'Lỗi khi tải lên ảnh đại diện');
+        throw new Error('Đã có lỗi xảy ra trong quá trình tải lên ảnh đại diện');
     }
 };
 
@@ -797,45 +859,103 @@ export const updateBookingStatus = async (bookingId: number, statusId: string): 
 };
 
 // Admin APIs
-export const createUser = async (data: CreateUserData): Promise<UserProfile> => {
+export const createUser = async (userData: CreateUserData): Promise<UserProfile> => {
     try {
         const token = localStorage.getItem('token');
-        const response = await apiClient.post('/users', data, {
+        if (!token) {
+            throw new Error('Vui lòng đăng nhập để thực hiện chức năng này');
+        }
+
+        // Validate roleId
+        if (userData.roleId !== "R2" && userData.roleId !== "R3") {
+            throw new Error('RoleId không hợp lệ. Chỉ chấp nhận R2 (Doctor) hoặc R3 (Admin)');
+        }
+
+        // Chuẩn bị dữ liệu gửi đi
+        const dataToSend = {
+            ...userData,
+            // Chỉ thêm positionId nếu là bác sĩ (R2)
+            positionId: userData.roleId === "R2" ? (userData.positionId || "P1") : undefined,
+            // Chỉ gửi specialtyId nếu là bác sĩ (R2)
+            specialtyId: userData.roleId === "R2" ? (userData.specialtyId ? Number(userData.specialtyId) : undefined) : undefined
+        };
+
+        console.log('Sending data to server:', dataToSend);
+
+        const response = await apiClient.post<ApiResponse<UserProfile>>('/users/register-doctor', dataToSend, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
         });
-        return response.data;
-    } catch (error: any) {
-        throw new Error(error.response?.data?.message || 'Lỗi khi tạo người dùng');
+
+        console.log('Server response:', response.data);
+
+        // Kiểm tra nếu response có message thành công
+        if (response.data.message && response.data.message.includes('thành công')) {
+            return response.data.data;
+        }
+
+        // Nếu không có message thành công, kiểm tra success flag
+        if (!response.data.success) {
+            throw new Error(response.data.message || 'Lỗi khi tạo người dùng');
+        }
+
+        return response.data.data;
+    } catch (error) {
+        console.error('Error creating user:', error);
+        if (axios.isAxiosError(error)) {
+            console.error('Error response:', error.response?.data);
+            // Nếu response có message thành công, trả về data
+            if (error.response?.data?.message?.includes('thành công')) {
+                return error.response.data.data;
+            }
+            throw new Error(error.response?.data?.message || 'Lỗi khi tạo người dùng');
+        }
+        throw new Error('Đã có lỗi xảy ra trong quá trình tạo người dùng');
     }
 };
 
 export const getAllUsers = async (): Promise<UserProfile[]> => {
     try {
         const token = localStorage.getItem('token');
-        const response = await apiClient.get('/users', {
+        const response = await apiClient.get<ApiResponse<UserProfile[]>>('/users', {
             headers: {
                 Authorization: `Bearer ${token}`
             }
         });
-        return response.data;
-    } catch (error: any) {
-        throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách người dùng');
+
+        if (!response.data.success) {
+            throw new Error(response.data.message || 'Lỗi khi lấy danh sách người dùng');
+        }
+
+        return response.data.data;
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách người dùng');
+        }
+        throw new Error('Đã có lỗi xảy ra khi lấy danh sách người dùng');
     }
 };
 
 export const updateUser = async (userId: number, data: UpdateUserData): Promise<UserProfile> => {
     try {
         const token = localStorage.getItem('token');
-        const response = await apiClient.put(`/users/${userId}`, data, {
+        const response = await apiClient.put<ApiResponse<UserProfile>>(`/users/${userId}`, data, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
         });
-        return response.data;
-    } catch (error: any) {
-        throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật người dùng');
+
+        if (!response.data.success) {
+            throw new Error(response.data.message || 'Lỗi khi cập nhật người dùng');
+        }
+
+        return response.data.data;
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật người dùng');
+        }
+        throw new Error('Đã có lỗi xảy ra khi cập nhật người dùng');
     }
 };
 
@@ -874,13 +994,96 @@ export const getTimeTypes = async (): Promise<TimeType[]> => {
 export const getAllAppointments = async (): Promise<Appointment[]> => {
     try {
         const token = localStorage.getItem('token');
-        const response = await apiClient.get<{ data: Appointment[] }>('/bookings', {
+        if (!token) {
+            throw new Error('Vui lòng đăng nhập để xem danh sách lịch hẹn');
+        }
+        // *** TEMPORARY CHANGE FOR DEBUGGING ***
+        // The backend booking controller provided does not have a general /bookings endpoint.
+        // To test connectivity to existing booking endpoints, we will temporarily call
+        // the getBookingsByDoctor endpoint with a hardcoded doctorId (e.g., 1).
+        // A proper fix would involve implementing a backend getAllBookings endpoint
+        // or adjusting the frontend component using this function.
+        const doctorIdToTest = 1; // Use a known doctor ID for testing
+
+        const response = await apiClient.get<{ data: Appointment[] }>(`/bookings/doctor/${doctorIdToTest}`, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
         });
         return response.data.data || [];
     } catch (error: any) {
-        throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách lịch hẹn');
+        console.error('Error fetching all appointments (debug call):', error);
+        throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách lịch hẹn (debug)');
+    }
+};
+
+// Thêm hàm mới để lấy tất cả user theo role
+export const getAllUsersByRole = async (): Promise<UsersByRole> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.get<ApiResponse<UsersByRole>>('/users/all', {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        if (!response.data.success) {
+            throw new Error(response.data.message || 'Lỗi khi lấy danh sách người dùng');
+        }
+
+        return response.data.data;
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách người dùng');
+        }
+        throw new Error('Đã có lỗi xảy ra khi lấy danh sách người dùng');
+    }
+};
+
+// Admin APIs
+export const deleteUser = async (userId: number): Promise<void> => {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('Vui lòng đăng nhập để thực hiện chức năng này');
+        }
+
+        const response = await apiClient.delete<ApiResponse<void>>(`/users/${userId}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+
+        if (!response.data.success) {
+            throw new Error(response.data.message || 'Lỗi khi xóa người dùng');
+        }
+    } catch (error) {
+        if (axios.isAxiosError(error)) {
+            throw new Error(error.response?.data?.message || 'Lỗi khi xóa người dùng');
+        }
+        throw new Error('Đã có lỗi xảy ra khi xóa người dùng');
+    }
+};
+
+export const createAdmin = async (userData: any) => {
+    try {
+        const token = getToken();
+        if (!token) {
+            throw new Error('Vui lòng đăng nhập để thực hiện chức năng này');
+        }
+
+        // Sử dụng apiClient
+        const response = await apiClient.post('/users/register-admin', userData);
+
+        // Axios tự động xử lý JSON response và response.ok
+        return response.data;
+
+    } catch (error: any) {
+        console.error('Error creating admin:', error);
+        // Xử lý lỗi chi tiết hơn từ response của axios
+        if (axios.isAxiosError(error)) {
+            throw new Error(error.response?.data?.message || error.message);
+        }
+        throw new Error('Đã có lỗi xảy ra trong quá trình tạo admin');
     }
 };
