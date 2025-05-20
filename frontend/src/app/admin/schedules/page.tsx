@@ -182,7 +182,6 @@ export default function AdminSchedulePage() {
             } finally {
                 setLoading(false);
             }
-
         } catch (err: any) {
             console.error('Error in handleUpdateSchedule:', err);
             setError(err.message || "Có lỗi xảy ra khi cập nhật lịch phân công");
@@ -211,6 +210,7 @@ export default function AdminSchedulePage() {
             } finally {
                 setLoading(false);
             }
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             console.error('Error in handleDeleteSchedule:', err);
             setError(err.message || "Có lỗi xảy ra khi xóa lịch phân công");

@@ -19,38 +19,37 @@ export default function RegisterPage() {
     setError('');
     setLoading(true);
 
-        try {
-            const response = await registerUser({
-                email,
-                password,
-                firstName,
-                lastName,
-            });
+    try {
+      const response = await registerUser({
+        email,
+        password,
+        firstName,
+        lastName,
+      });
 
-            // Điều hướng dựa vào role từ backend
-            // Giả sử roleId trong database là: R1 (admin), R2 (doctor), R3 (patient)
-            switch (response.role) {
-                case 'R1': // Admin
-                    router.push('/admin/dashboard');
-                    break;
-                case 'R2': // Doctor
-                    router.push('/doctor/dashboard');
-                    break;
-                case 'R3': // Patient
-                    router.push('/patient/dashboard');
-                    break;
-                default:
-                    router.push('/');
-            }
-        } catch (err: any) {
-            setError(err.message);
-        } finally {
-            setLoading(false);
-        }
-    };
+      // Điều hướng dựa vào role từ backend
+      switch (response.role) {
+        case 'R1':
+          router.push('/admin/dashboard');
+          break;
+        case 'R2':
+          router.push('/doctor/dashboard');
+          break;
+        case 'R3':
+          router.push('/patient/dashboard');
+          break;
+        default:
+          router.push('/');
+      }
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-white-200 to-blue-400 px-6 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-white to-blue-400 px-6 py-12">
       <div className="bg-white p-10 rounded-2xl shadow-2xl w-full max-w-md">
         <h2 className="text-3xl font-bold text-center text-gray-800 mb-8">
           Đăng ký tài khoản
@@ -66,7 +65,7 @@ export default function RegisterPage() {
           <input
             type="text"
             placeholder="Họ"
-            className="w-full p-3 rounded-lg  focus:ring-blue-400"
+            className="w-full p-3 rounded-lg border border-gray-300 bg-gray-50 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
             required
@@ -74,7 +73,7 @@ export default function RegisterPage() {
           <input
             type="text"
             placeholder="Tên"
-            className="w-full p-3 rounded-lg  focus:ring-blue-400"
+            className="w-full p-3 rounded-lg border border-gray-300 bg-gray-50 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
             required
@@ -82,7 +81,7 @@ export default function RegisterPage() {
           <input
             type="email"
             placeholder="Email"
-            className="w-full p-3 rounded-lg  focus:ring-blue-400"
+            className="w-full p-3 rounded-lg border border-gray-300 bg-gray-50 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
@@ -90,7 +89,7 @@ export default function RegisterPage() {
           <input
             type="password"
             placeholder="Mật khẩu"
-            className="w-full p-3 rounded-lg  focus:ring-blue-400"
+            className="w-full p-3 rounded-lg border border-gray-300 bg-gray-50 text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -98,7 +97,7 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            className="w-full bg-blue-500 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+            className="w-full bg-blue-600 text-white p-3 rounded-lg font-semibold hover:bg-blue-700 transition"
             disabled={loading}
           >
             {loading ? 'Đang đăng ký...' : 'Đăng ký'}

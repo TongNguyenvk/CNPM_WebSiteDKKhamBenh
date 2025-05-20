@@ -274,6 +274,7 @@ export const loginUser = async (data: LoginData): Promise<LoginResponse> => {
             }));
         }
         return response.data;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('Login error details:', {
             status: error.response?.status,
@@ -301,6 +302,7 @@ export const registerUser = async (data: RegisterData): Promise<LoginResponse> =
             }));
         }
         return response.data;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Đăng ký thất bại');
     }
@@ -333,6 +335,7 @@ export const getDoctorAppointments = async (doctorId: number): Promise<Appointme
             }
         });
         return response.data.data || [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi lấy lịch khám');
     }
@@ -373,6 +376,7 @@ export const getDoctorSchedules = async (doctorId: number, date: string): Promis
         console.log('Schedule API Response:', response.data);
 
         if (response.data && response.data.data) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return response.data.data.map((schedule: any) => ({
                 ...schedule,
                 timeTypeData: schedule.timeTypeData || {
@@ -385,6 +389,7 @@ export const getDoctorSchedules = async (doctorId: number, date: string): Promis
                 }
             }));
         } else if (Array.isArray(response.data)) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             return response.data.map((schedule: any) => ({
                 ...schedule,
                 timeTypeData: schedule.timeTypeData || {
@@ -427,6 +432,7 @@ export const getTodayAppointments = async (doctorId: number): Promise<Appointmen
             }
         });
         return response.data.data || [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi lấy lịch khám hôm nay');
     }
@@ -442,6 +448,7 @@ export const getPatientAppointments = async (patientId: number): Promise<Appoint
             }
         });
         return response.data.data || [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi lấy lịch khám');
     }
@@ -456,6 +463,7 @@ export const getBookingsByPatientId = async (patientId: number): Promise<Appoint
             }
         });
         return response.data.data || [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi lấy lịch khám');
     }
@@ -477,6 +485,7 @@ export const createBooking = async (data: {
             }
         });
         return response.data.data;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi đặt lịch khám');
     }
@@ -491,6 +500,7 @@ export const getBookingById = async (id: number): Promise<Appointment> => {
             }
         });
         return response.data.data;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi lấy thông tin lịch khám');
     }
@@ -505,6 +515,7 @@ export const cancelBooking = async (bookingId: number): Promise<Appointment> => 
             }
         });
         return response.data.data;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi hủy lịch khám');
     }
@@ -525,6 +536,7 @@ export const createSchedule = async (data: {
             }
         });
         return response.data;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi tạo lịch phân công');
     }
@@ -553,6 +565,7 @@ export const createDoctorSchedule = async (data: {
         }
 
         return response.data.data;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('Error creating doctor schedule:', error);
         throw new Error(error.response?.data?.message || 'Lỗi khi tạo lịch khám');
@@ -581,6 +594,7 @@ export const getAllSchedules = async (): Promise<Schedule[]> => {
             }
         });
         return response.data.data || [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách lịch khám');
     }
@@ -599,6 +613,7 @@ export const updateDoctorSchedule = async (scheduleId: number, data: {
             }
         });
         return response.data.data;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật lịch khám');
     }
@@ -612,6 +627,7 @@ export const deleteDoctorSchedule = async (scheduleId: number): Promise<void> =>
                 Authorization: `Bearer ${token}`
             }
         });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi xóa lịch khám');
     }
@@ -622,6 +638,7 @@ export const getAllDoctors = async (): Promise<Doctor[]> => {
     try {
         const response = await apiClient.get('/doctor');
         return response.data || [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách bác sĩ');
     }
@@ -690,7 +707,6 @@ export const createDoctor = async (userData: any) => {
 
         // Axios tự động xử lý JSON response và response.ok
         return response.data;
-
     } catch (error: any) {
         console.error('Error creating doctor:', error);
         // Xử lý lỗi chi tiết hơn từ response của axios
@@ -710,6 +726,7 @@ export const updateDoctor = async (doctorId: number, data: UpdateDoctorData): Pr
             }
         });
         return response.data;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật thông tin bác sĩ');
     }
@@ -723,6 +740,7 @@ export const deleteDoctor = async (doctorId: number): Promise<void> => {
                 Authorization: `Bearer ${token}`
             }
         });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi xóa bác sĩ');
     }
@@ -733,6 +751,7 @@ export const getAllSpecialties = async (): Promise<Specialty[]> => {
     try {
         const response = await apiClient.get('/specialties');
         return response.data || [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách chuyên khoa');
     }
@@ -769,6 +788,7 @@ export const getUserProfile = async (): Promise<UserProfile> => {
             }
         });
         return response.data;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('Error fetching user profile:', error);
         if (error.response?.status === 401) {
@@ -791,6 +811,7 @@ export const updateUserProfile = async (data: UpdateUserProfileData): Promise<Us
             }
         });
         return response.data;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('Error updating user profile:', error);
         if (error.response?.status === 401) {
@@ -820,10 +841,7 @@ export const uploadProfileImage = async (file: File): Promise<{ imageUrl: string
                 // 'Content-Type': 'multipart/form-data'
             }
         });
-
-        // apiClient tự động xử lý response.ok và parse JSON
-        return response.data; // apiClient trả về data trực tiếp trong response.data
-
+        return response.data;
     } catch (error: any) {
         console.error('Error uploading profile image:', error);
         // Xử lý lỗi chi tiết hơn từ response của axios
@@ -852,6 +870,7 @@ export const updateBookingStatus = async (bookingId: number, statusId: string): 
             }
         });
         return response.data.data;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('Error updating booking status:', error);
         throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật trạng thái lịch khám');
@@ -887,31 +906,9 @@ export const createUser = async (userData: CreateUserData): Promise<UserProfile>
                 Authorization: `Bearer ${token}`
             }
         });
-
-        console.log('Server response:', response.data);
-
-        // Kiểm tra nếu response có message thành công
-        if (response.data.message && response.data.message.includes('thành công')) {
-            return response.data.data;
-        }
-
-        // Nếu không có message thành công, kiểm tra success flag
-        if (!response.data.success) {
-            throw new Error(response.data.message || 'Lỗi khi tạo người dùng');
-        }
-
-        return response.data.data;
-    } catch (error) {
-        console.error('Error creating user:', error);
-        if (axios.isAxiosError(error)) {
-            console.error('Error response:', error.response?.data);
-            // Nếu response có message thành công, trả về data
-            if (error.response?.data?.message?.includes('thành công')) {
-                return error.response.data.data;
-            }
-            throw new Error(error.response?.data?.message || 'Lỗi khi tạo người dùng');
-        }
-        throw new Error('Đã có lỗi xảy ra trong quá trình tạo người dùng');
+        return response.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi tạo người dùng');
     }
 };
 
@@ -923,17 +920,9 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
                 Authorization: `Bearer ${token}`
             }
         });
-
-        if (!response.data.success) {
-            throw new Error(response.data.message || 'Lỗi khi lấy danh sách người dùng');
-        }
-
-        return response.data.data;
-    } catch (error) {
-        if (axios.isAxiosError(error)) {
-            throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách người dùng');
-        }
-        throw new Error('Đã có lỗi xảy ra khi lấy danh sách người dùng');
+        return response.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách người dùng');
     }
 };
 
@@ -945,17 +934,9 @@ export const updateUser = async (userId: number, data: UpdateUserData): Promise<
                 Authorization: `Bearer ${token}`
             }
         });
-
-        if (!response.data.success) {
-            throw new Error(response.data.message || 'Lỗi khi cập nhật người dùng');
-        }
-
-        return response.data.data;
-    } catch (error) {
-        if (axios.isAxiosError(error)) {
-            throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật người dùng');
-        }
-        throw new Error('Đã có lỗi xảy ra khi cập nhật người dùng');
+        return response.data;
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật người dùng');
     }
 };
 
@@ -970,6 +951,7 @@ export const getTimeStates = async (): Promise<TimeState[]> => {
             }
         });
         return response.data.data || [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('Error fetching time states:', error);
         throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách thời gian');
@@ -986,6 +968,7 @@ export const getTimeTypes = async (): Promise<TimeType[]> => {
             }
         });
         return response.data.data || [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách thời gian');
     }
@@ -1011,6 +994,7 @@ export const getAllAppointments = async (): Promise<Appointment[]> => {
             }
         });
         return response.data.data || [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('Error fetching all appointments (debug call):', error);
         throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách lịch hẹn (debug)');

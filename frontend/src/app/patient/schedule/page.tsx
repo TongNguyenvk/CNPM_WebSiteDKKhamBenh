@@ -12,6 +12,7 @@ export default function PatientSchedulePage() {
     const [doctorId, setDoctorId] = useState<number>(0);
     const [doctors, setDoctors] = useState<DoctorOption[]>([]);
     const [date, setDate] = useState('');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [schedules, setSchedules] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);

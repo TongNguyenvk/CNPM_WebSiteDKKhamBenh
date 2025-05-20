@@ -97,8 +97,8 @@ export default function UsersPage() {
 
     const loadUsers = async () => {
         try {
-            const data = await getAllUsersByRole();
-            setUsersByRole(data);
+            const data = await getAllUsers();
+            setUsers(data);
         } catch (error) {
             toast.error('Lỗi khi tải danh sách người dùng');
         }
@@ -161,33 +161,20 @@ export default function UsersPage() {
             }
 
             setIsCreateModalOpen(false);
-            resetForm();
-            await loadUsers();
-            router.refresh();
-        } catch (error: any) {
-            console.error('Error creating user:', error);
-            toast.error(error.message || 'Lỗi khi tạo người dùng!');
+            setFormData({
+                email: '',
+                password: '',
+                firstName: '',
+                lastName: '',
+                roleId: '',
+                phoneNumber: '',
+                address: '',
+                gender: true
+            });
+            loadUsers();
+        } catch (error) {
+            toast.error('Lỗi khi tạo người dùng');
         }
-    };
-
-    const resetForm = () => {
-        setFormData({
-            email: '',
-            password: '',
-            firstName: '',
-            lastName: '',
-            roleId: 'R2',
-            phoneNumber: '',
-            address: '',
-            gender: true,
-            positionId: '',
-            specialtyId: undefined,
-            image: '',
-            descriptionMarkdown: '',
-            descriptionHTML: ''
-        });
-        setImagePreview('');
-        setImageFile(null);
     };
 
     const handleUpdateUser = async () => {
@@ -199,14 +186,9 @@ export default function UsersPage() {
                 position: 'top-center',
             });
             setIsEditModalOpen(false);
-            await loadUsers();
-            router.refresh();
-        } catch (error: any) {
-            console.error('Error updating user:', error);
-            toast.error(error.message || 'Lỗi khi cập nhật người dùng!', {
-                duration: 3000,
-                position: 'top-center',
-            });
+            loadUsers();
+        } catch (error) {
+            toast.error('Lỗi khi cập nhật người dùng');
         }
     };
 

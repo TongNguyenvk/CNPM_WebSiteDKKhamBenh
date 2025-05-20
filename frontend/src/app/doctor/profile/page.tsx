@@ -57,6 +57,7 @@ export default function DoctorProfilePage() {
                 address: data.address || '',
                 gender: data.gender || false
             });
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -103,6 +104,7 @@ export default function DoctorProfilePage() {
             const result = await uploadProfileImage(e.target.files[0]);
             setProfile(prev => prev ? { ...prev, image: result.imageUrl } : null);
             setSuccess('Cập nhật ảnh đại diện thành công');
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             setError(err.message);
         }

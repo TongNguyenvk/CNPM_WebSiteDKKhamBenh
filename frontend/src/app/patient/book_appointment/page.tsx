@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createBooking, getDoctorById, getScheduleById } from "@/lib/api";
@@ -57,6 +58,7 @@ export default function BookAppointmentPage() {
 
                 setDoctor(doctorData);
                 setSchedule(scheduleData);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (err: any) {
                 setError(err.message || "Có lỗi xảy ra khi tải thông tin");
             } finally {
@@ -105,7 +107,7 @@ export default function BookAppointmentPage() {
             setTimeout(() => {
                 router.push('/patient/appointments');
             }, 2000);
-
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             setError(err.message || "Có lỗi xảy ra khi đặt lịch");
         }
@@ -143,10 +145,17 @@ export default function BookAppointmentPage() {
                     <div className="mb-6">
                         <h2 className="text-xl font-semibold mb-4">Thông tin bác sĩ</h2>
                         <div className="flex items-center space-x-4">
-                            <img
-                                src={doctor.image ? `http://localhost:8080/images/${doctor.image}` : "/images/default-doctor.jpg"}
-                                alt={`${doctor.firstName} ${doctor.lastName}`}
-                                className="w-16 h-16 rounded-full object-cover"
+                            <Image
+                            src={
+                                doctor.image
+                                ? `http://localhost:8080/images/${doctor.image}`
+                                : '/images/default-doctor.jpg'
+                            }
+                            alt={`${doctor.firstName || ''} ${doctor.lastName || ''}`}
+                            width={64}
+                            height={64}
+                            className="rounded-full object-cover"
+                            unoptimized
                             />
                             <div>
                                 <p className="font-medium">{doctor.firstName} {doctor.lastName}</p>

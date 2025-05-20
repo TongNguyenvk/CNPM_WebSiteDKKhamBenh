@@ -35,6 +35,8 @@ export default function NewAppointmentPage() {
             try {
                 const data = await getAllDoctors();
                 setDoctors(data);
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
             } catch (err: any) {
                 setError('Không thể tải danh sách bác sĩ');
             }
