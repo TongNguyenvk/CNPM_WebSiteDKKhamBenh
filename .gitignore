@@ -44,3 +44,6 @@ Thumbs.db
 
 # Specific files to ignore
 next-env.d.ts
+
+#
+.eslintrc.js

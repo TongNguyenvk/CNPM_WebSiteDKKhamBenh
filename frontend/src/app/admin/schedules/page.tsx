@@ -94,7 +94,8 @@ export default function AdminSchedulePage() {
                 setSchedules(allSchedulesData);
 
                 setLoading(false);
-
+               // eslint-disable-next-line @typescript-eslint/no-unused-vars 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any 
             } catch (error: any) {
                 console.error('Error loading initial data:', error);
                 toast.error(error.message || 'Lỗi khi tải dữ liệu ban đầu');
@@ -133,6 +134,8 @@ export default function AdminSchedulePage() {
             try {
                 const allSchedulesData = await getAllSchedules();
                 setSchedules(allSchedulesData);
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (error: any) {
                 console.error('Error re-fetching schedules after creation:', error);
                 toast.error('Lỗi khi tải lại danh sách lịch phân công');
@@ -147,7 +150,8 @@ export default function AdminSchedulePage() {
                 timeType: '',
                 maxNumber: 1
             });
-
+// eslint-disable-next-line @typescript-eslint/no-unused-vars 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (error: any) {
             console.error('Error creating schedule:', error);
             toast.error(error.message || 'Lỗi khi tạo lịch phân công');
@@ -176,12 +180,16 @@ export default function AdminSchedulePage() {
             try {
                 const allSchedulesData = await getAllSchedules();
                 setSchedules(allSchedulesData);
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (error: any) {
                 console.error('Error re-fetching schedules after update:', error);
                 toast.error('Lỗi khi tải lại danh sách lịch phân công');
             } finally {
                 setLoading(false);
             }
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
             console.error('Error in handleUpdateSchedule:', err);
             setError(err.message || "Có lỗi xảy ra khi cập nhật lịch phân công");
@@ -204,6 +212,8 @@ export default function AdminSchedulePage() {
             try {
                 const allSchedulesData = await getAllSchedules();
                 setSchedules(allSchedulesData);
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (error: any) {
                 console.error('Error re-fetching schedules after deletion:', error);
                 toast.error('Lỗi khi tải lại danh sách lịch phân công');

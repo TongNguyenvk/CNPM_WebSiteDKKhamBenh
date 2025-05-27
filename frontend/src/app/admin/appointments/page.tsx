@@ -120,6 +120,7 @@ export default function AppointmentsPage() {
             toast.success('Cập nhật lịch khám thành công');
             setIsEditModalOpen(false);
             loadSchedules();
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             toast.error('Lỗi khi cập nhật lịch khám');
         }

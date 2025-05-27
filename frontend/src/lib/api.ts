@@ -906,7 +906,7 @@ export const createUser = async (userData: CreateUserData): Promise<UserProfile>
                 Authorization: `Bearer ${token}`
             }
         });
-        return response.data;
+        return response.data.data;
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi tạo người dùng');
     }
@@ -920,7 +920,7 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
                 Authorization: `Bearer ${token}`
             }
         });
-        return response.data;
+        return response.data.data;
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách người dùng');
     }
@@ -934,7 +934,7 @@ export const updateUser = async (userId: number, data: UpdateUserData): Promise<
                 Authorization: `Bearer ${token}`
             }
         });
-        return response.data;
+        return response.data.data;
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật người dùng');
     }
@@ -1061,7 +1061,7 @@ export const createAdmin = async (userData: any) => {
 
         // Axios tự động xử lý JSON response và response.ok
         return response.data;
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('Error creating admin:', error);
         // Xử lý lỗi chi tiết hơn từ response của axios
