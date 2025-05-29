@@ -16,7 +16,7 @@ interface Doctor {
     id: number;
     firstName: string;
     lastName: string;
-    image: string;
+    image?: string;
     specialtyData?: {
         name: string;
     };
@@ -52,9 +52,10 @@ export default function SpecialtyDetailPage({ params }: PageProps) {
 
                 setSpecialty(specialtyData);
                 setDoctors(doctorsData);
-            } catch (err: Error) {
-                console.error('Error fetching data:', err);
-                setError(err.message || 'Có lỗi xảy ra khi tải thông tin chuyên khoa');
+            } catch (err: unknown) {
+                const error = err as Error;
+                console.error('Error fetching data:', error);
+                setError(error.message || 'Có lỗi xảy ra khi tải thông tin chuyên khoa');
             } finally {
                 setLoading(false);
             }

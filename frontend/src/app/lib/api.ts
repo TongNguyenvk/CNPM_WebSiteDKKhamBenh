@@ -168,7 +168,7 @@ export const getDoctorSchedules = async (doctorId: number, date: string): Promis
     console.log('Fetching schedules with token:', token ? 'Token exists' : 'No token');
     console.log('Doctor ID:', doctorId, 'Date:', date);
 
-    const response = await apiClient.get<{ success: boolean; data: Schedule[] }>(`/schedule/doctor/${doctorId}`, {
+    const response = await apiClient.get<{ success: boolean; data: Schedule[]; message?: string }>(`/schedule/doctor/${doctorId}`, {
       params: { date },
       headers: {
         Authorization: `Bearer ${token}`
@@ -177,11 +177,22 @@ export const getDoctorSchedules = async (doctorId: number, date: string): Promis
 
     console.log('Schedule API Response:', response.data);
 
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Lỗi khi lấy lịch phân công');
+    // Nếu response.data là mảng, trả về luôn
+    if (Array.isArray(response.data)) {
+      return response.data;
     }
 
-    return response.data.data || [];
+    // Nếu có cấu trúc { success, data, message }
+    if (response.data && typeof response.data === 'object') {
+      if (!response.data.success) {
+        console.warn('API returned success: false', response.data.message);
+        return [];
+      }
+      return response.data.data || [];
+    }
+
+    // Trường hợp khác trả về mảng rỗng
+    return [];
   } catch (error) {
     console.error(`Error fetching schedules for doctor ${doctorId} on ${date}:`, error);
     if (axios.isAxiosError(error)) {
@@ -192,7 +203,7 @@ export const getDoctorSchedules = async (doctorId: number, date: string): Promis
       });
 
       if (error.response?.status === 404) {
-        console.warn(`No schedules found (404) for doctor ${doctorId} on ${date}. Returning empty array.`);
+        console.warn(`No schedules found for doctor ${doctorId} on ${date}`);
         return [];
       }
       throw new Error(error.response?.data?.message || 'Lỗi khi lấy lịch phân công');

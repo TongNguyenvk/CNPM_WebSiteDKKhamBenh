@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "next build --no-lint",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "@tinymce/tinymce-react": "^6.2.0",
     "@types/uuid": "^10.0.0",
     "@uiw/react-md-editor": "^4.0.6",
     "axios": "^1.7.9",

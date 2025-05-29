@@ -128,8 +128,10 @@ interface Doctor {
 }
 
 interface Specialty {
-    id?: number;
+    id: number;
     name: string;
+    description: string;
+    image: string;
 }
 
 interface ApiResponse<T> {
@@ -343,20 +345,59 @@ export const getDoctorAppointments = async (doctorId: number): Promise<Appointme
 
 export const getDoctorSchedulesPT = async (doctorId: number, date: string): Promise<Schedule[]> => {
     try {
+        const token = localStorage.getItem('token');
         const response = await apiClient.get<Schedule[]>(`/schedule/doctor/${doctorId}`, {
-            params: { date }
+            params: { date },
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
         });
-        return response.data || [];
+        
+        // Xử lý dữ liệu trả về
+        const processSchedule = (schedule: any): Schedule => ({
+            id: Number(schedule.id) || 0,
+            doctorId: Number(schedule.doctorId) || 0,
+            date: String(schedule.date || ''),
+            timeType: String(schedule.timeType || ''),
+            maxNumber: Number(schedule.maxNumber) || 0,
+            currentNumber: Number(schedule.currentNumber) || 0,
+            timeTypeData: schedule.timeTypeData || {
+                keyMap: String(schedule.timeType || ''),
+                type: 'TIME',
+                valueVi: schedule.timeType === 'T1' ? 'Buổi sáng' :
+                        schedule.timeType === 'T2' ? 'Buổi chiều' :
+                        schedule.timeType === 'T3' ? 'Buổi tối' : 'Không xác định',
+                valueEn: ''
+            },
+            ...(schedule.User && {
+                User: {
+                    firstName: String(schedule.User.firstName || ''),
+                    lastName: String(schedule.User.lastName || ''),
+                    ...(schedule.User.Specialty && {
+                        Specialty: {
+                            name: String(schedule.User.Specialty.name || '')
+                        }
+                    })
+                }
+            })
+        });
+
+        if (response.data) {
+            return Array.isArray(response.data) 
+                ? response.data.map(processSchedule)
+                : [processSchedule(response.data)];
+        }
+        return [];
     } catch (error) {
         console.error(`Error fetching schedules for doctor ${doctorId} on ${date}:`, error);
-        if (axios.isAxiosError(error) && error.response?.status === 404) {
-            console.warn(`No schedules found (404) for doctor ${doctorId} on ${date}. Returning empty array.`);
-            return [];
-        }
         if (axios.isAxiosError(error)) {
-            throw new Error(`API Error: ${error.response?.status} - ${error.response?.data?.message || error.message}`);
+            if (error.response?.status === 404) {
+                console.warn(`No schedules found for doctor ${doctorId} on ${date}`);
+                return [];
+            }
+            throw new Error(error.response?.data?.message || 'Lỗi khi lấy lịch phân công');
         }
-        throw new Error('An unexpected error occurred while fetching schedules.');
+        throw new Error('Có lỗi xảy ra khi lấy lịch phân công');
     }
 };
 
@@ -366,7 +407,7 @@ export const getDoctorSchedules = async (doctorId: number, date: string): Promis
         console.log('Fetching schedules with token:', token ? 'Token exists' : 'No token');
         console.log('Doctor ID:', doctorId, 'Date:', date);
 
-        const response = await apiClient.get(`/schedule/doctor/${doctorId}`, {
+        const response = await apiClient.get<{ success: boolean; data: Schedule[] }>(`/schedule/doctor/${doctorId}`, {
             params: { date },
             headers: {
                 Authorization: `Bearer ${token}`
@@ -375,32 +416,43 @@ export const getDoctorSchedules = async (doctorId: number, date: string): Promis
 
         console.log('Schedule API Response:', response.data);
 
-        if (response.data && response.data.data) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return response.data.data.map((schedule: any) => ({
-                ...schedule,
-                timeTypeData: schedule.timeTypeData || {
-                    keyMap: schedule.timeType,
-                    type: 'TIME',
-                    valueVi: schedule.timeType === 'T1' ? 'Buổi sáng' :
+        if (!response.data.success) {
+            console.warn('API returned success: false');
+            return [];
+        }
+
+        const processSchedule = (schedule: any): Schedule => ({
+            id: Number(schedule.id) || 0,
+            doctorId: Number(schedule.doctorId) || 0,
+            date: String(schedule.date || ''),
+            timeType: String(schedule.timeType || ''),
+            maxNumber: Number(schedule.maxNumber) || 0,
+            currentNumber: Number(schedule.currentNumber) || 0,
+            timeTypeData: schedule.timeTypeData || {
+                keyMap: String(schedule.timeType || ''),
+                type: 'TIME',
+                valueVi: schedule.timeType === 'T1' ? 'Buổi sáng' :
                         schedule.timeType === 'T2' ? 'Buổi chiều' :
-                            schedule.timeType === 'T3' ? 'Buổi tối' : schedule.timeType,
-                    valueEn: ''
+                        schedule.timeType === 'T3' ? 'Buổi tối' : 'Không xác định',
+                valueEn: ''
+            },
+            ...(schedule.User && {
+                User: {
+                    firstName: String(schedule.User.firstName || ''),
+                    lastName: String(schedule.User.lastName || ''),
+                    ...(schedule.User.Specialty && {
+                        Specialty: {
+                            name: String(schedule.User.Specialty.name || '')
+                        }
+                    })
                 }
-            }));
-        } else if (Array.isArray(response.data)) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return response.data.map((schedule: any) => ({
-                ...schedule,
-                timeTypeData: schedule.timeTypeData || {
-                    keyMap: schedule.timeType,
-                    type: 'TIME',
-                    valueVi: schedule.timeType === 'T1' ? 'Buổi sáng' :
-                        schedule.timeType === 'T2' ? 'Buổi chiều' :
-                            schedule.timeType === 'T3' ? 'Buổi tối' : schedule.timeType,
-                    valueEn: ''
-                }
-            }));
+            })
+        });
+
+        if (response.data.data) {
+            return Array.isArray(response.data.data) 
+                ? response.data.data.map(processSchedule)
+                : [processSchedule(response.data.data)];
         }
         return [];
     } catch (error) {
@@ -413,7 +465,7 @@ export const getDoctorSchedules = async (doctorId: number, date: string): Promis
             });
 
             if (error.response?.status === 404) {
-                console.warn(`No schedules found (404) for doctor ${doctorId} on ${date}. Returning empty array.`);
+                console.warn(`No schedules found for doctor ${doctorId} on ${date}`);
                 return [];
             }
             throw new Error(error.response?.data?.message || 'Lỗi khi lấy lịch phân công');

@@ -22,7 +22,7 @@ interface Doctor {
 }
 
 interface Specialty {
-    id: number;
+    id?: number;
     name: string;
 }
 

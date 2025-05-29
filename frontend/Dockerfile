@@ -6,6 +6,8 @@ WORKDIR /app
 
 # Sao chép các file package.json và package-lock.json (hoặc yarn.lock)
 COPY package*.json ./
+COPY tsconfig.json ./
+COPY next.config.js ./
 
 # Cài đặt các dependencies
 RUN npm install

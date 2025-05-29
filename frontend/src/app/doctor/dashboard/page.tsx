@@ -29,11 +29,20 @@ interface Schedule {
     date: string;
     timeType: string;
     maxNumber: number;
-    currentNumber: number;
+    currentNumber?: number; // Đánh dấu là optional
     timeTypeData?: {
         valueVi: string;
         valueEn: string;
     };
+    User?: {
+        firstName: string;
+        lastName: string;
+        Specialty?: {
+            name: string;
+        };
+    };
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export default function DoctorDashboard() {
@@ -53,11 +62,14 @@ export default function DoctorDashboard() {
                 setError('');
 
                 // Gọi API song song để tối ưu thời gian
-                const [todayData, schedulesData, allAppointmentsData] = await Promise.all([
+                const [todayData, schedulesResponse, allAppointmentsData] = await Promise.all([
                     getTodayAppointments(user.userId),
-                    getDoctorSchedules(user.userId),
+                    getDoctorSchedules(user.userId, new Date().toISOString().split('T')[0]),
                     getDoctorAppointments(user.userId),
                 ]);
+                
+                // Xử lý dữ liệu lịch khám
+                const schedulesData = Array.isArray(schedulesResponse) ? schedulesResponse : [];
 
                 console.log('Today Appointments:', todayData);
                 console.log('Schedules:', schedulesData);

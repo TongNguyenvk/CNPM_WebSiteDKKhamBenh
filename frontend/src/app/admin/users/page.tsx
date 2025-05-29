@@ -9,6 +9,8 @@ import SimpleEditor from './components/SimpleEditor';
 interface Specialty {
     id: number;
     name: string;
+    description: string;
+    image: string;
 }
 
 interface UserProfile {
@@ -89,6 +91,11 @@ export default function UsersPage() {
     const [imagePreview, setImagePreview] = useState<string>('');
     const [specialties, setSpecialties] = useState<Specialty[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [users, setUsers] = useState<UsersByRole>({
+        R1: [],
+        R2: [],
+        R3: []
+    });
 
     useEffect(() => {
         loadUsers();
@@ -97,7 +104,7 @@ export default function UsersPage() {
 
     const loadUsers = async () => {
         try {
-            const data = await getAllUsers();
+            const data = await getAllUsersByRole();
             setUsers(data);
         } catch (error) {
             toast.error('Lỗi khi tải danh sách người dùng');
@@ -109,12 +116,38 @@ export default function UsersPage() {
             const data = await getAllSpecialties();
             // Ensure all specialties have required fields
             const validSpecialties = data.filter((specialty): specialty is Specialty =>
-                typeof specialty.id === 'number' && typeof specialty.name === 'string'
-            );
+                typeof specialty.id === 'number' && 
+                typeof specialty.name === 'string' &&
+                typeof specialty.description === 'string' &&
+                typeof specialty.image === 'string'
+            ) as Specialty[];
             setSpecialties(validSpecialties);
         } catch (error) {
             console.error('Error loading specialties:', error);
             toast.error('Lỗi khi tải danh sách chuyên khoa');
+        }
+    };
+
+    const resetForm = () => {
+        setFormData({
+            email: '',
+            password: '',
+            firstName: '',
+            lastName: '',
+            roleId: 'R2',
+            phoneNumber: '',
+            address: '',
+            gender: true,
+            positionId: '',
+            specialtyId: undefined,
+            image: '',
+            descriptionMarkdown: '',
+            descriptionHTML: ''
+        });
+        setImagePreview('');
+        setImageFile(null);
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
         }
     };
 
