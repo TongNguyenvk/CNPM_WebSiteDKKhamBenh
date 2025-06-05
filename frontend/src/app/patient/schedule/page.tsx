@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { getDoctorSchedules, getAllDoctors } from '../../../lib/api';
+import { getDoctorSchedules, getAllDoctors } from '@/lib/api';
 
 interface DoctorOption {
     id: number;
@@ -37,7 +37,9 @@ export default function PatientSchedulePage() {
         setLoading(true);
         setError(null);
         try {
+            console.log('Gọi getDoctorSchedules với:', { doctorId, date });
             const data = await getDoctorSchedules(doctorId, date);
+            console.log('Kết quả trả về từ getDoctorSchedules:', data);
             setSchedules(data);
         } catch (error: unknown) {
             const err = error as Error;

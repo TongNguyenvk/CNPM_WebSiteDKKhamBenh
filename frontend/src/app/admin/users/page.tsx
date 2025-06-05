@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { getAllUsersByRole, createDoctor, createAdmin, updateUser, deleteUser, getAllSpecialties } from '@/lib/api';
+import { getAllUsersByRole, createDoctor, createAdmin, updateUser, deleteUser, getAllSpecialties, getAllUsers } from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import SimpleEditor from './components/SimpleEditor';
@@ -97,8 +97,9 @@ export default function UsersPage() {
 
     const loadUsers = async () => {
         try {
-            const data = await getAllUsers();
-            setUsers(data);
+            const data = await getAllUsersByRole();
+            console.log('DATA USERS BY ROLE:', data);
+            setUsersByRole(data);
         } catch (error) {
             toast.error('Lỗi khi tải danh sách người dùng');
         }
@@ -519,6 +520,7 @@ export default function UsersPage() {
                                     value={formData.email}
                                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    disabled
                                 />
                             </div>
                             <div>
@@ -566,6 +568,23 @@ export default function UsersPage() {
                                     className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                 />
                             </div>
+                            {formData.roleId === 'R2' && (
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700">Chuyên khoa</label>
+                                    <select
+                                        value={formData.specialtyId || ''}
+                                        onChange={(e) => setFormData({ ...formData, specialtyId: Number(e.target.value) })}
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    >
+                                        <option value="">Chọn chuyên khoa</option>
+                                        {specialties.map((specialty) => (
+                                            <option key={specialty.id} value={specialty.id}>
+                                                {specialty.name}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
                             <div className="flex justify-end space-x-3">
                                 <button
                                     onClick={() => setIsEditModalOpen(false)}

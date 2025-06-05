@@ -28,13 +28,7 @@ interface Schedule {
     maxNumber: number;
     currentNumber?: number;
     timeTypeData?: TimeState;
-    User?: {
-        firstName: string;
-        lastName: string;
-        Specialty?: {
-            name: string;
-        };
-    };
+    doctorData?: Doctor;
 }
 
 export default function AppointmentsPage() {
@@ -203,10 +197,10 @@ export default function AppointmentsPage() {
                                 <tr key={schedule.id} className="hover:bg-gray-50">
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{schedule.id}</td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {schedule.User ? `${schedule.User.firstName} ${schedule.User.lastName}` : 'N/A'}
+                                        {schedule.doctorData ? `${schedule.doctorData.firstName} ${schedule.doctorData.lastName}` : 'N/A'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                        {schedule.User?.Specialty?.name || 'N/A'}
+                                        {schedule.doctorData?.Specialty?.name || 'N/A'}
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         {new Date(schedule.date).toLocaleDateString('vi-VN')}

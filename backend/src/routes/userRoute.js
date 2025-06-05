@@ -3,6 +3,21 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
 const { protect, authorizeRoles } = require('../middleware/authMiddleware'); // Import đúng các middleware
+const multer = require('multer');
+const path = require('path');
+
+// Cấu hình lưu file upload
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, path.join(__dirname, '../../uploads/avatars'));
+    },
+    filename: function (req, file, cb) {
+        const ext = path.extname(file.originalname);
+        const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+        cb(null, filename);
+    }
+});
+const upload = multer({ storage });
 
 /**
  * @swagger
@@ -310,5 +325,8 @@ router.put('/:id', protect, userController.updateUser);
  *         description: Không tìm thấy người dùng
  */
 router.delete('/:id', protect, userController.deleteUser);
+
+// Upload profile image
+router.post('/profile/image', protect, upload.single('image'), userController.uploadProfileImage);
 
 module.exports = router;

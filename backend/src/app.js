@@ -9,6 +9,7 @@ const specialtyRoutes = require('./routes/specialtyRoute');
 const scheduleRoutes = require('./routes/scheduleRoute');
 const bookingRoutes = require('./routes/bookingRoute');
 const allcodeRoutes = require('./routes/allcodeRoute');
+const path = require('path');
 
 const app = express();
 
@@ -19,6 +20,8 @@ const corsOptions = {
 // Middleware
 app.use(cors(corsOptions));
 app.use(express.json());
+// Cho phép truy cập ảnh tĩnh trong uploads/avatars
+app.use('/uploads/avatars', express.static(path.join(__dirname, '../uploads/avatars')));
 
 // Swagger Documentation
 app.use('/api-docs', swagger.serve, swagger.setup);

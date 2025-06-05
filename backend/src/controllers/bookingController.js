@@ -262,3 +262,41 @@ exports.getBookingById = async (req, res) => {
         res.status(500).json({ success: false, message: 'Lỗi server', error: error.message });
     }
 };
+
+exports.updateBookingStatus = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { statusId } = req.body;
+        const booking = await db.Booking.findByPk(id);
+        if (!booking) {
+            return res.status(404).json({ success: false, message: "Không tìm thấy lịch khám" });
+        }
+        const oldStatus = booking.statusId;
+        booking.statusId = statusId;
+        await booking.save();
+
+        // Lấy schedule liên quan
+        const schedule = await db.Schedule.findOne({
+            where: {
+                doctorId: booking.doctorId,
+                date: booking.date,
+                timeType: booking.timeType
+            }
+        });
+
+        // Nếu xác nhận (S2) và trước đó chưa xác nhận thì tăng currentNumber
+        if (statusId === 'S2' && oldStatus !== 'S2' && schedule) {
+            schedule.currentNumber += 1;
+            await schedule.save();
+        }
+        // Nếu hủy (S3) và trước đó là đã xác nhận thì giảm currentNumber
+        if (statusId === 'S3' && oldStatus === 'S2' && schedule && schedule.currentNumber > 0) {
+            schedule.currentNumber -= 1;
+            await schedule.save();
+        }
+
+        res.status(200).json({ success: true, message: "Cập nhật trạng thái thành công", data: booking });
+    } catch (error) {
+        res.status(500).json({ success: false, message: "Lỗi server", error });
+    }
+};

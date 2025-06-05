@@ -4,6 +4,8 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { sequelize } = require('../models/User');
 const DoctorDetail = require('../models/DoctorDetail');
+const path = require('path');
+const fs = require('fs');
 
 // @desc    Đăng ký người dùng mới
 // @route   POST /api/users/register
@@ -91,6 +93,7 @@ const updateUser = async (req, res) => {
         user.positionId = positionId || user.positionId;
         user.roleId = roleId || user.roleId;
         user.image = image || user.image;
+        user.specialtyId = req.body.specialtyId || user.specialtyId;
 
         await user.save(); // Lưu các thay đổi
 
@@ -344,6 +347,32 @@ const getAllUsersByRole = async (req, res) => {
     }
 };
 
+// Upload avatar/profile image
+const uploadProfileImage = async (req, res) => {
+    try {
+        console.log('--- [UPLOAD PROFILE IMAGE] ---');
+        console.log('req.user:', req.user);
+        console.log('req.file:', req.file);
+        if (!req.user) {
+            console.log('Không xác thực');
+            return res.status(401).json({ message: 'Không xác thực' });
+        }
+        if (!req.file) {
+            console.log('Không có file ảnh');
+            return res.status(400).json({ message: 'Không có file ảnh' });
+        }
+        // Đường dẫn lưu file
+        const imageUrl = `/uploads/avatars/${req.file.filename}`;
+        req.user.image = imageUrl;
+        await req.user.save();
+        console.log('Lưu ảnh thành công:', imageUrl);
+        res.json({ imageUrl });
+    } catch (error) {
+        console.error('Lỗi upload ảnh:', error);
+        res.status(500).json({ message: 'Lỗi server', error: error.message });
+    }
+};
+
 module.exports = {
     registerUser,
     registerPatient,
@@ -352,5 +381,6 @@ module.exports = {
     updateUser,
     deleteUser,
     getUser,
-    getAllUsersByRole
+    getAllUsersByRole,
+    uploadProfileImage
 };

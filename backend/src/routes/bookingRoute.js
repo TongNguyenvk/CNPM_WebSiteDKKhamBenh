@@ -152,4 +152,29 @@ router.put('/cancel/:id', protect, authorizeRoles('R1', 'R2', 'R3'), bookingCont
  */
 router.get('/:id', protect, authorizeRoles('R1', 'R2', 'R3'), bookingController.getBookingById);
 
+/**
+ * @swagger
+ * /api/bookings/{id}/status:
+ *   put:
+ *     summary: Cập nhật trạng thái lịch khám
+ *     tags: [Bookings]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID của lịch khám
+ *     responses:
+ *       200:
+ *         description: Cập nhật trạng thái thành công
+ *       401:
+ *         description: Không có quyền truy cập
+ *       404:
+ *         description: Không tìm thấy lịch khám
+ */
+router.put('/:id/status', protect, authorizeRoles('R1', 'R2', 'R3'), bookingController.updateBookingStatus);
+
 module.exports = router;

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
-import { getDoctorById, getDoctorSchedulesPT } from "@/lib/api";
+import { getDoctorById, getDoctorSchedules } from "@/lib/api";
 
 interface Schedule {
     id: number;
@@ -123,7 +123,7 @@ export default function DoctorDetailPage() {
             setIsLoadingSchedules(true);
             setGeneralError(null);
             try {
-                const scheduleData = await getDoctorSchedulesPT(doctorId, selectedDate);
+                const scheduleData = await getDoctorSchedules(doctorId, selectedDate);
                 setSchedules(scheduleData);
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
             } catch (err: any) {

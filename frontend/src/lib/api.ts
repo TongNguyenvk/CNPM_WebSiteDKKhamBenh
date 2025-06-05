@@ -61,7 +61,7 @@ interface Appointment {
         lastName: string;
         email: string;
         image: string;
-        specialtyData?: {
+        Specialty?: {
             name: string;
         };
     };
@@ -360,65 +360,52 @@ export const getDoctorSchedulesPT = async (doctorId: number, date: string): Prom
     }
 };
 
-export const getDoctorSchedules = async (doctorId: number, date: string): Promise<Schedule[]> => {
+// Interface cho response getDoctorSchedules
+export interface TimeTypeData {
+    valueVi: string;
+    valueEn: string;
+}
+
+export interface DoctorData {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    address: string;
+    gender: boolean;
+    phoneNumber: string;
+    image: string | null;
+}
+
+export interface DoctorSchedule {
+    id: number;
+    doctorId: number;
+    date: string;
+    timeType: string;
+    maxNumber: number;
+    currentNumber: number;
+    createdAt: string;
+    updatedAt: string;
+    timeTypeData: TimeTypeData;
+    doctorData: DoctorData;
+}
+
+export const getDoctorSchedules = async (
+    doctorId: number,
+    date: string
+): Promise<DoctorSchedule[]> => {
     try {
-        const token = localStorage.getItem('token');
-        console.log('Fetching schedules with token:', token ? 'Token exists' : 'No token');
-        console.log('Doctor ID:', doctorId, 'Date:', date);
-
-        const response = await apiClient.get(`/schedule/doctor/${doctorId}`, {
-            params: { date },
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
+        const res = await apiClient.get(`/schedule/doctor/${doctorId}`, {
+            params: { date }
         });
-
-        console.log('Schedule API Response:', response.data);
-
-        if (response.data && response.data.data) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return response.data.data.map((schedule: any) => ({
-                ...schedule,
-                timeTypeData: schedule.timeTypeData || {
-                    keyMap: schedule.timeType,
-                    type: 'TIME',
-                    valueVi: schedule.timeType === 'T1' ? 'Buổi sáng' :
-                        schedule.timeType === 'T2' ? 'Buổi chiều' :
-                            schedule.timeType === 'T3' ? 'Buổi tối' : schedule.timeType,
-                    valueEn: ''
-                }
-            }));
-        } else if (Array.isArray(response.data)) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            return response.data.map((schedule: any) => ({
-                ...schedule,
-                timeTypeData: schedule.timeTypeData || {
-                    keyMap: schedule.timeType,
-                    type: 'TIME',
-                    valueVi: schedule.timeType === 'T1' ? 'Buổi sáng' :
-                        schedule.timeType === 'T2' ? 'Buổi chiều' :
-                            schedule.timeType === 'T3' ? 'Buổi tối' : schedule.timeType,
-                    valueEn: ''
-                }
-            }));
+        console.log('API getDoctorSchedules response:', res.data);
+        if (res.data && res.data.success && Array.isArray(res.data.data)) {
+            return res.data.data as DoctorSchedule[];
         }
         return [];
-    } catch (error) {
-        console.error(`Error fetching schedules for doctor ${doctorId} on ${date}:`, error);
-        if (axios.isAxiosError(error)) {
-            console.error('Axios error details:', {
-                status: error.response?.status,
-                data: error.response?.data,
-                message: error.message
-            });
-
-            if (error.response?.status === 404) {
-                console.warn(`No schedules found (404) for doctor ${doctorId} on ${date}. Returning empty array.`);
-                return [];
-            }
-            throw new Error(error.response?.data?.message || 'Lỗi khi lấy lịch phân công');
-        }
-        throw new Error('Có lỗi xảy ra khi lấy lịch phân công');
+    } catch (error: any) {
+        if (error.response?.status === 404) return [];
+        throw new Error(error.response?.data?.message || 'Lỗi khi lấy lịch phân công');
     }
 };
 
@@ -447,8 +434,9 @@ export const getPatientAppointments = async (patientId: number): Promise<Appoint
                 Authorization: `Bearer ${token}`
             }
         });
+        console.log('API getPatientAppointments response:', response.data);
+        // Đảm bảo trả về đúng mảng booking, mỗi booking có doctorData.Specialty
         return response.data.data || [];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi lấy lịch khám');
     }
@@ -805,13 +793,19 @@ export const updateUserProfile = async (data: UpdateUserProfileData): Promise<Us
             throw new Error('Vui lòng đăng nhập để cập nhật thông tin');
         }
 
-        const response = await apiClient.put<UserProfile>('/users/profile', data, {
+        const userStr = localStorage.getItem('user');
+        if (!userStr) {
+            throw new Error('Không tìm thấy thông tin người dùng');
+        }
+        const user = JSON.parse(userStr);
+        const userId = user.userId;
+
+        const response = await apiClient.put<UserProfile>(`/users/${userId}`, data, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
         });
         return response.data;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('Error updating user profile:', error);
         if (error.response?.status === 401) {
@@ -831,20 +825,16 @@ export const uploadProfileImage = async (file: File): Promise<{ imageUrl: string
         const formData = new FormData();
         formData.append('image', file);
 
-        // Sử dụng apiClient để gọi đúng endpoint backend
-        // Giả định endpoint upload ảnh là /users/profile/image
-        const response = await apiClient.post<{ imageUrl: string }>('/users/profile/image', formData, {
+        // Dùng axios gốc, KHÔNG dùng apiClient để tránh lỗi Content-Type
+        const response = await axios.post('http://localhost:8080/api/users/profile/image', formData, {
             headers: {
-                'Authorization': `Bearer ${token}`,
-                // Axios và apiClient với FormData thường không cần set Content-Type
-                // Browser sẽ tự động set Content-Type là multipart/form-data
-                // 'Content-Type': 'multipart/form-data'
+                'Authorization': `Bearer ${token}`
+                // KHÔNG set Content-Type ở đây!
             }
         });
         return response.data;
     } catch (error: any) {
         console.error('Error uploading profile image:', error);
-        // Xử lý lỗi chi tiết hơn từ response của axios
         if (axios.isAxiosError(error)) {
             console.error('Axios error details:', {
                 status: error.response?.status,
@@ -854,7 +844,6 @@ export const uploadProfileImage = async (file: File): Promise<{ imageUrl: string
             if (error.response?.status === 401) {
                 throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
             }
-            // Sử dụng message từ backend nếu có, ngược lại dùng message mặc định
             throw new Error(error.response?.data?.message || error.message || 'Lỗi khi tải lên ảnh đại diện');
         }
         throw new Error('Đã có lỗi xảy ra trong quá trình tải lên ảnh đại diện');

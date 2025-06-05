@@ -16,7 +16,7 @@ interface Appointment {
         firstName: string;
         lastName: string;
         image: string;
-        specialtyData?: {
+        Specialty?: {
             name: string;
         };
     };
@@ -82,19 +82,19 @@ export default function PatientDashboard() {
         <div className="min-h-screen bg-gray-50 pt-16 flex flex-col items-center">
             <div className="max-w-4xl w-full mx-auto p-4 md:p-6">
                 <h1 className="text-2xl font-bold text-center text-blue-600 mb-8">Dashboard Bệnh Nhân</h1>
-    
+
                 {/* Các chức năng chính */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
                     <Link href="/patient/specialties" className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow">
                         <h2 className="text-lg font-semibold mb-2 text-gray-800">Chuyên Khoa</h2>
                         <p className="text-gray-600">Xem danh sách các chuyên khoa</p>
                     </Link>
-                    <Link href="/patient/appointments/new" className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow">
-                        <h2 className="text-lg font-semibold mb-2 text-gray-800">Đặt Lịch Khám</h2>
-                        <p className="text-gray-600">Đặt lịch khám với bác sĩ</p>
+                    <Link href="/patient/appointments" className="bg-white p-6 rounded-lg shadow-lg hover:shadow-xl transition-shadow">
+                        <h2 className="text-lg font-semibold mb-2 text-gray-800">Lịch Đã Đặt</h2>
+                        <p className="text-gray-600">Xem danh sách các lịch đã đặt</p>
                     </Link>
                 </div>
-    
+
                 {/* Lịch khám gần đây */}
                 <div className="bg-white rounded-lg shadow-lg p-6">
                     <h2 className="text-lg font-semibold mb-4 text-gray-800">Lịch Khám Gần Đây</h2>
@@ -117,7 +117,7 @@ export default function PatientDashboard() {
                                                 Bác sĩ: {appointment.doctorData?.firstName} {appointment.doctorData?.lastName}
                                             </p>
                                             <p className="text-sm text-gray-600">
-                                                Chuyên khoa: {appointment.doctorData?.specialtyData?.name || 'Chưa có thông tin'}
+                                                Chuyên khoa: {appointment.doctorData?.Specialty?.name || 'Chưa có thông tin'}
                                             </p>
                                             <p className="text-sm text-gray-600">
                                                 Ngày: {new Date(appointment.date).toLocaleDateString('vi-VN')}

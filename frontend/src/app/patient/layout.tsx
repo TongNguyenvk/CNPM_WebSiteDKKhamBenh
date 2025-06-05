@@ -36,7 +36,6 @@ export default function PatientLayout({
     const navItems = [
         { label: 'Dashboard', href: '/patient/dashboard' },
         { label: 'Chuyên Khoa', href: '/patient/specialties' },
-        { label: 'Lịch Khám', href: '/patient/schedule' },
         { label: 'Lịch Đã Đặt', href: '/patient/appointments' },
         { label: 'Tôi', href: '/patient/profile' }
     ];

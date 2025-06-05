@@ -3,7 +3,8 @@ const nextConfig = {
     images: {
         domains: [
             'localhost',
-            'avatars.githubusercontent.com'
+            'avatars.githubusercontent.com',
+            'via.placeholder.com'
         ],
     },
 }

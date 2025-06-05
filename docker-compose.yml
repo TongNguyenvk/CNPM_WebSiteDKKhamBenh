@@ -8,7 +8,6 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./frontend:/app
       - /app/node_modules  # Để hot-reloading hoạt động tốt (trong quá trình phát triển)
     environment:
       - NEXT_PRIVATE_TURBOPACK=false

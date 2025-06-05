@@ -1,6 +1,6 @@
 // controllers/scheduleController.js
 const db = require('../config/database');
-const { Schedule, Allcode, User } = require('../models');
+const { Schedule, Allcode, User, Specialty } = require('../models');
 const { Op } = require('sequelize');
 
 
@@ -64,7 +64,10 @@ const getDoctorSchedules = async (req, res) => {
                 {
                     model: User,
                     as: 'doctorData',
-                    attributes: ['id', 'firstName', 'lastName', 'email', 'address', 'gender', 'phoneNumber', 'image']
+                    attributes: ['id', 'firstName', 'lastName', 'email', 'address', 'gender', 'phoneNumber', 'image'],
+                    include: [
+                        { model: Specialty, attributes: ['id', 'name'] }
+                    ]
                 }
             ],
             order: [['date', 'ASC'], ['timeType', 'ASC']],
@@ -93,11 +96,18 @@ const getAllSchedules = async (req, res) => {
         const schedules = await Schedule.findAll({
             include: [
                 { model: Allcode, as: 'timeTypeData', attributes: ['valueVi', 'valueEn'] },
-                { model: User, as: 'doctorData', attributes: ['id', 'firstName', 'lastName', 'email', 'address', 'gender', 'phoneNumber', 'image'] }
+                {
+                    model: User,
+                    as: 'doctorData',
+                    attributes: ['id', 'firstName', 'lastName', 'email', 'address', 'gender', 'phoneNumber', 'image'],
+                    include: [
+                        { model: Specialty, attributes: ['id', 'name'] }
+                    ]
+                }
             ],
             order: [['date', 'ASC'], ['timeType', 'ASC']]
         });
-        res.status(200).json(schedules);
+        res.status(200).json({ success: true, data: schedules });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Lỗi server', error: error.message });
