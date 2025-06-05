@@ -1,14 +1,13 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { getUserProfile, updateUserProfile, uploadProfileImage } from '@/lib/api';
-import Image from 'next/image';
 
 interface ProfileProps {
     role: 'admin' | 'doctor' | 'patient';
 }
 
 export default function Profile({ role }: ProfileProps) {
-    const [profile, setProfile] = useState<any>(null);
+    const [profile, setProfile] = useState<unknown>(null);
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);

@@ -60,7 +60,6 @@ export default function AppointmentsPage() {
             if (data.length > 0) {
                 setFormData(prev => ({ ...prev, timeType: data[0].keyMap }));
             }
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             toast.error('Lỗi khi tải danh sách thời gian');
         }
@@ -70,7 +69,6 @@ export default function AppointmentsPage() {
         try {
             const data = await getAllDoctors();
             setDoctors(data);
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             toast.error('Lỗi khi tải danh sách bác sĩ');
         }
@@ -80,7 +78,6 @@ export default function AppointmentsPage() {
         try {
             const data = await getAllSchedules();
             setSchedules(data);
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             toast.error('Lỗi khi tải danh sách lịch khám');
         } finally {
@@ -97,7 +94,6 @@ export default function AppointmentsPage() {
             toast.success('Tạo lịch khám thành công');
             setIsCreateModalOpen(false);
             loadSchedules();
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             toast.error('Lỗi khi tạo lịch khám');
         }
@@ -125,7 +121,6 @@ export default function AppointmentsPage() {
             await deleteDoctorSchedule(scheduleId);
             toast.success('Xóa lịch khám thành công');
             loadSchedules();
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             toast.error('Lỗi khi xóa lịch khám');
         }

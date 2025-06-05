@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { getDoctorSchedules, updateDoctorSchedule, deleteDoctorSchedule, createSchedule, getAllDoctors, getAllSchedules } from '@/lib/api';
+import { updateDoctorSchedule, deleteDoctorSchedule, createSchedule, getAllDoctors, getAllSchedules } from '@/lib/api';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
@@ -71,10 +71,6 @@ export default function AdminSchedulePage() {
     const [loading, setLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState<string>(format(new Date(), 'yyyy-MM-dd'));
     const [selectedDoctor, setSelectedDoctor] = useState<number | ''>('');
-    const [selectedTime, setSelectedTime] = useState('');
-    const [maxNumber, setMaxNumber] = useState(1);
-    const [error, setError] = useState<string | null>(null);
-    const [success, setSuccess] = useState<string | null>(null);
     const [formData, setFormData] = useState({
         doctorId: '',
         date: format(new Date(), 'yyyy-MM-dd'),
@@ -94,8 +90,8 @@ export default function AdminSchedulePage() {
                 const allSchedulesData = await getAllSchedules();
                 setSchedules(allSchedulesData);
                 setLoading(false);
-            } catch (error: any) {
-                toast.error(error.message || 'Lỗi khi tải dữ liệu ban đầu');
+            } catch (error: unknown) {
+                toast.error(error instanceof Error ? error.message : 'Lỗi khi tải dữ liệu ban đầu');
                 setLoading(false);
             }
         };
@@ -130,8 +126,8 @@ export default function AdminSchedulePage() {
             try {
                 const allSchedulesData = await getAllSchedules();
                 setSchedules(allSchedulesData);
-            } catch (error: any) {
-                toast.error('Lỗi khi tải lại danh sách lịch phân công');
+            } catch (error: unknown) {
+                toast.error(error instanceof Error ? error.message : 'Lỗi khi tải lại danh sách lịch phân công');
             } finally {
                 setLoading(false);
             }
@@ -142,38 +138,14 @@ export default function AdminSchedulePage() {
                 timeType: '',
                 maxNumber: 1
             });
-        } catch (error: any) {
-            toast.error(error.message || 'Lỗi khi tạo lịch phân công');
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : 'Lỗi khi tạo lịch phân công');
         }
     };
 
     const getTimeLabel = (timeType: string) => {
         const timeSlot = timeSlots.find(slot => slot.key === timeType);
         return timeSlot ? timeSlot.label : timeType;
-    };
-
-    const handleUpdateSchedule = async (scheduleId: number, maxNumber: number) => {
-        try {
-            setError(null);
-            setSuccess(null);
-            if (maxNumber < 1) {
-                setError('Số lượng bệnh nhân tối đa phải lớn hơn 0');
-                return;
-            }
-            await updateDoctorSchedule(scheduleId, { maxNumber });
-            toast.success('Cập nhật lịch phân công thành công!');
-            setLoading(true);
-            try {
-                const allSchedulesData = await getAllSchedules();
-                setSchedules(allSchedulesData);
-            } catch (error: any) {
-                toast.error('Lỗi khi tải lại danh sách lịch phân công');
-            } finally {
-                setLoading(false);
-            }
-        } catch (err: any) {
-            toast.error(err.message || 'Có lỗi xảy ra khi cập nhật lịch phân công');
-        }
     };
 
     const handleDeleteSchedule = async (scheduleId: number) => {
@@ -187,13 +159,13 @@ export default function AdminSchedulePage() {
             try {
                 const allSchedulesData = await getAllSchedules();
                 setSchedules(allSchedulesData);
-            } catch (error: any) {
-                toast.error('Lỗi khi tải lại danh sách lịch phân công');
+            } catch (error: unknown) {
+                toast.error(error instanceof Error ? error.message : 'Lỗi khi tải lại danh sách lịch phân công');
             } finally {
                 setLoading(false);
             }
-        } catch (err: any) {
-            toast.error(err.message || 'Có lỗi xảy ra khi xóa lịch phân công');
+        } catch (err: unknown) {
+            toast.error(err instanceof Error ? err.message : 'Có lỗi xảy ra khi xóa lịch phân công');
         }
     };
 
@@ -223,13 +195,13 @@ export default function AdminSchedulePage() {
             try {
                 const allSchedulesData = await getAllSchedules();
                 setSchedules(allSchedulesData);
-            } catch (error: any) {
-                toast.error('Lỗi khi tải lại danh sách lịch phân công');
+            } catch (error: unknown) {
+                toast.error(error instanceof Error ? error.message : 'Lỗi khi tải lại danh sách lịch phân công');
             } finally {
                 setLoading(false);
             }
-        } catch (err: any) {
-            toast.error(err.message || 'Có lỗi xảy ra khi cập nhật lịch phân công');
+        } catch (err: unknown) {
+            toast.error(err instanceof Error ? err.message : 'Có lỗi xảy ra khi cập nhật lịch phân công');
         }
     };
 

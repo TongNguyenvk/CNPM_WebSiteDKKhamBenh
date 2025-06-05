@@ -41,8 +41,8 @@ export default function RegisterPage() {
         default:
           router.push('/');
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {
       setLoading(false);
     }

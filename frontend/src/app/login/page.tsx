@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { loginUser } from '@/app/lib/api';
+import { loginUser } from '@/lib/api';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import Image from 'next/image';
 
@@ -68,11 +68,11 @@ const LoginPage: React.FC = () => {
               Chào mừng đến với Hệ thống Đặt lịch Khám bệnh
             </h2>
             <p className="text-blue-100 text-lg">
-              Đặt lịch khám bệnh trực tuyến - Tiết kiệm thời gian, 
+              Đặt lịch khám bệnh trực tuyến - Tiết kiệm thời gian,
               tối ưu hiệu quả
             </p>
           </div>
-          
+
           {/* Decorative elements */}
           <div className="absolute bottom-0 right-0 opacity-10">
             <svg width="320" height="320" viewBox="0 0 320 320">
@@ -160,8 +160,8 @@ const LoginPage: React.FC = () => {
                 type="submit"
                 disabled={isLoading}
                 className={`w-full py-3 px-4 rounded-lg text-white font-medium transition-all
-                  ${isLoading 
-                    ? 'bg-gray-400 cursor-not-allowed' 
+                  ${isLoading
+                    ? 'bg-gray-400 cursor-not-allowed'
                     : 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-lg hover:shadow-xl'
                   }`}
               >

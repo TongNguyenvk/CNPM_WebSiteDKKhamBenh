@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { getSpecialtyById, getDoctorsBySpecialty } from '../../../../lib/api';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
 
 interface Specialty {
     id: number;
@@ -36,9 +35,6 @@ export default function SpecialtyDetailPage({ params }: PageProps) {
     const resolvedParams = React.use(params);
     const specialtyId = parseInt(resolvedParams.id);
 
-    // Initialize the router
-    const router = useRouter();
-
     useEffect(() => {
         const fetchData = async () => {
             try {
@@ -50,11 +46,11 @@ export default function SpecialtyDetailPage({ params }: PageProps) {
                     getDoctorsBySpecialty(specialtyId)
                 ]);
 
-                setSpecialty(specialtyData);
-                setDoctors(doctorsData);
-            } catch (err: Error) {
+                setSpecialty(specialtyData as Specialty);
+                setDoctors(doctorsData as Doctor[]);
+            } catch (err: unknown) {
                 console.error('Error fetching data:', err);
-                setError(err.message || 'Có lỗi xảy ra khi tải thông tin chuyên khoa');
+                setError(err instanceof Error ? err.message : 'Có lỗi xảy ra khi tải thông tin chuyên khoa');
             } finally {
                 setLoading(false);
             }
@@ -105,12 +101,11 @@ export default function SpecialtyDetailPage({ params }: PageProps) {
         <div className="p-6 mt-6">
             <div className="max-w-4xl mx-auto">
                 {/* Nút Quay lại */}
-            <button
-                className="flex items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-full border-2 border-blue-500 hover:bg-gray-200 transition-colors"
-                onClick={() => router.back()}
-            >
-                ← Quay lại
-            </button>
+                <button
+                    className="flex items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-full border-2 border-blue-500 hover:bg-gray-200 transition-colors"
+                >
+                    ← Quay lại
+                </button>
                 {/* Thông tin chuyên khoa */}
                 <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8 mt-6">
                     <div className="relative h-64">

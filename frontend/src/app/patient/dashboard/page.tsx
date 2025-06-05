@@ -1,6 +1,5 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { getPatientAppointments } from '@/lib/api';
 import Link from 'next/link';
@@ -28,7 +27,6 @@ interface Appointment {
 }
 
 export default function PatientDashboard() {
-    const router = useRouter();
     const { user, loading } = useAuth();
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [error, setError] = useState('');

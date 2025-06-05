@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { getDoctorAppointments, updateBookingStatus } from "@/lib/api";
-import { useRouter } from "next/navigation";
 
 interface Appointment {
     id: number;
@@ -36,7 +35,6 @@ export default function DoctorAppointmentsPage() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-    const router = useRouter();
 
     useEffect(() => {
         const fetchAppointments = async () => {

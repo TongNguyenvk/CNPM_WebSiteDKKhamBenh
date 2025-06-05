@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 import { getAllSpecialties } from '../../../lib/api';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useParams } from 'next/navigation';
 
 interface Specialty {
     id: number;
@@ -23,7 +22,7 @@ export default function SpecialtiesPage() {
                 setLoading(true);
                 setError('');
                 const data = await getAllSpecialties();
-                setSpecialties(data);
+                setSpecialties(data as any);
             } catch (error: unknown) {
                 const err = error as Error;
                 setError(err.message || 'Lỗi khi tải danh sách chuyên khoa');

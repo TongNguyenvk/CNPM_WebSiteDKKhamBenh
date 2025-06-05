@@ -53,9 +53,7 @@ export default function DoctorsPage() {
         try {
             const data = await getAllDoctors();
             setDoctors(data);
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
+        } catch (error) {
             toast.error('Lỗi khi tải danh sách bác sĩ');
         }
     };
@@ -64,9 +62,7 @@ export default function DoctorsPage() {
         try {
             const data = await getAllSpecialties();
             setSpecialties(data);
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
+        } catch (error) {
             toast.error('Lỗi khi tải danh sách chuyên khoa');
         }
     };
@@ -91,9 +87,7 @@ export default function DoctorsPage() {
                 gender: true
             });
             loadDoctors();
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
+        } catch (error) {
             toast.error('Lỗi khi tạo bác sĩ');
         }
     };
@@ -108,9 +102,7 @@ export default function DoctorsPage() {
             toast.success('Cập nhật bác sĩ thành công');
             setIsEditModalOpen(false);
             loadDoctors();
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (error: any) {
+        } catch (error) {
             toast.error('Lỗi khi cập nhật bác sĩ');
         }
     };
@@ -121,9 +113,7 @@ export default function DoctorsPage() {
                 await deleteDoctor(doctorId);
                 toast.success('Xóa bác sĩ thành công');
                 loadDoctors();
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars 
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } catch (error: any) {
+            } catch (error) {
                 toast.error('Lỗi khi xóa bác sĩ');
             }
         }
@@ -324,7 +314,7 @@ export default function DoctorsPage() {
                                         type="email"
                                         value={formData.email}
                                         disabled
-                                        className="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3" // Added text-lg and py-3
+                                        className="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3"
                                     />
                                 </div>
                                 <div>
@@ -333,7 +323,7 @@ export default function DoctorsPage() {
                                         type="text"
                                         value={formData.firstName}
                                         onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3" // Added text-lg and py-3
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3"
                                     />
                                 </div>
                                 <div>
@@ -342,7 +332,7 @@ export default function DoctorsPage() {
                                         type="text"
                                         value={formData.lastName}
                                         onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3" // Added text-lg and py-3
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3"
                                     />
                                 </div>
                                 <div>
@@ -350,7 +340,7 @@ export default function DoctorsPage() {
                                     <select
                                         value={formData.specialtyId}
                                         onChange={(e) => setFormData({ ...formData, specialtyId: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3" // Added text-lg and py-3
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3"
                                     >
                                         <option value="">Chọn chuyên khoa</option>
                                         {specialties.map((specialty) => (
@@ -365,7 +355,7 @@ export default function DoctorsPage() {
                                     <select
                                         value={formData.positionId}
                                         onChange={(e) => setFormData({ ...formData, positionId: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3" // Added text-lg and py-3
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3"
                                     >
                                         <option value="">Chọn vị trí</option>
                                         <option value="P0">Bác sĩ</option>
@@ -381,7 +371,7 @@ export default function DoctorsPage() {
                                         type="text"
                                         value={formData.phoneNumber}
                                         onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3" // Added text-lg and py-3
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3"
                                     />
                                 </div>
                                 <div>
@@ -390,7 +380,7 @@ export default function DoctorsPage() {
                                         type="text"
                                         value={formData.address}
                                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3" // Added text-lg and py-3
+                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3"
                                     />
                                 </div>
                                 <div className="flex justify-end gap-4 mt-6">

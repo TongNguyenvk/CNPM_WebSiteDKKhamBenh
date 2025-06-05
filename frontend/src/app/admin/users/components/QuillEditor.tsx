@@ -16,7 +16,7 @@ const ReactQuill = dynamic(() => import('react-quill'), {
 
 interface QuillEditorProps {
     value: string;
-    onChange: (content: string, delta: any, source: string, editor: any) => void;
+    onChange: (content: string, delta: unknown, source: string, editor: unknown) => void;
 }
 
 export default function QuillEditor({ value, onChange }: QuillEditorProps) {

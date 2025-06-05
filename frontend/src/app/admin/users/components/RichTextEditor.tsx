@@ -9,7 +9,7 @@ interface RichTextEditorProps {
 }
 
 export default function RichTextEditor({ value, onChange }: RichTextEditorProps) {
-    const editorRef = useRef<any>(null);
+    const editorRef = useRef<unknown>(null);
 
     return (
         <div className="rich-text-editor">

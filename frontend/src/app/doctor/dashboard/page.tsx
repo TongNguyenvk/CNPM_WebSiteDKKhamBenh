@@ -2,8 +2,6 @@
 import React, { useEffect, useState } from 'react';
 import { getTodayAppointments, getDoctorSchedules, getDoctorAppointments } from '../../../lib/api';
 import { useAuth } from '../../../hooks/useAuth';
-import { getMaxAge } from 'next/dist/server/image-optimizer';
-import { getMedicalRecords } from '../../lib/api';
 
 interface Appointment {
     id: number;
@@ -133,7 +131,7 @@ export default function DoctorDashboard() {
                             <p className="text-gray-600">Chưa có lịch khám</p>
                         )}
                     </div>
-    
+
                     {/* Lịch Phân Công */}
                     <div className="bg-white p-6 rounded-lg shadow-lg">
                         <h2 className="text-lg font-semibold mb-4 text-gray-800">Lịch Phân Công</h2>
@@ -155,7 +153,7 @@ export default function DoctorDashboard() {
                             <p className="text-gray-600">Chưa có lịch phân công</p>
                         )}
                     </div>
-    
+
                     {/* Thống Kê */}
                     <div className="bg-white p-6 rounded-lg shadow-lg">
                         <h2 className="text-lg font-semibold mb-4 text-gray-800">Thống Kê</h2>

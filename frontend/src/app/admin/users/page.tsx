@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { getAllUsersByRole, createDoctor, createAdmin, updateUser, deleteUser, getAllSpecialties, getAllUsers } from '@/lib/api';
+import { getAllUsersByRole, createDoctor, createAdmin, updateUser, deleteUser, getAllSpecialties } from '@/lib/api';
 import { toast } from 'react-hot-toast';
-import { useRouter } from 'next/navigation';
 import SimpleEditor from './components/SimpleEditor';
 
 interface Specialty {
@@ -60,7 +59,6 @@ interface UsersByRole {
 }
 
 export default function UsersPage() {
-    const router = useRouter();
     const [usersByRole, setUsersByRole] = useState<UsersByRole>({
         R1: [],
         R2: [],
@@ -489,7 +487,6 @@ export default function UsersPage() {
                                 <button
                                     onClick={() => {
                                         setIsCreateModalOpen(false);
-                                        resetForm();
                                     }}
                                     className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition duration-200"
                                 >

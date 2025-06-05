@@ -895,7 +895,7 @@ export const createUser = async (userData: CreateUserData): Promise<UserProfile>
                 Authorization: `Bearer ${token}`
             }
         });
-        return response.data;
+        return response.data.data;
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi tạo người dùng');
     }
@@ -909,7 +909,7 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
                 Authorization: `Bearer ${token}`
             }
         });
-        return response.data;
+        return response.data.data;
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách người dùng');
     }
@@ -923,7 +923,7 @@ export const updateUser = async (userId: number, data: UpdateUserData): Promise<
                 Authorization: `Bearer ${token}`
             }
         });
-        return response.data;
+        return response.data.data;
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật người dùng');
     }
