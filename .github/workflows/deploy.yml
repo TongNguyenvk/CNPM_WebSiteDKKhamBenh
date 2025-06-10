@@ -1,13 +1,13 @@
-name: CI/CD with Docker Hub
+name: 🚀 Legacy Deploy (Deprecated)
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "frontend/**"
-      - "backend/**"
-      - ".github/workflows/**"
+  # Disabled - use ci-cd.yml instead
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force legacy deployment'
+        required: false
+        type: boolean
 
 jobs:
   build-and-push:

@@ -2,6 +2,13 @@
 import React, { useEffect, useState } from 'react';
 import { getTodayAppointments, getDoctorSchedules, getDoctorAppointments } from '../../../lib/api';
 import { useAuth } from '../../../hooks/useAuth';
+import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { LoadingPage } from '@/components/ui/loading';
+import { format, parseISO, isToday, isTomorrow, isPast } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import Link from 'next/link';
 
 interface Appointment {
     id: number;
@@ -75,105 +82,305 @@ export default function DoctorDashboard() {
         fetchData();
     }, [user]);
 
-    if (loading) {
+    const getDateLabel = (dateString: string) => {
+        const date = parseISO(dateString);
+        if (isToday(date)) return 'Hôm nay';
+        if (isTomorrow(date)) return 'Ngày mai';
+        return format(date, 'dd/MM/yyyy', { locale: vi });
+    };
+
+    const getStatusBadge = (statusId: string, statusData?: any) => {
+        const statusMap: Record<string, { variant: any; text: string }> = {
+            S1: { variant: 'warning', text: 'Chờ xác nhận' },
+            S2: { variant: 'primary', text: 'Đã xác nhận' },
+            S3: { variant: 'success', text: 'Hoàn thành' },
+            S4: { variant: 'error', text: 'Đã hủy' }
+        };
+
+        const status = statusMap[statusId] || { variant: 'neutral', text: statusData?.valueVi || statusId };
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Đang tải dữ liệu...</p>
-                </div>
-            </div>
+            <Badge variant={status.variant} size="sm">
+                {status.text}
+            </Badge>
         );
+    };
+
+    if (loading) {
+        return <LoadingPage text="Đang tải dashboard..." />;
     }
 
     if (error) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                    <div className="text-red-600 text-xl mb-4">⚠️</div>
-                    <p className="text-red-600">{error}</p>
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                    >
-                        Thử lại
-                    </button>
-                </div>
+            <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
+                <Card className="max-w-md">
+                    <CardBody className="text-center p-8">
+                        <div className="w-16 h-16 bg-error-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg className="w-8 h-8 text-error-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <h3 className="text-lg font-semibold text-neutral-900 mb-2">Có lỗi xảy ra</h3>
+                        <p className="text-neutral-600 mb-6">{error}</p>
+                        <Button onClick={() => window.location.reload()}>
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Thử lại
+                        </Button>
+                    </CardBody>
+                </Card>
             </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 flex flex-col items-center">
-            <div className="max-w-4xl w-full mx-auto p-4 md:p-6">
-                <h1 className="text-2xl font-bold text-center text-blue-600 mb-8">Dashboard Bác Sĩ</h1>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* Lịch Khám Hôm Nay */}
-                    <div className="bg-white p-6 rounded-lg shadow-lg">
-                        <h2 className="text-lg font-semibold mb-4 text-gray-800">Lịch Khám Hôm Nay</h2>
-                        {todayAppointments.length > 0 ? (
-                            <div className="space-y-4">
-                                {todayAppointments.map((appointment) => (
-                                    <div key={appointment.id} className="border-b pb-2">
-                                        <p className="font-medium text-gray-800">
-                                            {appointment.patientData?.firstName} {appointment.patientData?.lastName}
-                                        </p>
-                                        <p className="text-sm text-gray-600">
-                                            Thời gian: {appointment.timeType}
-                                        </p>
-                                        <p className="text-sm text-gray-600">
-                                            Trạng thái: {appointment.statusData?.valueVi || appointment.statusId}
-                                        </p>
-                                    </div>
-                                ))}
+        <div className="min-h-screen bg-neutral-50">
+            <div className="container py-8">
+                {/* Header */}
+                <div className="mb-8">
+                    <h1 className="text-3xl font-bold text-neutral-900 mb-2">
+                        Dashboard Bác Sĩ
+                    </h1>
+                    <p className="text-neutral-600">
+                        Chào mừng trở lại, {user?.firstName} {user?.lastName}
+                    </p>
+                </div>
+
+                {/* Stats Overview */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <Card>
+                        <CardBody className="flex items-center space-x-4">
+                            <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center">
+                                <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
                             </div>
-                        ) : (
-                            <p className="text-gray-600">Chưa có lịch khám</p>
-                        )}
+                            <div>
+                                <p className="text-2xl font-bold text-neutral-900">{todayAppointments.length}</p>
+                                <p className="text-sm text-neutral-600">Lịch hôm nay</p>
+                            </div>
+                        </CardBody>
+                    </Card>
+
+                    <Card>
+                        <CardBody className="flex items-center space-x-4">
+                            <div className="w-12 h-12 bg-success-100 rounded-xl flex items-center justify-center">
+                                <svg className="w-6 h-6 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold text-neutral-900">{allAppointments.length}</p>
+                                <p className="text-sm text-neutral-600">Tổng lịch khám</p>
+                            </div>
+                        </CardBody>
+                    </Card>
+
+                    <Card>
+                        <CardBody className="flex items-center space-x-4">
+                            <div className="w-12 h-12 bg-accent-100 rounded-xl flex items-center justify-center">
+                                <svg className="w-6 h-6 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold text-neutral-900">{schedules.length}</p>
+                                <p className="text-sm text-neutral-600">Lịch làm việc</p>
+                            </div>
+                        </CardBody>
+                    </Card>
+
+                    <Card>
+                        <CardBody className="flex items-center space-x-4">
+                            <div className="w-12 h-12 bg-warning-100 rounded-xl flex items-center justify-center">
+                                <svg className="w-6 h-6 text-warning-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold text-neutral-900">
+                                    {allAppointments.filter(a => a.statusId === 'S2').length}
+                                </p>
+                                <p className="text-sm text-neutral-600">Đã xác nhận</p>
+                            </div>
+                        </CardBody>
+                    </Card>
+                </div>
+
+                {/* Main Content Grid */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    {/* Today's Appointments */}
+                    <div className="lg:col-span-2">
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center justify-between">
+                                    <CardTitle>Lịch Khám Hôm Nay</CardTitle>
+                                    <Link href="/doctor/appointments">
+                                        <Button variant="ghost" size="sm">
+                                            Xem tất cả
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </CardHeader>
+                            <CardBody>
+                                {todayAppointments.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {todayAppointments.slice(0, 5).map((appointment) => (
+                                            <div key={appointment.id} className="flex items-center justify-between p-4 bg-neutral-50 rounded-xl">
+                                                <div className="flex items-center space-x-4">
+                                                    <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                                                        <span className="text-primary-600 font-medium text-sm">
+                                                            {appointment.patientData?.firstName?.charAt(0)}{appointment.patientData?.lastName?.charAt(0)}
+                                                        </span>
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-medium text-neutral-900">
+                                                            {appointment.patientData?.firstName} {appointment.patientData?.lastName}
+                                                        </h4>
+                                                        <p className="text-sm text-neutral-600">
+                                                            {appointment.patientData?.email}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-sm font-medium text-neutral-900">
+                                                        {appointment.timeType}
+                                                    </p>
+                                                    {getStatusBadge(appointment.statusId, appointment.statusData)}
+                                                </div>
+                                            </div>
+                                        ))}
+                                        {todayAppointments.length > 5 && (
+                                            <div className="text-center pt-4">
+                                                <Link href="/doctor/appointments">
+                                                    <Button variant="outline" size="sm">
+                                                        Xem thêm {todayAppointments.length - 5} lịch khám
+                                                    </Button>
+                                                </Link>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-8">
+                                        <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <svg className="w-8 h-8 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
+                                        <p className="text-neutral-600 mb-4">Hôm nay bạn không có lịch khám nào</p>
+                                        <Link href="/doctor/schedule">
+                                            <Button variant="outline">
+                                                Xem lịch làm việc
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                )}
+                            </CardBody>
+                        </Card>
                     </div>
 
-                    {/* Lịch Phân Công */}
-                    <div className="bg-white p-6 rounded-lg shadow-lg">
-                        <h2 className="text-lg font-semibold mb-4 text-gray-800">Lịch Phân Công</h2>
-                        {schedules.length > 0 ? (
-                            <div className="space-y-4">
-                                {schedules.map((schedule) => (
-                                    <div key={schedule.id} className="border-b pb-2">
-                                        <p className="font-medium text-gray-800">Ngày: {schedule.date}</p>
-                                        <p className="text-sm text-gray-600">
-                                            Khung giờ: {schedule.timeTypeData?.valueVi || schedule.timeType}
-                                        </p>
-                                        <p className="text-sm text-gray-600">
-                                            Số lượng: {schedule.currentNumber}/{schedule.maxNumber}
-                                        </p>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <p className="text-gray-600">Chưa có lịch phân công</p>
-                        )}
-                    </div>
+                    {/* Sidebar */}
+                    <div className="space-y-6">
+                        {/* Quick Actions */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>Thao Tác Nhanh</CardTitle>
+                            </CardHeader>
+                            <CardBody className="space-y-4">
+                                <Link href="/doctor/appointments">
+                                    <Button className="w-full justify-start" variant="outline">
+                                        <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        Xem lịch khám
+                                    </Button>
+                                </Link>
 
-                    {/* Thống Kê */}
-                    <div className="bg-white p-6 rounded-lg shadow-lg">
-                        <h2 className="text-lg font-semibold mb-4 text-gray-800">Thống Kê</h2>
-                        <div className="space-y-4">
-                            <div>
-                                <p className="font-medium text-gray-700">Tổng số lịch khám</p>
-                                <p className="text-2xl font-bold text-blue-600">{allAppointments.length}</p>
-                            </div>
-                            <div>
-                                <p className="font-medium text-gray-700">Lịch khám hôm nay</p>
-                                <p className="text-2xl font-bold text-green-600">{todayAppointments.length}</p>
-                            </div>
-                            <div>
-                                <p className="font-medium text-gray-700">Lịch phân công</p>
-                                <p className="text-2xl font-bold text-purple-600">{schedules.length}</p>
-                            </div>
-                        </div>
+                                <Link href="/doctor/patients">
+                                    <Button className="w-full justify-start" variant="outline">
+                                        <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                        Quản lý bệnh nhân
+                                    </Button>
+                                </Link>
+
+                                <Link href="/doctor/medical-records">
+                                    <Button className="w-full justify-start" variant="outline">
+                                        <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                        </svg>
+                                        Hồ sơ bệnh án
+                                    </Button>
+                                </Link>
+
+                                <Link href="/doctor/schedule">
+                                    <Button className="w-full justify-start" variant="outline">
+                                        <svg className="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Lịch làm việc
+                                    </Button>
+                                </Link>
+                            </CardBody>
+                        </Card>
+
+                        {/* Upcoming Schedules */}
+                        <Card>
+                            <CardHeader>
+                                <div className="flex items-center justify-between">
+                                    <CardTitle>Lịch Làm Việc Sắp Tới</CardTitle>
+                                    <Link href="/doctor/schedule">
+                                        <Button variant="ghost" size="sm">
+                                            Xem tất cả
+                                        </Button>
+                                    </Link>
+                                </div>
+                            </CardHeader>
+                            <CardBody>
+                                {schedules.length > 0 ? (
+                                    <div className="space-y-4">
+                                        {schedules.slice(0, 4).map((schedule) => (
+                                            <div key={schedule.id} className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
+                                                <div>
+                                                    <p className="font-medium text-neutral-900">
+                                                        {getDateLabel(schedule.date)}
+                                                    </p>
+                                                    <p className="text-sm text-neutral-600">
+                                                        {schedule.timeTypeData?.valueVi || schedule.timeType}
+                                                    </p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-sm font-medium text-neutral-900">
+                                                        {schedule.currentNumber}/{schedule.maxNumber}
+                                                    </p>
+                                                    <div className="w-16 bg-neutral-200 rounded-full h-1.5 mt-1">
+                                                        <div
+                                                            className="bg-primary-600 h-1.5 rounded-full"
+                                                            style={{
+                                                                width: `${Math.min((schedule.currentNumber / schedule.maxNumber) * 100, 100)}%`
+                                                            }}
+                                                        ></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-6">
+                                        <div className="w-12 h-12 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <svg className="w-6 h-6 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                            </svg>
+                                        </div>
+                                        <p className="text-sm text-neutral-600">Chưa có lịch làm việc</p>
+                                    </div>
+                                )}
+                            </CardBody>
+                        </Card>
                     </div>
                 </div>
             </div>
         </div>
     );
-} 
+}

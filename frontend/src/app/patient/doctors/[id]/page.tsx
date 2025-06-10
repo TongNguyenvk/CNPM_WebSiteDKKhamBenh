@@ -42,6 +42,11 @@ interface Doctor {
         id: number;
         name: string;
     };
+    specialtyData?: {
+        id: number;
+        name: string;
+        description?: string;
+    };
     positionData?: {
         keyMap: string;
         valueVi: string;
@@ -100,6 +105,9 @@ export default function DoctorDetailPage() {
             setGeneralError(null);
             try {
                 const response = await getDoctorById(Number(id));
+                console.log('Doctor API response:', response);
+                console.log('Specialty data:', response?.Specialty);
+                console.log('SpecialtyData:', response?.specialtyData);
                 setDoctor(response);
             } catch (error: unknown) {
                 const err = error as Error;
@@ -185,7 +193,7 @@ export default function DoctorDetailPage() {
                         </h1>
                         <div className="mt-2 space-y-2">
                             <p className="text-gray-600">
-                                <span className="font-semibold">Chuyên khoa:</span> {doctor.Specialty?.name || "Chưa cập nhật"}
+                                <span className="font-semibold">Chuyên khoa:</span> {doctor.specialtyData?.name || doctor.Specialty?.name || "Chưa cập nhật"}
                             </p>
                             <p className="text-gray-600">
                                 <span className="font-semibold">Vị trí:</span> {doctor.positionData?.valueVi || "Chưa cập nhật"}

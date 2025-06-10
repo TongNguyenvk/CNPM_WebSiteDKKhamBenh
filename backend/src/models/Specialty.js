@@ -12,7 +12,7 @@ const Specialty = sequelize.define('Specialty', {
 });
 
 Specialty.associate = function (models) {
-  Specialty.hasMany(models.User, { foreignKey: 'specialtyId' }); // Nếu dùng quan hệ một-nhiều
+  Specialty.hasMany(models.User, { foreignKey: 'specialtyId', as: 'specialtyData' }); // Nếu dùng quan hệ một-nhiều
   // Specialty.belongsToMany(models.User, { through: 'Doctor_Specialty', foreignKey: 'specialtyId', otherKey: 'doctorId' }); // Nếu dùng quan hệ nhiều-nhiều
 };
 

@@ -50,8 +50,8 @@ const getDoctor = async (req, res) => {
                 },
                 {
                     model: Specialty,
-                    as: 'Specialty',
-                    attributes: ['id', 'name']
+                    as: 'specialtyData',
+                    attributes: ['id', 'name', 'description']
                 },
                 {
                     model: Allcode,
@@ -173,9 +173,17 @@ const getDoctorsBySpecialty = async (req, res) => {
     try {
         const { id } = req.params;
 
+        // Validate ID
+        if (!id || isNaN(parseInt(id))) {
+            return res.status(400).json({ message: 'Invalid specialty ID' });
+        }
+
+        console.log('Getting doctors for specialty ID:', id);
+
         const doctors = await User.findAll({
             where: {
-                roleId: 'R2', // Lấy tất cả users có role là bác sĩ (R2)
+                roleId: 'R2',
+                // Lấy tất cả users có role là bác sĩ (R2)
                 specialtyId: id  // Thêm điều kiện lọc theo chuyên khoa
             },
             attributes: { exclude: ['password'] }, // Loại bỏ password khỏi kết quả
@@ -186,18 +194,24 @@ const getDoctorsBySpecialty = async (req, res) => {
                     attributes: ['descriptionMarkdown', 'descriptionHTML']
                 },
                 {
-                    model: Specialty, // Liên kết với bảng Specialty
-                    //as: 'specialty', // Định danh alias
-                    attributes: ['name'] // Lấy tên chuyên khoa
+                    model: Specialty,
+                    as: 'specialtyData', // Liên kết với bảng Specialty
+                    attributes: ['id', 'name', 'description'] // Lấy thông tin chuyên khoa
+                },
+                {
+                    model: Allcode,
+                    as: 'positionData',
+                    attributes: ['keyMap', 'valueVi', 'valueEn']
                 }
             ],
             raw: false,
-            nest: true
+            nest: false // Để có structure rõ ràng hơn
         });
 
+        console.log(`Found ${doctors.length} doctors for specialty ${id}`);
         res.json(doctors);
     } catch (error) {
-        console.error(error);
+        console.error('Error in getDoctorsBySpecialty:', error);
         res.status(500).json({ message: 'Lỗi server', error: error.message });
     }
 };

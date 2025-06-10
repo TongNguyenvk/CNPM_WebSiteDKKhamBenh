@@ -1,36 +1,35 @@
-
 services:
   frontend:
-    image: tongnguyen/frontend
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
-    volumes:
-      - /app/node_modules  # Để hot-reloading hoạt động tốt (trong quá trình phát triển)
     environment:
-      - NEXT_PRIVATE_TURBOPACK=false
-      - NODE_ENV=production # Hoặc production khi triển khai
-      - REACT_APP_BACKEND_URL=http://localhost:8080 # Thay đổi nếu backend chạy trên host khác
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://backend:8080/api/
+      - API_URL=http://backend:8080/api/
     depends_on:
       - backend
     networks:
       - app-network
 
   backend:
-    image: tongnguyen/backend
     build:
       context: ./backend
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
-    volumes:
-      - ./backend:/app
-      - /app/node_modules  # Để hot-reloading hoạt động tốt (trong quá trình phát triển)
     environment:
-      - NODE_ENV=production # Hoặc production khi triển khai
-      - DATABASE_URL=mysql://root:123456@cnpm_websitedkkhambenh-db-mysql-1:3306/DBDKKHAMBENH
+      - NODE_ENV=production
+      - PORT=8080
+      - DATABASE_URL=mysql://root:123456@db-mysql:3306/DBDKKHAMBENH
+      - DB_HOST=db-mysql
+      - DB_PORT=3306
+      - DB_NAME=DBDKKHAMBENH
+      - DB_USER=root
+      - DB_PASSWORD=123456
+      - ALLOWED_ORIGINS=http://localhost:3000,http://frontend:3000
     depends_on:
       - db-mysql
     networks:

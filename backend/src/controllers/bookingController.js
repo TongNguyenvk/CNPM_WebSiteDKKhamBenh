@@ -45,6 +45,7 @@ exports.getBookingsByDoctor = async (req, res) => {
                         },
                         {
                             model: db.Specialty,
+                            as: 'specialtyData',
                             attributes: ['id', 'name', 'image', 'description']
                         },
                         {
@@ -120,6 +121,7 @@ exports.getBookingsByPatient = async (req, res) => {
                         },
                         {
                             model: db.Specialty,
+                            as: 'specialtyData',
                             attributes: ['id', 'name', 'image', 'description']
                         },
                         {

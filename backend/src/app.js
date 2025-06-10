@@ -13,9 +13,39 @@ const path = require('path');
 
 const app = express();
 
+// Dynamic CORS configuration for different environments
+const getAllowedOrigins = () => {
+  const origins = ['http://localhost:3000']; // Local development
+
+  // Add Docker/production origins
+  if (process.env.NODE_ENV === 'production') {
+    origins.push('http://frontend:3000'); // Docker internal communication
+  }
+
+  // Add any additional origins from environment variable
+  if (process.env.ALLOWED_ORIGINS) {
+    origins.push(...process.env.ALLOWED_ORIGINS.split(','));
+  }
+
+  return origins;
+};
+
 const corsOptions = {
-  origin: 'http://localhost:3000', // Thay thế bằng origin của frontend
-  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
+  origin: function (origin, callback) {
+    const allowedOrigins = getAllowedOrigins();
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('CORS blocked origin:', origin);
+      console.log('Allowed origins:', allowedOrigins);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true, // Allow cookies and credentials
+  optionsSuccessStatus: 200
 }
 // Middleware
 app.use(cors(corsOptions));

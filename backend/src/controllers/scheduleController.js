@@ -66,7 +66,7 @@ const getDoctorSchedules = async (req, res) => {
                     as: 'doctorData',
                     attributes: ['id', 'firstName', 'lastName', 'email', 'address', 'gender', 'phoneNumber', 'image'],
                     include: [
-                        { model: Specialty, attributes: ['id', 'name'] }
+                        { model: Specialty, as: 'specialtyData', attributes: ['id', 'name'] }
                     ]
                 }
             ],

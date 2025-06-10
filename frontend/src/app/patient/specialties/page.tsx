@@ -3,6 +3,10 @@ import React, { useEffect, useState } from 'react';
 import { getAllSpecialties } from '../../../lib/api';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Card, CardBody, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { LoadingPage } from '@/components/ui/loading';
+import { cn } from '@/lib/utils';
 
 interface Specialty {
     id: number;
@@ -35,60 +39,127 @@ export default function SpecialtiesPage() {
     }, []);
 
     if (loading) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">Đang tải...</p>
-                </div>
-            </div>
-        );
+        return <LoadingPage text="Đang tải danh sách chuyên khoa..." />;
     }
 
     if (error) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                    <div className="text-red-600 text-xl mb-4">⚠️</div>
-                    <p className="text-red-600">{error}</p>
-                    <button
-                        onClick={() => window.location.reload()}
-                        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                    >
-                        Thử lại
-                    </button>
-                </div>
+            <div className="min-h-screen flex items-center justify-center bg-neutral-50">
+                <Card className="max-w-md mx-4">
+                    <CardBody className="text-center py-8">
+                        <div className="w-16 h-16 bg-error-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg className="w-8 h-8 text-error-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                        </div>
+                        <h3 className="text-lg font-semibold text-neutral-900 mb-2">Có lỗi xảy ra</h3>
+                        <p className="text-neutral-600 mb-6">{error}</p>
+                        <Button onClick={() => window.location.reload()}>
+                            Thử lại
+                        </Button>
+                    </CardBody>
+                </Card>
             </div>
         );
     }
 
     return (
-        <div className="mt-20 px-4">
-            <h1 className="text-2xl font-bold text-center text-blue-600 mb-8">Danh Sách Chuyên Khoa</h1>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {specialties.map((specialty) => (
-                    <Link
-                        key={specialty.id}
-                        href={`/patient/specialties/${specialty.id}`}
-                        className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow"
-                    >
-                        <div className="relative h-48">
-                            <Image
-                                src={`/${specialty.image}`}
-                                alt={specialty.name}
-                                fill
-                                className="object-cover"
-                                priority
+        <div className="min-h-screen bg-neutral-50">
+            <div className="container py-8">
+                {/* Header */}
+                <div className="text-center mb-12">
+                    <h1 className="text-3xl font-bold text-neutral-900 mb-4">
+                        Chuyên Khoa Y Tế
+                    </h1>
+                    <p className="text-neutral-600 max-w-2xl mx-auto">
+                        Chọn chuyên khoa phù hợp với nhu cầu khám chữa bệnh của bạn.
+                        Đội ngũ bác sĩ chuyên môn cao sẵn sàng phục vụ.
+                    </p>
+                </div>
+
+                {/* Search and Filter */}
+                <div className="mb-8">
+                    <div className="max-w-md mx-auto">
+                        <div className="relative">
+                            <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                            <input
+                                type="text"
+                                placeholder="Tìm kiếm chuyên khoa..."
+                                className="form-input pl-10"
                             />
                         </div>
-                        <div className="p-4">
-                            <h2 className="text-xl font-semibold mb-2">{specialty.name}</h2>
-                            <p className="text-gray-600 line-clamp-2">{specialty.description}</p>
-                        </div>
-                    </Link>
-                ))}
+                    </div>
+                </div>
+
+                {/* Specialties Grid */}
+                {specialties.length === 0 ? (
+                    <Card className="text-center py-16">
+                        <CardBody>
+                            <div className="w-24 h-24 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                <svg className="w-12 h-12 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                </svg>
+                            </div>
+                            <h3 className="text-xl font-semibold text-neutral-900 mb-2">
+                                Chưa có chuyên khoa nào
+                            </h3>
+                            <p className="text-neutral-600">
+                                Hiện tại chưa có chuyên khoa nào được cập nhật.
+                            </p>
+                        </CardBody>
+                    </Card>
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                        {specialties.map((specialty) => (
+                            <SpecialtyCard key={specialty.id} specialty={specialty} />
+                        ))}
+                    </div>
+                )}
             </div>
         </div>
     );
+}
 
-} 
+// Specialty Card Component
+interface SpecialtyCardProps {
+    specialty: Specialty;
+}
+
+function SpecialtyCard({ specialty }: SpecialtyCardProps) {
+    return (
+        <Link href={`/patient/specialties/${specialty.id}`}>
+            <Card hover className="h-full group">
+                <div className="relative h-48 overflow-hidden">
+                    <Image
+                        src={`/${specialty.image}`}
+                        alt={specialty.name}
+                        fill
+                        className="object-cover transition-transform duration-300 group-hover:scale-105"
+                        priority
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                    <div className="absolute bottom-4 left-4 right-4">
+                        <h3 className="text-white font-semibold text-lg mb-1">
+                            {specialty.name}
+                        </h3>
+                    </div>
+                </div>
+                <CardBody className="p-6">
+                    <p className="text-neutral-600 text-sm line-clamp-3 mb-4">
+                        {specialty.description}
+                    </p>
+                    <div className="flex items-center justify-between">
+                        <span className="text-primary-600 font-medium text-sm group-hover:text-primary-700 transition-colors">
+                            Xem chi tiết
+                        </span>
+                        <svg className="w-4 h-4 text-primary-600 group-hover:text-primary-700 group-hover:translate-x-1 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                </CardBody>
+            </Card>
+        </Link>
+    );
+}

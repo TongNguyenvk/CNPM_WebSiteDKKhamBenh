@@ -56,7 +56,7 @@ User.associate = function (models) {
   User.hasMany(models.Schedule, { foreignKey: 'doctorId', as: 'doctorData' });
   User.hasMany(models.Booking, { foreignKey: 'patientId' });
   User.hasOne(models.DoctorDetail, { foreignKey: 'doctorId', as: 'doctorDetail' });
-  User.belongsTo(models.Specialty, { foreignKey: 'specialtyId' });
+  User.belongsTo(models.Specialty, { foreignKey: 'specialtyId', as: 'specialtyData' });
 };
 
 module.exports = User;

@@ -1,0 +1,260 @@
+name: 🚀 Release Management
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.0.0)'
+        required: true
+        type: string
+
+env:
+  NODE_VERSION: '18'
+  DOCKER_USERNAME: tongnguyen
+
+jobs:
+  # ==================== VALIDATE RELEASE ====================
+  
+  validate-release:
+    name: ✅ Validate Release
+    runs-on: ubuntu-latest
+    
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      is_prerelease: ${{ steps.version.outputs.is_prerelease }}
+    
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🏷️ Extract version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION=${GITHUB_REF#refs/tags/}
+          fi
+          
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          
+          # Check if it's a prerelease (contains alpha, beta, rc)
+          if [[ $VERSION =~ (alpha|beta|rc) ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "Release version: $VERSION"
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: 🧪 Run full test suite
+        run: |
+          # Frontend tests
+          cd frontend
+          npm ci
+          npm run test
+          
+          # Backend tests
+          cd ../backend
+          npm ci
+          npm run test
+
+  # ==================== BUILD RELEASE ====================
+  
+  build-release:
+    name: 🏗️ Build Release
+    runs-on: ubuntu-latest
+    needs: validate-release
+    
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🛠️ Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+
+      - name: 🧱 Build and push release images
+        run: |
+          VERSION=${{ needs.validate-release.outputs.version }}
+          
+          # Build and push backend
+          docker build -t ${{ env.DOCKER_USERNAME }}/backend:$VERSION ./backend
+          docker build -t ${{ env.DOCKER_USERNAME }}/backend:latest ./backend
+          docker push ${{ env.DOCKER_USERNAME }}/backend:$VERSION
+          docker push ${{ env.DOCKER_USERNAME }}/backend:latest
+          
+          # Build and push frontend
+          docker build -t ${{ env.DOCKER_USERNAME }}/frontend:$VERSION ./frontend
+          docker build -t ${{ env.DOCKER_USERNAME }}/frontend:latest ./frontend
+          docker push ${{ env.DOCKER_USERNAME }}/frontend:$VERSION
+          docker push ${{ env.DOCKER_USERNAME }}/frontend:latest
+
+      - name: 📊 Generate image manifest
+        run: |
+          VERSION=${{ needs.validate-release.outputs.version }}
+          
+          echo "# Docker Images for Release $VERSION" > release-manifest.md
+          echo "" >> release-manifest.md
+          echo "## Backend Image" >> release-manifest.md
+          echo "- \`${{ env.DOCKER_USERNAME }}/backend:$VERSION\`" >> release-manifest.md
+          echo "- \`${{ env.DOCKER_USERNAME }}/backend:latest\`" >> release-manifest.md
+          echo "" >> release-manifest.md
+          echo "## Frontend Image" >> release-manifest.md
+          echo "- \`${{ env.DOCKER_USERNAME }}/frontend:$VERSION\`" >> release-manifest.md
+          echo "- \`${{ env.DOCKER_USERNAME }}/frontend:latest\`" >> release-manifest.md
+          echo "" >> release-manifest.md
+          echo "## Usage" >> release-manifest.md
+          echo "\`\`\`bash" >> release-manifest.md
+          echo "docker pull ${{ env.DOCKER_USERNAME }}/backend:$VERSION" >> release-manifest.md
+          echo "docker pull ${{ env.DOCKER_USERNAME }}/frontend:$VERSION" >> release-manifest.md
+          echo "\`\`\`" >> release-manifest.md
+
+      - name: 📊 Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-manifest
+          path: release-manifest.md
+
+  # ==================== GENERATE CHANGELOG ====================
+  
+  generate-changelog:
+    name: 📝 Generate Changelog
+    runs-on: ubuntu-latest
+    needs: validate-release
+    
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 📝 Generate changelog
+        run: |
+          VERSION=${{ needs.validate-release.outputs.version }}
+          
+          echo "# Changelog for $VERSION" > CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          echo "Release Date: $(date '+%Y-%m-%d')" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          
+          # Get commits since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          if [ -n "$LAST_TAG" ]; then
+            echo "## Changes since $LAST_TAG" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            
+            # Categorize commits
+            echo "### 🚀 Features" >> CHANGELOG.md
+            git log $LAST_TAG..HEAD --oneline --grep="feat" --grep="feature" >> CHANGELOG.md || echo "No new features" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            
+            echo "### 🐛 Bug Fixes" >> CHANGELOG.md
+            git log $LAST_TAG..HEAD --oneline --grep="fix" --grep="bug" >> CHANGELOG.md || echo "No bug fixes" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            
+            echo "### 📚 Documentation" >> CHANGELOG.md
+            git log $LAST_TAG..HEAD --oneline --grep="docs" >> CHANGELOG.md || echo "No documentation changes" >> CHANGELOG.md
+            echo "" >> CHANGELOG.md
+            
+            echo "### 🔧 Other Changes" >> CHANGELOG.md
+            git log $LAST_TAG..HEAD --oneline --invert-grep --grep="feat" --grep="fix" --grep="docs" >> CHANGELOG.md || echo "No other changes" >> CHANGELOG.md
+          else
+            echo "## Initial Release" >> CHANGELOG.md
+            echo "This is the first release of the application." >> CHANGELOG.md
+          fi
+
+      - name: 📊 Upload changelog
+        uses: actions/upload-artifact@v4
+        with:
+          name: changelog
+          path: CHANGELOG.md
+
+  # ==================== CREATE GITHUB RELEASE ====================
+  
+  create-release:
+    name: 🎉 Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [validate-release, build-release, generate-changelog]
+    
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📥 Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: 🎉 Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.validate-release.outputs.version }}
+          release_name: Release ${{ needs.validate-release.outputs.version }}
+          body_path: artifacts/changelog/CHANGELOG.md
+          draft: false
+          prerelease: ${{ needs.validate-release.outputs.is_prerelease }}
+
+      - name: 📎 Upload release assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: artifacts/release-manifest/release-manifest.md
+          asset_name: docker-images.md
+          asset_content_type: text/markdown
+
+  # ==================== DEPLOYMENT ====================
+  
+  deploy-release:
+    name: 🚀 Deploy Release
+    runs-on: ubuntu-latest
+    needs: [validate-release, create-release]
+    environment: production
+    if: needs.validate-release.outputs.is_prerelease == 'false'
+    
+    steps:
+      - name: 🚀 Deploy to production
+        run: |
+          echo "🚀 Deploying release ${{ needs.validate-release.outputs.version }} to production"
+          echo "Backend image: ${{ env.DOCKER_USERNAME }}/backend:${{ needs.validate-release.outputs.version }}"
+          echo "Frontend image: ${{ env.DOCKER_USERNAME }}/frontend:${{ needs.validate-release.outputs.version }}"
+          
+          # Add your deployment commands here
+          # For example:
+          # kubectl set image deployment/backend backend=${{ env.DOCKER_USERNAME }}/backend:${{ needs.validate-release.outputs.version }}
+          # kubectl set image deployment/frontend frontend=${{ env.DOCKER_USERNAME }}/frontend:${{ needs.validate-release.outputs.version }}
+
+  # ==================== POST-RELEASE ====================
+  
+  post-release:
+    name: 📢 Post-Release Tasks
+    runs-on: ubuntu-latest
+    needs: [validate-release, create-release]
+    if: always()
+    
+    steps:
+      - name: 📢 Notify release completion
+        run: |
+          echo "🎉 Release ${{ needs.validate-release.outputs.version }} completed!"
+          echo "GitHub Release: https://github.com/${{ github.repository }}/releases/tag/${{ needs.validate-release.outputs.version }}"
+          echo "Docker Images:"
+          echo "  - ${{ env.DOCKER_USERNAME }}/backend:${{ needs.validate-release.outputs.version }}"
+          echo "  - ${{ env.DOCKER_USERNAME }}/frontend:${{ needs.validate-release.outputs.version }}"

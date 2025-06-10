@@ -8,8 +8,18 @@ const getToken = () => {
     return '';
 };
 
+// Get API URL from environment variable or fallback to localhost
+const getApiBaseUrl = () => {
+    // For client-side (browser)
+    if (typeof window !== 'undefined') {
+        return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/';
+    }
+    // For server-side (SSR)
+    return process.env.API_URL || 'http://backend:8080/api/';
+};
+
 const apiClient = axios.create({
-    baseURL: 'http://localhost:8080/api/',
+    baseURL: getApiBaseUrl(),
     headers: {
         'Content-Type': 'application/json',
     },

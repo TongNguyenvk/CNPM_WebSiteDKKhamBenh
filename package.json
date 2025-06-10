@@ -1,5 +1,39 @@
 {
+  "name": "cnpm-websitedkkhambenh",
+  "version": "1.0.0",
+  "description": "Website Đăng Ký Khám Bệnh - CNPM Project",
+  "scripts": {
+    "test": "npm run test:frontend && npm run test:backend",
+    "test:frontend": "cd frontend && npm run test",
+    "test:backend": "cd backend && npm run test",
+    "test:all": "powershell -ExecutionPolicy Bypass -File scripts/test-all.ps1",
+    "test:all:bash": "bash scripts/test-all.sh",
+    "lint": "npm run lint:frontend",
+    "lint:frontend": "cd frontend && npm run lint",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && echo 'Backend build completed'",
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:backend": "cd backend && npm run dev",
+    "docker:build": "docker build -t frontend ./frontend && docker build -t backend ./backend",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down"
+  },
   "dependencies": {
     "multer": "^2.0.1"
-  }
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "healthcare",
+    "appointment",
+    "booking",
+    "nodejs",
+    "react",
+    "mysql"
+  ],
+  "author": "CNPM Team",
+  "license": "MIT"
 }

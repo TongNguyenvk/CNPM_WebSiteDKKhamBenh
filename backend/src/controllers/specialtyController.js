@@ -13,13 +13,16 @@ exports.getSpecialtyById = async (req, res) => {
     try {
         const { id } = req.params;
 
-
+        // Validate ID
+        if (!id || isNaN(parseInt(id))) {
+            return res.status(400).json({ message: 'Invalid specialty ID' });
+        }
 
         // Tìm chuyên khoa theo ID
         const specialty = await Specialty.findByPk(id);
 
         if (!specialty) {
-            return res.status(404).json({ message: `Specialty with ID ${specialtyId} not found` });
+            return res.status(404).json({ message: `Specialty with ID ${id} not found` });
         }
 
         res.status(200).json(specialty);
