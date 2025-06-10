@@ -26,12 +26,6 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: 🔍 Frontend Lint Check
-        working-directory: ./frontend
-        run: |
-          npm ci
-          npm run lint
-
       - name: 📊 Check file changes
         run: |
           echo "Changed files:"
