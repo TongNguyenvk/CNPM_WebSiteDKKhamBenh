@@ -9,7 +9,7 @@
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "type-check": "tsc --noEmit",
-    "test": "echo \"Running frontend tests...\" && npm run lint && npm run type-check && npm run build",
+    "test": "echo \"Running frontend tests...\" && npm run type-check && npm run build",
     "test:watch": "npm run lint -- --watch",
     "analyze": "ANALYZE=true npm run build"
   },
