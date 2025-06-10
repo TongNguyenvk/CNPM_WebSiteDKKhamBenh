@@ -25,7 +25,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
 
       # Frontend Build
       - name: 📥 Install frontend dependencies
@@ -52,14 +51,6 @@ jobs:
           cd frontend && npm audit --audit-level=high || echo "Frontend audit completed with warnings"
           cd ../backend && npm audit --audit-level=high || echo "Backend audit completed with warnings"
 
-      - name: 📊 Upload build artifacts
-        uses: actions/upload-artifact@v4
-        if: github.ref == 'refs/heads/main'
-        with:
-          name: frontend-build
-          path: frontend/.next
-          retention-days: 1
-
   # ==================== DOCKER BUILD & PUSH ====================
 
   docker-deploy:
@@ -80,12 +71,6 @@ jobs:
         with:
           username: ${{ env.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
-
-      - name: 📥 Download frontend build
-        uses: actions/download-artifact@v4
-        with:
-          name: frontend-build
-          path: frontend/.next
 
       - name: 🏷️ Generate tags
         id: meta
