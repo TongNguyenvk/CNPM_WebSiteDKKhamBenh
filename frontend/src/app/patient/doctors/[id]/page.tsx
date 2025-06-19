@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { getDoctorById, getDoctorSchedules } from "@/lib/api";
+import Link from "next/link";
 
 interface Schedule {
     id: number;
@@ -167,12 +168,16 @@ export default function DoctorDetailPage() {
     return (
         <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
             {/* Nút Quay lại */}
-            <button
-                className="flex items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-full border-2 border-blue-500 hover:bg-gray-200 transition-colors"
-                onClick={() => router.back()}
+            <Link
+                href="/patient/doctors"
+                className="flex items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-full border-2 border-blue-500 hover:bg-gray-200 transition-colors mb-6"
+                onClick={(e) => {
+                    e.preventDefault();
+                    router.back();
+                }}
             >
                 ← Quay lại
-            </button>
+            </Link>
 
             {/* Thông tin bác sĩ */}
             {doctor && (

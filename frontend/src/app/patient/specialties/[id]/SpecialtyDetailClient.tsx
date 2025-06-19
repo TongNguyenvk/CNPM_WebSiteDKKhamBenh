@@ -116,10 +116,10 @@ export default function SpecialtyDetailClient({ specialtyId }: SpecialtyDetailCl
                         </button>
                         <Link
                             href="/patient/specialties"
-                            className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+                            className="flex items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-full border-2 border-blue-500 hover:bg-gray-200 transition-colors mb-6"
                         >
                             Quay lại
-                        </Link>
+                </Link>
                     </div>
                 </div>
             </div>
@@ -148,7 +148,7 @@ export default function SpecialtyDetailClient({ specialtyId }: SpecialtyDetailCl
                 {/* Nút Quay lại */}
                 <Link
                     href="/patient/specialties"
-                    className="flex items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-full border-2 border-blue-500 hover:bg-gray-200 transition-colors mb-6"
+                    className="inline-flex items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-full border-2 border-blue-500 hover:bg-gray-200 transition-colors mb-6 w-auto"
                 >
                     ← Quay lại
                 </Link>

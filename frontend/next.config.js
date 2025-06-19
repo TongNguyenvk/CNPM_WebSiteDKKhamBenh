@@ -12,6 +12,7 @@ const nextConfig = {
                 pathname: '/images/**',
             },
         ],
+        domains: ['avatars.githubusercontent.com'],
     },
     eslint: {
         ignoreDuringBuilds: true,

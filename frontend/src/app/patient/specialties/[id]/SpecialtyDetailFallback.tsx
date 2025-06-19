@@ -17,7 +17,7 @@ export default function SpecialtyDetailFallback({ specialtyId, error }: Specialt
                     href="/patient/specialties"
                     className="flex items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-full border-2 border-blue-500 hover:bg-gray-200 transition-colors mb-6"
                 >
-                    ← Quay lại
+                    Quay lại
                 </Link>
 
                 {/* Error message */}

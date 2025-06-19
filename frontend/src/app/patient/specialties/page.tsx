@@ -19,6 +19,7 @@ export default function SpecialtiesPage() {
     const [specialties, setSpecialties] = useState<Specialty[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         const fetchSpecialties = async () => {
@@ -37,6 +38,12 @@ export default function SpecialtiesPage() {
 
         fetchSpecialties();
     }, []);
+
+    // Lọc danh sách chuyên khoa theo từ khóa tìm kiếm
+    const filteredSpecialties = specialties.filter(specialty => 
+        specialty.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        specialty.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     if (loading) {
         return <LoadingPage text="Đang tải danh sách chuyên khoa..." />;
@@ -87,14 +94,36 @@ export default function SpecialtiesPage() {
                             <input
                                 type="text"
                                 placeholder="Tìm kiếm chuyên khoa..."
-                                className="form-input pl-10"
+                                className="form-input pl-10 w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
                             />
+                            {searchTerm && (
+                                <button 
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                                    onClick={() => setSearchTerm('')}
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
 
+                {/* Kết quả tìm kiếm */}
+                {searchTerm && (
+                    <div className="mb-6">
+                        <p className="text-neutral-600 text-center">
+                            Tìm thấy <span className="font-semibold text-neutral-900">{filteredSpecialties.length}</span> chuyên khoa
+                            {searchTerm && ` cho "${searchTerm}"`}
+                        </p>
+                    </div>
+                )}
+
                 {/* Specialties Grid */}
-                {specialties.length === 0 ? (
+                {filteredSpecialties.length === 0 ? (
                     <Card className="text-center py-16">
                         <CardBody>
                             <div className="w-24 h-24 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -103,16 +132,24 @@ export default function SpecialtiesPage() {
                                 </svg>
                             </div>
                             <h3 className="text-xl font-semibold text-neutral-900 mb-2">
-                                Chưa có chuyên khoa nào
+                                {searchTerm ? "Không tìm thấy chuyên khoa nào" : "Chưa có chuyên khoa nào"}
                             </h3>
-                            <p className="text-neutral-600">
-                                Hiện tại chưa có chuyên khoa nào được cập nhật.
+                            <p className="text-neutral-600 mb-6">
+                                {searchTerm ? "Thử tìm kiếm với từ khóa khác." : "Hiện tại chưa có chuyên khoa nào được cập nhật."}
                             </p>
+                            {searchTerm && (
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setSearchTerm('')}
+                                >
+                                    Xóa bộ lọc
+                                </Button>
+                            )}
                         </CardBody>
                     </Card>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {specialties.map((specialty) => (
+                        {filteredSpecialties.map((specialty) => (
                             <SpecialtyCard key={specialty.id} specialty={specialty} />
                         ))}
                     </div>
