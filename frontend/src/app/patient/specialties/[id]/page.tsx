@@ -1,6 +1,7 @@
 import React from 'react';
 import SpecialtyDetailClient from './SpecialtyDetailClient';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { BackButton } from "@/components/ui/BackButton";
 
 interface PageProps {
     params: Promise<{
@@ -32,8 +33,12 @@ export default async function SpecialtyDetailPage({ params }: PageProps) {
     }
 
     return (
-        <ErrorBoundary>
-            <SpecialtyDetailClient specialtyId={specialtyId} />
-        </ErrorBoundary>
+        <div className="container mx-auto p-4 ">
+            <div className="mb-4 ">
+            </div>
+            <ErrorBoundary>
+                <SpecialtyDetailClient specialtyId={specialtyId} />
+            </ErrorBoundary>
+        </div>
     );
 }

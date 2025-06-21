@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { BackButton } from '@/components/ui/BackButton';
 
 interface SpecialtyDetailFallbackProps {
     specialtyId: number;
@@ -12,13 +13,7 @@ export default function SpecialtyDetailFallback({ specialtyId, error }: Specialt
     return (
         <div className="p-6 mt-6">
             <div className="max-w-4xl mx-auto">
-                {/* Nút Quay lại */}
-                <Link
-                    href="/patient/specialties"
-                    className="flex items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-full border-2 border-blue-500 hover:bg-gray-200 transition-colors mb-6"
-                >
-                    Quay lại
-                </Link>
+        
 
                 {/* Error message */}
                 <div className="bg-white rounded-lg shadow-md p-8 text-center">

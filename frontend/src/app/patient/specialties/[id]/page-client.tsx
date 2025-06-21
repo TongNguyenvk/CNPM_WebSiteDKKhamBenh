@@ -6,6 +6,7 @@ import { getSpecialtyById, getDoctorsBySpecialty } from '@/lib/api';
 import Image from 'next/image';
 import Link from 'next/link';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import { BackButton } from '@/components/ui/BackButton';
 
 interface Specialty {
     id: number;
@@ -127,13 +128,6 @@ function SpecialtyDetailContent() {
     return (
         <div className="p-6 mt-6">
             <div className="max-w-4xl mx-auto">
-                {/* Nút Quay lại */}
-                <Link
-                    href="/patient/specialties"
-                    className="inline-flex items-center px-4 py-2 text-gray-700 bg-gray-100 rounded-full border-2 border-blue-500 hover:bg-gray-200 transition-colors mb-6 w-auto"
-                >
-                    ← Quay lại
-                </Link>
 
                 {/* Thông tin chuyên khoa */}
                 <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
