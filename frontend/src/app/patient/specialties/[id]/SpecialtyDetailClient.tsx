@@ -144,9 +144,9 @@ export default function SpecialtyDetailClient({ specialtyId }: SpecialtyDetailCl
     }
 
     return (
-        <div className="p-6 mt-6">
+        <div>
             <div className="max-w-4xl mx-auto">
-                <BackButton className="mb-6" />
+                <BackButton />
                 {/* Thông tin chuyên khoa */}
                 <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
                     <div className="relative h-64">
