@@ -35,6 +35,16 @@ export default function PatientDashboard() {
     const { user, loading } = useAuth();
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [error, setError] = useState('');
+    const [stats, setStats] = useState({
+        totalAppointments: 0,
+        upcomingAppointments: 0,
+        completedAppointments: 0,
+        cancelledAppointments: 0,
+        thisMonthAppointments: 0,
+        lastAppointmentDate: null as string | null,
+        favoriteDoctor: null as string | null,
+        totalDoctorsVisited: 0
+    });
 
     useEffect(() => {
         const fetchAppointments = async () => {
@@ -44,6 +54,53 @@ export default function PatientDashboard() {
                 setError('');
                 const data = await getPatientAppointments(user.userId);
                 setAppointments(data);
+
+                // Calculate statistics
+                const today = new Date();
+                const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+                const upcoming = data.filter(apt =>
+                    new Date(apt.date) >= today && apt.statusId !== 'S3' && apt.statusId !== 'S4'
+                ).length;
+
+                const completed = data.filter(apt => apt.statusId === 'S3').length;
+                const cancelled = data.filter(apt => apt.statusId === 'S4').length;
+
+                const thisMonth = data.filter(apt =>
+                    new Date(apt.date) >= startOfMonth
+                ).length;
+
+                // Find last appointment
+                const sortedAppointments = data
+                    .filter(apt => apt.statusId === 'S3')
+                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                const lastAppointment = sortedAppointments[0];
+
+                // Find favorite doctor (most visited)
+                const doctorCounts = data.reduce((acc, apt) => {
+                    if (apt.doctorData) {
+                        const doctorName = `${apt.doctorData.firstName} ${apt.doctorData.lastName}`;
+                        acc[doctorName] = (acc[doctorName] || 0) + 1;
+                    }
+                    return acc;
+                }, {} as Record<string, number>);
+
+                const favoriteDoctor = Object.keys(doctorCounts).length > 0
+                    ? Object.keys(doctorCounts).reduce((a, b) => doctorCounts[a] > doctorCounts[b] ? a : b)
+                    : null;
+
+                const totalDoctors = Object.keys(doctorCounts).length;
+
+                setStats({
+                    totalAppointments: data.length,
+                    upcomingAppointments: upcoming,
+                    completedAppointments: completed,
+                    cancelledAppointments: cancelled,
+                    thisMonthAppointments: thisMonth,
+                    lastAppointmentDate: lastAppointment?.date || null,
+                    favoriteDoctor,
+                    totalDoctorsVisited: totalDoctors
+                });
             } catch (error: unknown) {
                 const err = error as Error;
                 setError(err.message || 'Lỗi khi tải lịch hẹn');
@@ -107,8 +164,8 @@ export default function PatientDashboard() {
                                 </svg>
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-neutral-900">{upcomingAppointments.length}</p>
-                                <p className="text-sm text-neutral-600">Lịch khám sắp tới</p>
+                                <p className="text-2xl font-bold text-neutral-900">{stats.upcomingAppointments}</p>
+                                <p className="text-sm text-neutral-600">Lịch sắp tới</p>
                             </div>
                         </CardBody>
                     </Card>
@@ -121,8 +178,8 @@ export default function PatientDashboard() {
                                 </svg>
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-neutral-900">{appointments.length}</p>
-                                <p className="text-sm text-neutral-600">Tổng lịch khám</p>
+                                <p className="text-2xl font-bold text-neutral-900">{stats.completedAppointments}</p>
+                                <p className="text-sm text-neutral-600">Đã hoàn thành</p>
                             </div>
                         </CardBody>
                     </Card>
@@ -135,11 +192,65 @@ export default function PatientDashboard() {
                                 </svg>
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-neutral-900">
-                                    {new Set(appointments.map(apt => apt.doctorId)).size}
-                                </p>
-                                <p className="text-sm text-neutral-600">Bác sĩ đã khám</p>
+                                <p className="text-2xl font-bold text-neutral-900">{stats.totalAppointments}</p>
+                                <p className="text-sm text-neutral-600">Tổng lịch khám</p>
                             </div>
+                        </CardBody>
+                    </Card>
+                </div>
+
+                {/* Additional Stats Row */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <Card className="hover:shadow-lg transition-shadow">
+                        <CardBody className="text-center">
+                            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                            </div>
+                            <p className="text-lg font-semibold text-neutral-900">{stats.thisMonthAppointments}</p>
+                            <p className="text-xs text-neutral-600">Lịch tháng này</p>
+                        </CardBody>
+                    </Card>
+
+                    <Card className="hover:shadow-lg transition-shadow">
+                        <CardBody className="text-center">
+                            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </div>
+                            <p className="text-lg font-semibold text-neutral-900">{stats.cancelledAppointments}</p>
+                            <p className="text-xs text-neutral-600">Đã hủy</p>
+                        </CardBody>
+                    </Card>
+
+                    <Card className="hover:shadow-lg transition-shadow">
+                        <CardBody className="text-center">
+                            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                            </div>
+                            <p className="text-lg font-semibold text-neutral-900">{stats.totalDoctorsVisited}</p>
+                            <p className="text-xs text-neutral-600">Bác sĩ đã khám</p>
+                        </CardBody>
+                    </Card>
+
+                    <Card className="hover:shadow-lg transition-shadow">
+                        <CardBody className="text-center">
+                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                            <p className="text-lg font-semibold text-neutral-900">
+                                {stats.lastAppointmentDate
+                                    ? new Date(stats.lastAppointmentDate).toLocaleDateString('vi-VN')
+                                    : 'Chưa có'
+                                }
+                            </p>
+                            <p className="text-xs text-neutral-600">Lần khám cuối</p>
                         </CardBody>
                     </Card>
                 </div>

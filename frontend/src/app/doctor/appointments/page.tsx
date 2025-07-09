@@ -44,7 +44,12 @@ export default function DoctorAppointmentsPage() {
     const [error, setError] = useState<string | null>(null);
     const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
     const [filterStatus, setFilterStatus] = useState<string>('all');
+    const [dateFilter, setDateFilter] = useState<string>('all');
     const [searchTerm, setSearchTerm] = useState('');
+    const [sortBy, setSortBy] = useState<string>('date');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [itemsPerPage] = useState<number>(10);
 
     useEffect(() => {
         const fetchAppointments = async () => {
@@ -133,6 +138,30 @@ export default function DoctorAppointmentsPage() {
             filtered = filtered.filter(appointment => appointment.statusId === filterStatus);
         }
 
+        // Filter by date
+        if (dateFilter !== 'all') {
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+            switch (dateFilter) {
+                case 'today':
+                    filtered = filtered.filter(appointment => appointment.date === todayStr);
+                    break;
+                case 'tomorrow':
+                    filtered = filtered.filter(appointment => appointment.date === tomorrowStr);
+                    break;
+                case 'upcoming':
+                    filtered = filtered.filter(appointment => appointment.date >= todayStr);
+                    break;
+                case 'past':
+                    filtered = filtered.filter(appointment => appointment.date < todayStr);
+                    break;
+            }
+        }
+
         // Filter by search term
         if (searchTerm) {
             filtered = filtered.filter(appointment =>
@@ -142,7 +171,57 @@ export default function DoctorAppointmentsPage() {
             );
         }
 
-        return filtered.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        // Sort appointments
+        filtered.sort((a, b) => {
+            let aValue: string | number = '';
+            let bValue: string | number = '';
+
+            switch (sortBy) {
+                case 'date':
+                    aValue = new Date(a.date).getTime();
+                    bValue = new Date(b.date).getTime();
+                    break;
+                case 'patient':
+                    aValue = `${a.patientData?.firstName} ${a.patientData?.lastName}` || '';
+                    bValue = `${b.patientData?.firstName} ${b.patientData?.lastName}` || '';
+                    break;
+                case 'timeType':
+                    aValue = a.timeTypeData?.valueVi || '';
+                    bValue = b.timeTypeData?.valueVi || '';
+                    break;
+                case 'status':
+                    aValue = a.statusData?.valueVi || '';
+                    bValue = b.statusData?.valueVi || '';
+                    break;
+                default:
+                    aValue = new Date(a.date).getTime();
+                    bValue = new Date(b.date).getTime();
+            }
+
+            if (typeof aValue === 'string' && typeof bValue === 'string') {
+                return sortOrder === 'asc'
+                    ? aValue.localeCompare(bValue)
+                    : bValue.localeCompare(aValue);
+            } else {
+                return sortOrder === 'asc'
+                    ? (aValue as number) - (bValue as number)
+                    : (bValue as number) - (aValue as number);
+            }
+        });
+
+        return filtered;
+    };
+
+    const getPaginatedAppointments = () => {
+        const filtered = getFilteredAppointments();
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        return filtered.slice(startIndex, endIndex);
+    };
+
+    const getTotalPages = () => {
+        const filtered = getFilteredAppointments();
+        return Math.ceil(filtered.length / itemsPerPage);
     };
 
     if (isLoading) {
@@ -170,7 +249,9 @@ export default function DoctorAppointmentsPage() {
         );
     }
 
-    const filteredAppointments = getFilteredAppointments();
+    const appointmentsToDisplay = getPaginatedAppointments();
+    const totalAppointments = getFilteredAppointments().length;
+    const totalPages = getTotalPages();
 
     return (
         <div className="min-h-screen bg-neutral-50">
@@ -188,27 +269,41 @@ export default function DoctorAppointmentsPage() {
                 {/* Filters and Search */}
                 <Card className="mb-6">
                     <CardBody className="p-6">
-                        <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-                            <div className="flex flex-col sm:flex-row gap-4 flex-1">
-                                {/* Search */}
-                                <div className="relative flex-1 max-w-md">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+                            {/* Search */}
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                    Tìm kiếm
+                                </label>
+                                <div className="relative">
                                     <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                     </svg>
                                     <input
                                         type="text"
-                                        placeholder="Tìm kiếm theo tên, email, số điện thoại..."
+                                        placeholder="Tìm theo tên, email, SĐT..."
                                         className="form-input pl-10"
                                         value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        onChange={(e) => {
+                                            setSearchTerm(e.target.value);
+                                            setCurrentPage(1);
+                                        }}
                                     />
                                 </div>
+                            </div>
 
-                                {/* Status Filter */}
+                            {/* Status Filter */}
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                    Trạng thái
+                                </label>
                                 <select
                                     value={filterStatus}
-                                    onChange={(e) => setFilterStatus(e.target.value)}
-                                    className="form-select min-w-[150px]"
+                                    onChange={(e) => {
+                                        setFilterStatus(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
+                                    className="form-select"
                                 >
                                     <option value="all">Tất cả trạng thái</option>
                                     <option value="S1">Chờ xác nhận</option>
@@ -217,6 +312,60 @@ export default function DoctorAppointmentsPage() {
                                     <option value="S4">Đã hủy</option>
                                 </select>
                             </div>
+
+                            {/* Date Filter */}
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                    Thời gian
+                                </label>
+                                <select
+                                    value={dateFilter}
+                                    onChange={(e) => {
+                                        setDateFilter(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
+                                    className="form-select"
+                                >
+                                    <option value="all">Tất cả</option>
+                                    <option value="today">Hôm nay</option>
+                                    <option value="tomorrow">Ngày mai</option>
+                                    <option value="upcoming">Sắp tới</option>
+                                    <option value="past">Đã qua</option>
+                                </select>
+                            </div>
+
+                            {/* Sort By */}
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                    Sắp xếp theo
+                                </label>
+                                <select
+                                    value={sortBy}
+                                    onChange={(e) => setSortBy(e.target.value)}
+                                    className="form-select"
+                                >
+                                    <option value="date">Ngày khám</option>
+                                    <option value="patient">Tên bệnh nhân</option>
+                                    <option value="timeType">Giờ khám</option>
+                                    <option value="status">Trạng thái</option>
+                                </select>
+                            </div>
+
+                            {/* Sort Order */}
+                            <div className="flex items-end">
+                                <button
+                                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                                    className="btn-secondary px-3 py-2 h-10"
+                                    title={sortOrder === 'asc' ? 'Tăng dần' : 'Giảm dần'}
+                                >
+                                    {sortOrder === 'asc' ? '↑' : '↓'}
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Stats */}
+                        <div className="mt-4 text-sm text-neutral-600">
+                            Hiển thị {appointmentsToDisplay.length} trong tổng số {totalAppointments} lịch khám
                         </div>
                     </CardBody>
                 </Card>
@@ -290,11 +439,11 @@ export default function DoctorAppointmentsPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>
-                            Danh sách lịch khám ({filteredAppointments.length})
+                            Danh sách lịch khám ({totalAppointments})
                         </CardTitle>
                     </CardHeader>
                     <CardBody>
-                        {filteredAppointments.length === 0 ? (
+                        {appointmentsToDisplay.length === 0 ? (
                             <div className="text-center py-16">
                                 <div className="w-24 h-24 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-6">
                                     <svg className="w-12 h-12 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -313,6 +462,8 @@ export default function DoctorAppointmentsPage() {
                                         onClick={() => {
                                             setSearchTerm('');
                                             setFilterStatus('all');
+                                            setDateFilter('all');
+                                            setCurrentPage(1);
                                         }}
                                     >
                                         Xóa bộ lọc
@@ -321,7 +472,7 @@ export default function DoctorAppointmentsPage() {
                             </div>
                         ) : (
                             <div className="space-y-4">
-                                {filteredAppointments.map((appointment) => (
+                                {appointmentsToDisplay.map((appointment) => (
                                     <div
                                         key={appointment.id}
                                         className="flex items-center justify-between p-6 bg-white border border-neutral-200 rounded-xl hover:shadow-md transition-all cursor-pointer"
@@ -364,6 +515,64 @@ export default function DoctorAppointmentsPage() {
                         )}
                     </CardBody>
                 </Card>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-6">
+                        <div className="text-sm text-neutral-600">
+                            Hiển thị {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, totalAppointments)} trong tổng số {totalAppointments} lịch khám
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                                disabled={currentPage === 1}
+                            >
+                                Trước
+                            </Button>
+
+                            {/* Page numbers */}
+                            <div className="flex items-center space-x-1">
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                    let pageNum;
+                                    if (totalPages <= 5) {
+                                        pageNum = i + 1;
+                                    } else if (currentPage <= 3) {
+                                        pageNum = i + 1;
+                                    } else if (currentPage >= totalPages - 2) {
+                                        pageNum = totalPages - 4 + i;
+                                    } else {
+                                        pageNum = currentPage - 2 + i;
+                                    }
+
+                                    return (
+                                        <button
+                                            key={pageNum}
+                                            onClick={() => setCurrentPage(pageNum)}
+                                            className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                                                currentPage === pageNum
+                                                    ? "bg-primary-600 text-white"
+                                                    : "text-neutral-600 hover:bg-neutral-100"
+                                            }`}
+                                        >
+                                            {pageNum}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                                disabled={currentPage === totalPages}
+                            >
+                                Sau
+                            </Button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Appointment Detail Modal */}
                 <Modal

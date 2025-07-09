@@ -31,6 +31,10 @@ export default function DoctorsPage() {
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedSpecialty, setSelectedSpecialty] = useState('');
+    const [sortBy, setSortBy] = useState<string>('firstName');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [itemsPerPage] = useState<number>(8);
 
     useEffect(() => {
         const fetchDoctors = async () => {
@@ -49,16 +53,86 @@ export default function DoctorsPage() {
         fetchDoctors();
     }, []);
 
-    const filteredDoctors = doctors.filter(doctor => {
-        const matchesSearch = searchTerm === '' ||
-            `${doctor.firstName} ${doctor.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            doctor.specialtyData?.name.toLowerCase().includes(searchTerm.toLowerCase());
+    // Helper functions for filtering, sorting, and pagination
+    const getFilteredDoctors = () => {
+        let filtered = doctors;
 
-        const matchesSpecialty = selectedSpecialty === '' ||
-            doctor.specialtyData?.name === selectedSpecialty;
+        // Filter by search term
+        if (searchTerm) {
+            filtered = filtered.filter(doctor =>
+                `${doctor.firstName} ${doctor.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (doctor.specialtyData?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (doctor.positionData?.valueVi || '').toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
 
-        return matchesSearch && matchesSpecialty;
-    });
+        // Filter by specialty
+        if (selectedSpecialty) {
+            filtered = filtered.filter(doctor =>
+                doctor.specialtyData?.name === selectedSpecialty
+            );
+        }
+
+        // Sort doctors
+        filtered.sort((a, b) => {
+            let aValue: string | number = '';
+            let bValue: string | number = '';
+
+            switch (sortBy) {
+                case 'firstName':
+                    aValue = a.firstName || '';
+                    bValue = b.firstName || '';
+                    break;
+                case 'lastName':
+                    aValue = a.lastName || '';
+                    bValue = b.lastName || '';
+                    break;
+                case 'specialty':
+                    aValue = a.specialtyData?.name || '';
+                    bValue = b.specialtyData?.name || '';
+                    break;
+                case 'position':
+                    aValue = a.positionData?.valueVi || '';
+                    bValue = b.positionData?.valueVi || '';
+                    break;
+                case 'experience':
+                    aValue = a.experience || 0;
+                    bValue = b.experience || 0;
+                    break;
+                default:
+                    aValue = a.firstName || '';
+                    bValue = b.firstName || '';
+            }
+
+            if (typeof aValue === 'string' && typeof bValue === 'string') {
+                return sortOrder === 'asc'
+                    ? aValue.localeCompare(bValue)
+                    : bValue.localeCompare(aValue);
+            } else {
+                return sortOrder === 'asc'
+                    ? (aValue as number) - (bValue as number)
+                    : (bValue as number) - (aValue as number);
+            }
+        });
+
+        return filtered;
+    };
+
+    const getPaginatedDoctors = () => {
+        const filtered = getFilteredDoctors();
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        return filtered.slice(startIndex, endIndex);
+    };
+
+    const getTotalPages = () => {
+        const filtered = getFilteredDoctors();
+        return Math.ceil(filtered.length / itemsPerPage);
+    };
+
+    const doctorsToDisplay = getPaginatedDoctors();
+    const totalDoctors = getFilteredDoctors().length;
+    const totalPages = getTotalPages();
 
     const specialties = Array.from(new Set(doctors.map(d => d.specialtyData?.name).filter(Boolean)));
 
@@ -102,53 +176,94 @@ export default function DoctorsPage() {
                 </div>
 
                 {/* Search and Filter */}
-                <div className="mb-8">
-                    <div className="flex flex-col md:flex-row gap-4 max-w-4xl mx-auto">
-                        {/* Search */}
-                        <div className="flex-1">
-                            <div className="relative">
-                                <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                </svg>
-                                <input
-                                    type="text"
-                                    placeholder="Tìm kiếm bác sĩ theo tên hoặc chuyên khoa..."
-                                    className="form-input pl-10"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
+                <Card className="mb-8">
+                    <CardBody className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
+                            {/* Search */}
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                    Tìm kiếm bác sĩ
+                                </label>
+                                <div className="relative">
+                                    <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                    <input
+                                        type="text"
+                                        placeholder="Tìm theo tên, chuyên khoa..."
+                                        className="form-input pl-10"
+                                        value={searchTerm}
+                                        onChange={(e) => {
+                                            setSearchTerm(e.target.value);
+                                            setCurrentPage(1);
+                                        }}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Specialty Filter */}
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                    Chuyên khoa
+                                </label>
+                                <select
+                                    className="form-select"
+                                    value={selectedSpecialty}
+                                    onChange={(e) => {
+                                        setSelectedSpecialty(e.target.value);
+                                        setCurrentPage(1);
+                                    }}
+                                >
+                                    <option value="">Tất cả chuyên khoa</option>
+                                    {specialties.map((specialty) => (
+                                        <option key={specialty} value={specialty}>
+                                            {specialty}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Sort By */}
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                    Sắp xếp theo
+                                </label>
+                                <select
+                                    value={sortBy}
+                                    onChange={(e) => setSortBy(e.target.value)}
+                                    className="form-select"
+                                >
+                                    <option value="firstName">Tên</option>
+                                    <option value="lastName">Họ</option>
+                                    <option value="specialty">Chuyên khoa</option>
+                                    <option value="position">Chức vụ</option>
+                                    <option value="experience">Kinh nghiệm</option>
+                                </select>
+                            </div>
+
+                            {/* Sort Order */}
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                    Thứ tự
+                                </label>
+                                <button
+                                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                                    className="btn-secondary px-3 py-2 w-full"
+                                >
+                                    {sortOrder === 'asc' ? '↑ Tăng dần' : '↓ Giảm dần'}
+                                </button>
                             </div>
                         </div>
 
-                        {/* Specialty Filter */}
-                        <div className="md:w-64">
-                            <select
-                                className="form-select"
-                                value={selectedSpecialty}
-                                onChange={(e) => setSelectedSpecialty(e.target.value)}
-                            >
-                                <option value="">Tất cả chuyên khoa</option>
-                                {specialties.map((specialty) => (
-                                    <option key={specialty} value={specialty}>
-                                        {specialty}
-                                    </option>
-                                ))}
-                            </select>
+                        {/* Stats */}
+                        <div className="mt-4 text-sm text-neutral-600">
+                            Hiển thị {doctorsToDisplay.length} trong tổng số {totalDoctors} bác sĩ
                         </div>
-                    </div>
-                </div>
-
-                {/* Results Count */}
-                <div className="mb-6">
-                    <p className="text-neutral-600 text-center">
-                        Tìm thấy <span className="font-semibold text-neutral-900">{filteredDoctors.length}</span> bác sĩ
-                        {searchTerm && ` cho "${searchTerm}"`}
-                        {selectedSpecialty && ` trong chuyên khoa "${selectedSpecialty}"`}
-                    </p>
-                </div>
+                    </CardBody>
+                </Card>
 
                 {/* Doctors Grid */}
-                {filteredDoctors.length === 0 ? (
+                {doctorsToDisplay.length === 0 ? (
                     <Card className="text-center py-16">
                         <CardBody>
                             <div className="w-24 h-24 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -175,9 +290,67 @@ export default function DoctorsPage() {
                     </Card>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredDoctors.map((doctor) => (
+                        {doctorsToDisplay.map((doctor) => (
                             <DoctorCard key={doctor.id} doctor={doctor} />
                         ))}
+                    </div>
+                )}
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-8">
+                        <div className="text-sm text-neutral-600">
+                            Hiển thị {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, totalDoctors)} trong tổng số {totalDoctors} bác sĩ
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                                disabled={currentPage === 1}
+                            >
+                                Trước
+                            </Button>
+
+                            {/* Page numbers */}
+                            <div className="flex items-center space-x-1">
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                    let pageNum;
+                                    if (totalPages <= 5) {
+                                        pageNum = i + 1;
+                                    } else if (currentPage <= 3) {
+                                        pageNum = i + 1;
+                                    } else if (currentPage >= totalPages - 2) {
+                                        pageNum = totalPages - 4 + i;
+                                    } else {
+                                        pageNum = currentPage - 2 + i;
+                                    }
+
+                                    return (
+                                        <button
+                                            key={pageNum}
+                                            onClick={() => setCurrentPage(pageNum)}
+                                            className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                                                currentPage === pageNum
+                                                    ? "bg-primary-600 text-white"
+                                                    : "text-neutral-600 hover:bg-neutral-100"
+                                            }`}
+                                        >
+                                            {pageNum}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                                disabled={currentPage === totalPages}
+                            >
+                                Sau
+                            </Button>
+                        </div>
                     </div>
                 )}
             </div>

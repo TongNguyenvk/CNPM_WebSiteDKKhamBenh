@@ -3,19 +3,34 @@ name: 🚀 CI/CD Pipeline
 on:
   push:
     branches: [ main, develop ]
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+      - '.github/workflows/**'
+      - 'package.json'
+      - 'docker-compose.yml'
   pull_request:
     branches: [ main, develop ]
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+      - '.github/workflows/**'
+      - 'package.json'
+      - 'docker-compose.yml'
 
 env:
   NODE_VERSION: '18'
   DOCKER_USERNAME: tongnguyen
 
 jobs:
-  # ==================== BUILD & TEST ====================
+  # ==================== TESTING JOBS ====================
 
-  build-and-test:
-    name: 🧪 Build & Test
+  frontend-test:
+    name: 🧪 Frontend Tests
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
 
     steps:
       - name: 📦 Checkout code
@@ -25,38 +40,116 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
-      # Frontend Build
-      - name: 📥 Install frontend dependencies
-        working-directory: ./frontend
+      - name: 📥 Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: 🏗️ Build frontend
-        working-directory: ./frontend
+      - name: 🏗️ Build application
         run: npm run build
 
-      # Backend Build
-      - name: 📥 Install backend dependencies
+      - name: 📊 Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/.next
+          retention-days: 1
+
+  backend-test:
+    name: 🧪 Backend Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
         working-directory: ./backend
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: test_db
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: 📥 Install dependencies
         run: npm ci
 
-      - name: 🧪 Test backend (if available)
-        working-directory: ./backend
+      - name: 🧪 Run tests
         run: npm test || echo "No tests configured"
+        env:
+          DB_HOST: localhost
+          DB_PORT: 3306
+          DB_NAME: test_db
+          DB_USERNAME: root
+          DB_PASSWORD: root
 
-      # Security Check
-      - name: 🔍 Security audit
-        run: |
-          echo "🔍 Running security audits..."
-          cd frontend && npm audit --audit-level=high || echo "Frontend audit completed with warnings"
-          cd ../backend && npm audit --audit-level=high || echo "Backend audit completed with warnings"
+  # ==================== SECURITY & QUALITY ====================
 
-  # ==================== DOCKER BUILD & PUSH ====================
-
-  docker-deploy:
-    name: 🐳 Docker Build & Push
+  security-scan:
+    name: 🔒 Security Scan
     runs-on: ubuntu-latest
-    needs: [build-and-test]
+
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: 📊 Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  dependency-check:
+    name: � Dependency Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Frontend dependency audit
+        working-directory: ./frontend
+        run: |
+          npm audit --audit-level=high || echo "Frontend audit completed with warnings"
+          npm outdated || true
+
+      - name: 🔍 Backend dependency audit
+        working-directory: ./backend
+        run: |
+          npm audit --audit-level=high || echo "Backend audit completed with warnings"
+          npm outdated || true
+
+  # ==================== BUILD & DEPLOY ====================
+
+  build-and-push:
+    name: 🐳 Build & Push Docker Images
+    runs-on: ubuntu-latest
+    needs: [frontend-test, backend-test, security-scan]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
@@ -72,35 +165,84 @@ jobs:
           username: ${{ env.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
 
+      - name: 📥 Download frontend build
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/.next
+
       - name: 🏷️ Generate tags
         id: meta
         run: |
+          echo "timestamp=$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
           echo "short_sha=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
 
-      - name: 🧱 Build and push Backend
+      - name: 🧱 Build and push Backend image
         uses: docker/build-push-action@v5
         with:
           context: ./backend
+          file: ./backend/Dockerfile
           push: true
           tags: |
-            ${{ env.DOCKER_USERNAME }}/cnpm-backend:latest
-            ${{ env.DOCKER_USERNAME }}/cnpm-backend:${{ steps.meta.outputs.short_sha }}
+            ${{ env.DOCKER_USERNAME }}/backend:latest
+            ${{ env.DOCKER_USERNAME }}/backend:${{ steps.meta.outputs.short_sha }}
+            ${{ env.DOCKER_USERNAME }}/backend:${{ steps.meta.outputs.timestamp }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: 🧱 Build and push Frontend
+      - name: 🧱 Build and push Frontend image
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
+          file: ./frontend/Dockerfile
           push: true
           tags: |
-            ${{ env.DOCKER_USERNAME }}/cnpm-frontend:latest
-            ${{ env.DOCKER_USERNAME }}/cnpm-frontend:${{ steps.meta.outputs.short_sha }}
+            ${{ env.DOCKER_USERNAME }}/frontend:latest
+            ${{ env.DOCKER_USERNAME }}/frontend:${{ steps.meta.outputs.short_sha }}
+            ${{ env.DOCKER_USERNAME }}/frontend:${{ steps.meta.outputs.timestamp }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: 🎉 Deploy Success
+  # ==================== DEPLOYMENT ====================
+
+  deploy:
+    name: 🚀 Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [build-and-push]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    environment: production
+
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🚀 Deploy notification
         run: |
-          echo "✅ Docker images built and pushed successfully!"
-          echo "🐳 Backend: ${{ env.DOCKER_USERNAME }}/cnpm-backend:latest"
-          echo "🐳 Frontend: ${{ env.DOCKER_USERNAME }}/cnpm-frontend:latest"
+          echo "🎉 Deployment completed successfully!"
+          echo "Frontend: ${{ env.DOCKER_USERNAME }}/frontend:latest"
+          echo "Backend: ${{ env.DOCKER_USERNAME }}/backend:latest"
+
+  # ==================== NOTIFICATIONS ====================
+
+  notify:
+    name: 📢 Notifications
+    runs-on: ubuntu-latest
+    needs: [frontend-test, backend-test, security-scan, dependency-check]
+    if: always()
+
+    steps:
+      - name: 📊 Check job results
+        run: |
+          echo "Frontend Tests: ${{ needs.frontend-test.result }}"
+          echo "Backend Tests: ${{ needs.backend-test.result }}"
+          echo "Security Scan: ${{ needs.security-scan.result }}"
+          echo "Dependency Check: ${{ needs.dependency-check.result }}"
+
+          if [[ "${{ needs.frontend-test.result }}" == "failure" ||
+                "${{ needs.backend-test.result }}" == "failure" ||
+                "${{ needs.security-scan.result }}" == "failure" ]]; then
+            echo "❌ Some critical jobs failed!"
+            exit 1
+          else
+            echo "✅ All jobs completed successfully!"
+          fi

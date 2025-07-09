@@ -313,6 +313,7 @@ const getAllUsersByRole = async (req, res) => {
                 },
                 {
                     model: User.sequelize.models.Specialty,
+                    as: 'specialtyData',
                     attributes: ['id', 'name']
                 }
             ]

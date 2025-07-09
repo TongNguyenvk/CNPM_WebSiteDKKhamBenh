@@ -36,18 +36,20 @@ export default function DoctorLayout({
     const navItems = [
         { label: 'Dashboard', href: '/doctor/dashboard' },
         { label: 'Lịch Khám', href: '/doctor/appointments' },
-        { label: 'Lịch Phân Công', href: '/doctor/schedule' },
+        { label: 'Bệnh Nhân', href: '/doctor/patients' },
+        { label: 'Hồ Sơ', href: '/doctor/medical-records' },
+        { label: 'Phân Công', href: '/doctor/schedule' },
         { label: 'Tôi', href: '/doctor/profile' }
     ];
 
     return (
-        <div>
+        <div className="min-h-screen bg-neutral-50">
             <Navbar
                 role="doctor"
-                userName={`${user.firstName} ${user.lastName}`}
+                userName={`Dr. ${user.firstName} ${user.lastName}`}
                 navItems={navItems}
             />
-            <main className="container mx-auto px-4 py-8 pt-20"> {/* Increased padding-top */}
+            <main className="pt-20"> {/* Increased padding-top for fixed navbar */}
                 {children}
             </main>
         </div>

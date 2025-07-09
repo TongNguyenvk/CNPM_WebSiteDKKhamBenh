@@ -235,6 +235,7 @@ exports.getBookingById = async (req, res) => {
                         },
                         {
                             model: db.Specialty,
+                            as: 'specialtyData',
                             attributes: ['id', 'name', 'image', 'description']
                         },
                         {

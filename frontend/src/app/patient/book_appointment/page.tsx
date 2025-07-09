@@ -1,7 +1,7 @@
 "use client";
 
 import Image from 'next/image';
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createBooking, getDoctorById, getScheduleById } from "@/lib/api";
 
@@ -28,7 +28,7 @@ interface Doctor {
     };
 }
 
-export default function BookAppointmentPage() {
+function BookAppointmentForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [isLoading, setIsLoading] = useState(true);
@@ -193,4 +193,19 @@ export default function BookAppointmentPage() {
             )}
         </div>
     );
-} 
+}
+
+export default function BookAppointmentPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">Đang tải...</p>
+                </div>
+            </div>
+        }>
+            <BookAppointmentForm />
+        </Suspense>
+    );
+}

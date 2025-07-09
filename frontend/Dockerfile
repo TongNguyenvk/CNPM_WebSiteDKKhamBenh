@@ -1,25 +1,26 @@
 # Sử dụng Node.js phiên bản 18 làm base image
-FROM node:20-alpine AS builder
+FROM node:18-alpine AS builder
 
 # Tạo thư mục làm việc bên trong container
 WORKDIR /app
 
-# Sao chép các file package.json và package-lock.json (hoặc yarn.lock)
+# Sao chép các file package.json và package-lock.json
 COPY package*.json ./
-# Copy environment files
-COPY .env* ./
 
-# Cài đặt các dependencies với legacy peer deps để tránh conflicts
+# Cài đặt tất cả dependencies (bao gồm devDependencies để build)
 RUN npm install --legacy-peer-deps
 
 # Sao chép toàn bộ source code của ứng dụng
 COPY . .
 
+# Disable Next.js telemetry
+ENV NEXT_TELEMETRY_DISABLED=1
+
 # Build ứng dụng Next.js
 RUN npm run build
 
 # Sử dụng một base image nhỏ gọn hơn để chạy ứng dụng
-FROM node:20-alpine
+FROM node:18-alpine
 
 # Tạo thư mục làm việc
 WORKDIR /app

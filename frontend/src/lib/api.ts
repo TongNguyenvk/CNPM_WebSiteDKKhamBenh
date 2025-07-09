@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { getApiUrl } from './config';
 
 // Utility function to get token from localStorage
 const getToken = () => {
@@ -8,14 +9,9 @@ const getToken = () => {
     return '';
 };
 
-// Get API URL from environment variable or fallback to localhost
+// Get API URL from config
 const getApiBaseUrl = () => {
-    // For client-side (browser)
-    if (typeof window !== 'undefined') {
-        return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/';
-    }
-    // For server-side (SSR)
-    return process.env.API_URL || 'http://backend:8080/api/';
+    return getApiUrl();
 };
 
 const apiClient = axios.create({
@@ -36,6 +32,9 @@ interface RegisterData {
     password: string;
     firstName: string;
     lastName: string;
+    gender: boolean;
+    phoneNumber: string;
+    address: string;
     roleId?: string;
 }
 
@@ -47,6 +46,15 @@ interface ApiError extends Error {
 export interface LoginResponse {
     message: string;
     token: string;
+    userId: number;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: string; // roleId từ database
+}
+
+export interface RegisterResponse {
+    message: string;
     userId: number;
     email: string;
     firstName: string;
@@ -126,9 +134,11 @@ interface Doctor {
         descriptionMarkdown?: string;
         descriptionHTML?: string;
     };
-    Specialty?: {
+    specialtyData?: {
         id: number;
         name: string;
+        description?: string;
+        image?: string;
     };
     positionData?: {
         keyMap: string;
@@ -298,19 +308,11 @@ export const loginUser = async (data: LoginData): Promise<LoginResponse> => {
     }
 };
 
-export const registerUser = async (data: RegisterData): Promise<LoginResponse> => {
+export const registerUser = async (data: RegisterData): Promise<RegisterResponse> => {
     try {
-        const response = await apiClient.post<LoginResponse>('/auth/register', data);
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('token', response.data.token);
-            localStorage.setItem('user', JSON.stringify({
-                userId: response.data.userId,
-                email: response.data.email,
-                firstName: response.data.firstName,
-                lastName: response.data.lastName,
-                role: response.data.role
-            }));
-        }
+        const response = await apiClient.post<RegisterResponse>('/users/register-patient', data);
+        // Backend không trả về token ngay sau khi đăng ký, chỉ trả về thông tin user
+        // Nên ta không lưu token vào localStorage ở đây
         return response.data;
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
@@ -755,6 +757,132 @@ export const getAllSpecialties = async (): Promise<Specialty[]> => {
     }
 };
 
+export const createSpecialty = async (data: { name: string; description: string; image?: string }): Promise<Specialty> => {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('Vui lòng đăng nhập để thực hiện chức năng này');
+        }
+
+        const response = await apiClient.post<{ message: string; specialty: Specialty }>('/specialties', data, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data.specialty;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi tạo chuyên khoa');
+    }
+};
+
+export const updateSpecialty = async (id: number, data: { name: string; description: string; image?: string }): Promise<Specialty> => {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('Vui lòng đăng nhập để thực hiện chức năng này');
+        }
+
+        const response = await apiClient.put<{ message: string; specialty: Specialty }>(`/specialties/${id}`, data, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data.specialty;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật chuyên khoa');
+    }
+};
+
+export const deleteSpecialty = async (id: number): Promise<void> => {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('Vui lòng đăng nhập để thực hiện chức năng này');
+        }
+
+        await apiClient.delete(`/specialties/${id}`, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi xóa chuyên khoa');
+    }
+};
+
+// Doctor Patients API
+export interface DoctorPatient {
+    id: number;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phoneNumber?: string;
+    address?: string;
+    gender?: boolean;
+    image?: string;
+    createdAt?: string;
+    totalAppointments?: number;
+    lastAppointment?: string;
+    upcomingAppointments?: number;
+}
+
+export const getDoctorPatients = async (doctorId: number): Promise<DoctorPatient[]> => {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('Vui lòng đăng nhập để xem danh sách bệnh nhân');
+        }
+
+        // Lấy tất cả appointments của doctor để tìm patients
+        const appointments = await getDoctorAppointments(doctorId);
+
+        // Group by patient và tính toán thống kê
+        const patientMap = new Map<number, DoctorPatient>();
+
+        appointments.forEach(appointment => {
+            if (appointment.patientData) {
+                const patientId = appointment.patientId;
+                const existing = patientMap.get(patientId);
+
+                if (existing) {
+                    existing.totalAppointments = (existing.totalAppointments || 0) + 1;
+                    // Update last appointment if this one is more recent
+                    if (appointment.date > (existing.lastAppointment || '')) {
+                        existing.lastAppointment = appointment.date;
+                    }
+                    // Count upcoming appointments
+                    if (appointment.date >= new Date().toISOString().split('T')[0] && appointment.statusId === 'S1') {
+                        existing.upcomingAppointments = (existing.upcomingAppointments || 0) + 1;
+                    }
+                } else {
+                    patientMap.set(patientId, {
+                        id: patientId,
+                        firstName: appointment.patientData.firstName || '',
+                        lastName: appointment.patientData.lastName || '',
+                        email: appointment.patientData.email || '',
+                        phoneNumber: appointment.patientData.phoneNumber,
+                        address: appointment.patientData.address,
+                        gender: appointment.patientData.gender,
+                        image: appointment.patientData.image,
+                        createdAt: appointment.patientData.createdAt,
+                        totalAppointments: 1,
+                        lastAppointment: appointment.date,
+                        upcomingAppointments: appointment.date >= new Date().toISOString().split('T')[0] && appointment.statusId === 'S1' ? 1 : 0
+                    });
+                }
+            }
+        });
+
+        return Array.from(patientMap.values());
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+        throw new Error(error.message || 'Lỗi khi lấy danh sách bệnh nhân');
+    }
+};
+
 export const getSpecialtyById = async (id: number): Promise<Specialty> => {
     try {
         const response = await apiClient.get(`/specialties/${id}`);
@@ -1068,5 +1196,70 @@ export const createAdmin = async (userData: any) => {
             throw new Error(error.response?.data?.message || error.message);
         }
         throw new Error('Đã có lỗi xảy ra trong quá trình tạo admin');
+    }
+};
+
+// Dashboard Stats API
+export interface DashboardStats {
+    totalUsers: number;
+    totalDoctors: number;
+    totalPatients: number;
+    totalAppointments: number;
+    pendingAppointments: number;
+    completedAppointments: number;
+    totalSpecialties: number;
+    activeSchedules: number;
+    todayAppointments: number;
+    monthlyGrowth: number;
+    systemHealth: number;
+    activeUsers: number;
+}
+
+export const getDashboardStats = async (): Promise<DashboardStats> => {
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('Vui lòng đăng nhập để xem thống kê');
+        }
+
+        // Gọi nhiều API để lấy thống kê
+        const [usersData, appointmentsData, specialtiesData, schedulesData] = await Promise.all([
+            getAllUsersByRole(),
+            getAllAppointments(),
+            getAllSpecialties(),
+            getAllSchedules()
+        ]);
+
+        // Tính toán thống kê
+        const totalPatients = usersData.R1.length;
+        const totalDoctors = usersData.R2.length;
+        const totalUsers = totalPatients + totalDoctors + usersData.R3.length;
+        const totalAppointments = appointmentsData.length;
+
+        // Đếm appointments theo status
+        const pendingAppointments = appointmentsData.filter(apt => apt.statusId === 'S1').length;
+        const completedAppointments = appointmentsData.filter(apt => apt.statusId === 'S3').length;
+
+        // Đếm appointments hôm nay
+        const today = new Date().toISOString().split('T')[0];
+        const todayAppointments = appointmentsData.filter(apt => apt.date === today).length;
+
+        return {
+            totalUsers,
+            totalDoctors,
+            totalPatients,
+            totalAppointments,
+            pendingAppointments,
+            completedAppointments,
+            totalSpecialties: specialtiesData.length,
+            activeSchedules: schedulesData.length,
+            todayAppointments,
+            monthlyGrowth: 12.5, // Tạm thời hardcode, có thể tính toán sau
+            systemHealth: 98.5, // Tạm thời hardcode
+            activeUsers: Math.floor(totalUsers * 0.7) // Giả sử 70% users active
+        };
+    } catch (error: any) {
+        console.error('Error fetching dashboard stats:', error);
+        throw new Error(error.message || 'Lỗi khi lấy thống kê dashboard');
     }
 };

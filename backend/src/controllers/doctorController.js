@@ -51,7 +51,7 @@ const getDoctor = async (req, res) => {
                 {
                     model: Specialty,
                     as: 'specialtyData',
-                    attributes: ['id', 'name', 'description']
+                    attributes: ['id', 'name', 'description', 'image']
                 },
                 {
                     model: Allcode,
@@ -154,8 +154,18 @@ const getAllDoctors = async (req, res) => {
             include: [
                 {
                     model: DoctorDetail,
-                    as: 'doctorDetail', // Alias để truy cập thông tin DoctorDetail
-                    attributes: ['descriptionMarkdown', 'descriptionHTML'] // Chọn các thuộc tính cần thiết
+                    as: 'doctorDetail',
+                    attributes: ['descriptionMarkdown', 'descriptionHTML']
+                },
+                {
+                    model: Specialty,
+                    as: 'specialtyData',
+                    attributes: ['id', 'name', 'description', 'image']
+                },
+                {
+                    model: Allcode,
+                    as: 'positionData',
+                    attributes: ['keyMap', 'valueVi', 'valueEn']
                 }
             ],
             //raw: true,  // Loại bỏ raw: true và nest: true
@@ -195,8 +205,8 @@ const getDoctorsBySpecialty = async (req, res) => {
                 },
                 {
                     model: Specialty,
-                    as: 'specialtyData', // Liên kết với bảng Specialty
-                    attributes: ['id', 'name', 'description'] // Lấy thông tin chuyên khoa
+                    as: 'specialtyData',
+                    attributes: ['id', 'name', 'description', 'image']
                 },
                 {
                     model: Allcode,

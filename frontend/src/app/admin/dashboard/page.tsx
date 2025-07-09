@@ -4,22 +4,9 @@ import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { LoadingPage } from '@/components/ui/loading';
+import { getDashboardStats, DashboardStats } from '@/lib/api';
+import { toast } from 'react-hot-toast';
 import Link from 'next/link';
-
-interface DashboardStats {
-    totalUsers: number;
-    totalDoctors: number;
-    totalPatients: number;
-    totalAppointments: number;
-    pendingAppointments: number;
-    completedAppointments: number;
-    totalSpecialties: number;
-    activeSchedules: number;
-    todayAppointments: number;
-    monthlyGrowth: number;
-    systemHealth: number;
-    activeUsers: number;
-}
 
 interface RecentActivity {
     id: number;
@@ -45,6 +32,7 @@ export default function AdminDashboard() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [currentTime, setCurrentTime] = useState(new Date());
     const [selectedTimeRange, setSelectedTimeRange] = useState<'today' | 'week' | 'month'>('today');
 
@@ -54,29 +42,14 @@ export default function AdminDashboard() {
     }, []);
 
     useEffect(() => {
-        // Simulate API calls - replace with actual API calls
         const fetchDashboardData = async () => {
             try {
                 setLoading(true);
+                setError(null);
 
-                // Simulate API delay
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
-                // Enhanced mock data
-                setStats({
-                    totalUsers: 1250,
-                    totalDoctors: 45,
-                    totalPatients: 1205,
-                    totalAppointments: 3420,
-                    pendingAppointments: 28,
-                    completedAppointments: 3392,
-                    totalSpecialties: 12,
-                    activeSchedules: 156,
-                    todayAppointments: 24,
-                    monthlyGrowth: 12.5,
-                    systemHealth: 98.5,
-                    activeUsers: 89
-                });
+                // Lấy thống kê thực tế từ API
+                const dashboardStats = await getDashboardStats();
+                setStats(dashboardStats);
 
                 setRecentActivities([
                     {
@@ -125,8 +98,10 @@ export default function AdminDashboard() {
                         priority: 'low'
                     }
                 ]);
-            } catch (error) {
-                console.error('Error fetching dashboard data:', error);
+            } catch (err: any) {
+                setError(err.message || 'Không thể tải dữ liệu dashboard');
+                console.error('Dashboard error:', err);
+                toast.error('Lỗi khi tải thống kê dashboard');
             } finally {
                 setLoading(false);
             }
@@ -137,6 +112,19 @@ export default function AdminDashboard() {
 
     if (loading) {
         return <LoadingPage text="Đang tải dashboard..." />;
+    }
+
+    if (error) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <div className="text-red-500 text-xl mb-4">{error}</div>
+                    <Button onClick={() => window.location.reload()}>
+                        Thử lại
+                    </Button>
+                </div>
+            </div>
+        );
     }
 
     const getActivityIcon = (type: string) => {

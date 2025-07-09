@@ -5,7 +5,11 @@ export const metadata = {
     description: 'Hệ thống đặt lịch khám bệnh trực tuyến hiện đại và tiện lợi',
     keywords: 'phòng khám, đặt lịch khám, bác sĩ, chuyên khoa, sức khỏe',
     authors: [{ name: 'Phòng Khám Team' }],
-    viewport: 'width=device-width, initial-scale=1',
+};
+
+export const viewport = {
+    width: 'device-width',
+    initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

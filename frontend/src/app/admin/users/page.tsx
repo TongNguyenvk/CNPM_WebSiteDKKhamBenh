@@ -37,7 +37,7 @@ interface UserProfile {
         valueVi: string;
         valueEn: string;
     };
-    Specialty?: {
+    specialtyData?: {
         id: number;
         name: string;
     };
@@ -72,6 +72,11 @@ export default function UsersPage() {
         R3: []
     });
     const [selectedRole, setSelectedRole] = useState<string>('all');
+    const [searchTerm, setSearchTerm] = useState<string>('');
+    const [sortBy, setSortBy] = useState<string>('firstName');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [itemsPerPage] = useState<number>(10);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -94,7 +99,7 @@ export default function UsersPage() {
     const [imagePreview, setImagePreview] = useState<string>('');
     const [specialties, setSpecialties] = useState<Specialty[]>([]);
     const [loading, setLoading] = useState(true);
-    const [searchTerm, setSearchTerm] = useState('');
+  
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -282,11 +287,62 @@ export default function UsersPage() {
             usersToDisplay = usersToDisplay.filter(user =>
                 `${user.firstName} ${user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                user.Specialty?.name.toLowerCase().includes(searchTerm.toLowerCase())
+                (user.specialtyData?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (user.phoneNumber || '').includes(searchTerm)
             );
         }
 
+        // Sort users
+        usersToDisplay.sort((a, b) => {
+            let aValue: string | number = '';
+            let bValue: string | number = '';
+
+            switch (sortBy) {
+                case 'firstName':
+                    aValue = a.firstName || '';
+                    bValue = b.firstName || '';
+                    break;
+                case 'lastName':
+                    aValue = a.lastName || '';
+                    bValue = b.lastName || '';
+                    break;
+                case 'email':
+                    aValue = a.email || '';
+                    bValue = b.email || '';
+                    break;
+                case 'createdAt':
+                    aValue = new Date(a.createdAt || '').getTime();
+                    bValue = new Date(b.createdAt || '').getTime();
+                    break;
+                default:
+                    aValue = a.firstName || '';
+                    bValue = b.firstName || '';
+            }
+
+            if (typeof aValue === 'string' && typeof bValue === 'string') {
+                return sortOrder === 'asc'
+                    ? aValue.localeCompare(bValue)
+                    : bValue.localeCompare(aValue);
+            } else {
+                return sortOrder === 'asc'
+                    ? (aValue as number) - (bValue as number)
+                    : (bValue as number) - (aValue as number);
+            }
+        });
+
         return usersToDisplay;
+    };
+
+    const getPaginatedUsers = () => {
+        const allUsers = getUsersToDisplay();
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        return allUsers.slice(startIndex, endIndex);
+    };
+
+    const getTotalPages = () => {
+        const allUsers = getUsersToDisplay();
+        return Math.ceil(allUsers.length / itemsPerPage);
     };
 
     const getRoleBadge = (roleId: string) => {
@@ -316,7 +372,7 @@ export default function UsersPage() {
             address: user.address || '',
             gender: user.gender || true,
             positionId: user.positionData?.keyMap || 'P1',
-            specialtyId: user.Specialty?.id || 1,
+            specialtyId: user.specialtyData?.id || 1,
             image: ''
         });
         setIsEditModalOpen(true);
@@ -326,7 +382,9 @@ export default function UsersPage() {
         return <LoadingPage text="Đang tải danh sách người dùng..." />;
     }
 
-    const usersToDisplay = getUsersToDisplay();
+    const usersToDisplay = getPaginatedUsers();
+    const totalUsers = getUsersToDisplay().length;
+    const totalPages = getTotalPages();
 
     return (
         <div className="min-h-screen bg-neutral-50">
@@ -356,14 +414,20 @@ export default function UsersPage() {
                                         placeholder="Tìm kiếm theo tên, email, chuyên khoa..."
                                         className="form-input pl-10"
                                         value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        onChange={(e) => {
+                                            setSearchTerm(e.target.value);
+                                            setCurrentPage(1); // Reset to first page when searching
+                                        }}
                                     />
                                 </div>
 
                                 {/* Role Filter */}
                                 <select
                                     value={selectedRole}
-                                    onChange={(e) => setSelectedRole(e.target.value)}
+                                    onChange={(e) => {
+                                        setSelectedRole(e.target.value);
+                                        setCurrentPage(1); // Reset to first page when filtering
+                                    }}
                                     className="form-select min-w-[150px]"
                                 >
                                     <option value="all">Tất cả quyền</option>
@@ -371,6 +435,26 @@ export default function UsersPage() {
                                     <option value="R2">Bác sĩ</option>
                                     <option value="R3">Admin</option>
                                 </select>
+
+                                {/* Sort By */}
+                                <select
+                                    value={sortBy}
+                                    onChange={(e) => setSortBy(e.target.value)}
+                                    className="form-select min-w-[150px]"
+                                >
+                                    <option value="firstName">Sắp xếp theo tên</option>
+                                    <option value="lastName">Sắp xếp theo họ</option>
+                                    <option value="email">Sắp xếp theo email</option>
+                                    <option value="createdAt">Sắp xếp theo ngày tạo</option>
+                                </select>
+
+                                {/* Sort Order */}
+                                <button
+                                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                                    className="btn-secondary px-3 py-2 min-w-[100px]"
+                                >
+                                    {sortOrder === 'asc' ? '↑ Tăng dần' : '↓ Giảm dần'}
+                                </button>
                             </div>
 
                             {/* Add User Button */}
@@ -521,7 +605,7 @@ export default function UsersPage() {
                                                     {getRoleBadge(user.roleId)}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
-                                                    {user.Specialty?.name || (
+                                                    {user.specialtyData?.name || (
                                                         <span className="text-neutral-400 italic">-</span>
                                                     )}
                                                 </td>
@@ -557,6 +641,65 @@ export default function UsersPage() {
                         )}
                     </CardBody>
                 </Card>
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-6">
+                        <div className="text-sm text-neutral-600">
+                            Hiển thị {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, totalUsers)} trong tổng số {totalUsers} người dùng
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                                disabled={currentPage === 1}
+                            >
+                                Trước
+                            </Button>
+
+                            {/* Page numbers */}
+                            <div className="flex items-center space-x-1">
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                    let pageNum;
+                                    if (totalPages <= 5) {
+                                        pageNum = i + 1;
+                                    } else if (currentPage <= 3) {
+                                        pageNum = i + 1;
+                                    } else if (currentPage >= totalPages - 2) {
+                                        pageNum = totalPages - 4 + i;
+                                    } else {
+                                        pageNum = currentPage - 2 + i;
+                                    }
+
+                                    return (
+                                        <button
+                                            key={pageNum}
+                                            onClick={() => setCurrentPage(pageNum)}
+                                            className={cn(
+                                                "px-3 py-1 text-sm rounded-md transition-colors",
+                                                currentPage === pageNum
+                                                    ? "bg-primary-600 text-white"
+                                                    : "text-neutral-600 hover:bg-neutral-100"
+                                            )}
+                                        >
+                                            {pageNum}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                                disabled={currentPage === totalPages}
+                            >
+                                Sau
+                            </Button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Create User Modal */}
                 <Modal

@@ -36,18 +36,20 @@ export default function PatientLayout({
     const navItems = [
         { label: 'Dashboard', href: '/patient/dashboard' },
         { label: 'Chuyên Khoa', href: '/patient/specialties' },
+        { label: 'Bác Sĩ', href: '/patient/doctors' },
         { label: 'Lịch Đã Đặt', href: '/patient/appointments' },
+        { label: 'Đặt Lịch', href: '/patient/book_appointment' },
         { label: 'Tôi', href: '/patient/profile' }
     ];
 
     return (
-        <div>
+        <div className="min-h-screen bg-neutral-50">
             <Navbar
                 role="patient"
                 userName={`${user.firstName} ${user.lastName}`}
                 navItems={navItems}
             />
-            <main className="container mx-auto px-4 pt-16 pb-8"> {/* Changed py-8 to pt-16 pb-8 */}
+            <main className="pt-20"> {/* Increased padding-top for fixed navbar */}
                 {children}
             </main>
         </div>

@@ -48,6 +48,16 @@ export default function DoctorDashboard() {
     const [allAppointments, setAllAppointments] = useState<Appointment[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [stats, setStats] = useState({
+        totalPatients: 0,
+        completedAppointments: 0,
+        upcomingAppointments: 0,
+        todayAppointments: 0,
+        thisWeekAppointments: 0,
+        thisMonthAppointments: 0,
+        pendingAppointments: 0,
+        cancelledAppointments: 0
+    });
 
     useEffect(() => {
         const fetchData = async () => {
@@ -71,6 +81,38 @@ export default function DoctorDashboard() {
                 setTodayAppointments(todayData);
                 setSchedules(schedulesData);
                 setAllAppointments(allAppointmentsData);
+
+                // Calculate statistics
+                const today = new Date();
+                const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
+                const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+                const uniquePatients = new Set(allAppointmentsData.map(apt => apt.patientId)).size;
+                const completed = allAppointmentsData.filter(apt => apt.statusId === 'S3').length;
+                const pending = allAppointmentsData.filter(apt => apt.statusId === 'S1').length;
+                const cancelled = allAppointmentsData.filter(apt => apt.statusId === 'S4').length;
+                const upcoming = allAppointmentsData.filter(apt =>
+                    apt.statusId === 'S1' && new Date(apt.date) >= new Date()
+                ).length;
+
+                const thisWeek = allAppointmentsData.filter(apt =>
+                    new Date(apt.date) >= startOfWeek
+                ).length;
+
+                const thisMonth = allAppointmentsData.filter(apt =>
+                    new Date(apt.date) >= startOfMonth
+                ).length;
+
+                setStats({
+                    totalPatients: uniquePatients,
+                    completedAppointments: completed,
+                    upcomingAppointments: upcoming,
+                    todayAppointments: todayData.length,
+                    thisWeekAppointments: thisWeek,
+                    thisMonthAppointments: thisMonth,
+                    pendingAppointments: pending,
+                    cancelledAppointments: cancelled
+                });
             } catch (error: unknown) {
                 const err = error as Error;
                 setError(err.message || 'Lỗi khi tải lịch hẹn');
@@ -156,7 +198,7 @@ export default function DoctorDashboard() {
                                 </svg>
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-neutral-900">{todayAppointments.length}</p>
+                                <p className="text-2xl font-bold text-neutral-900">{stats.todayAppointments}</p>
                                 <p className="text-sm text-neutral-600">Lịch hôm nay</p>
                             </div>
                         </CardBody>
@@ -170,8 +212,8 @@ export default function DoctorDashboard() {
                                 </svg>
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-neutral-900">{allAppointments.length}</p>
-                                <p className="text-sm text-neutral-600">Tổng lịch khám</p>
+                                <p className="text-2xl font-bold text-neutral-900">{stats.completedAppointments}</p>
+                                <p className="text-sm text-neutral-600">Đã hoàn thành</p>
                             </div>
                         </CardBody>
                     </Card>
@@ -184,8 +226,8 @@ export default function DoctorDashboard() {
                                 </svg>
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-neutral-900">{schedules.length}</p>
-                                <p className="text-sm text-neutral-600">Lịch làm việc</p>
+                                <p className="text-2xl font-bold text-neutral-900">{stats.upcomingAppointments}</p>
+                                <p className="text-sm text-neutral-600">Sắp tới</p>
                             </div>
                         </CardBody>
                     </Card>
@@ -198,11 +240,60 @@ export default function DoctorDashboard() {
                                 </svg>
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-neutral-900">
-                                    {allAppointments.filter(a => a.statusId === 'S2').length}
-                                </p>
-                                <p className="text-sm text-neutral-600">Đã xác nhận</p>
+                                <p className="text-2xl font-bold text-neutral-900">{stats.totalPatients}</p>
+                                <p className="text-sm text-neutral-600">Tổng bệnh nhân</p>
                             </div>
+                        </CardBody>
+                    </Card>
+                </div>
+
+                {/* Additional Stats Row */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <Card className="hover:shadow-lg transition-shadow">
+                        <CardBody className="text-center">
+                            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                                </svg>
+                            </div>
+                            <p className="text-lg font-semibold text-neutral-900">{stats.thisWeekAppointments}</p>
+                            <p className="text-xs text-neutral-600">Tuần này</p>
+                        </CardBody>
+                    </Card>
+
+                    <Card className="hover:shadow-lg transition-shadow">
+                        <CardBody className="text-center">
+                            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                </svg>
+                            </div>
+                            <p className="text-lg font-semibold text-neutral-900">{stats.thisMonthAppointments}</p>
+                            <p className="text-xs text-neutral-600">Tháng này</p>
+                        </CardBody>
+                    </Card>
+
+                    <Card className="hover:shadow-lg transition-shadow">
+                        <CardBody className="text-center">
+                            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <p className="text-lg font-semibold text-neutral-900">{stats.pendingAppointments}</p>
+                            <p className="text-xs text-neutral-600">Chờ xử lý</p>
+                        </CardBody>
+                    </Card>
+
+                    <Card className="hover:shadow-lg transition-shadow">
+                        <CardBody className="text-center">
+                            <div className="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                                <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </div>
+                            <p className="text-lg font-semibold text-neutral-900">{stats.cancelledAppointments}</p>
+                            <p className="text-xs text-neutral-600">Đã hủy</p>
                         </CardBody>
                     </Card>
                 </div>

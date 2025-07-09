@@ -2,7 +2,6 @@
 const nextConfig = {
     output: 'standalone',
     reactStrictMode: true,
-    swcMinify: true,
     images: {
         remotePatterns: [
             {
@@ -21,8 +20,7 @@ const nextConfig = {
         ignoreBuildErrors: true,
     },
     experimental: {
-        appDir: true,
-        // Các options mới cho Next.js 15
+        // Removed deprecated options for Next.js 15
     },
     compiler: {
         removeConsole: process.env.NODE_ENV === 'production',

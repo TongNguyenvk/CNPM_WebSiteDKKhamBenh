@@ -20,9 +20,11 @@ export default function AdminLayout({
 
     const navItems = [
         { label: 'Dashboard', href: '/admin/dashboard' },
-        { label: 'Quản Lý User', href: '/admin/users' },
-        { label: 'Quản Lý Lịch Phân Công', href: '/admin/schedules' },
-        { label: 'Quản Lý Lịch Khám', href: '/admin/appointments' },
+        { label: 'Users', href: '/admin/users' },
+        { label: 'Bác Sĩ', href: '/admin/doctors' },
+        { label: 'Chuyên Khoa', href: '/admin/specialties' },
+        { label: 'Phân Công', href: '/admin/schedules' },
+        { label: 'Lịch Khám', href: '/admin/appointments' },
         { label: 'Tôi', href: '/admin/profile' }
     ];
 

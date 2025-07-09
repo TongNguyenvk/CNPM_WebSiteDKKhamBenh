@@ -91,6 +91,15 @@
         @apply max-w-md mx-auto px-4;
     }
 
+    /* Navigation utilities */
+    .nav-responsive {
+        @apply flex items-center space-x-1 overflow-x-auto scrollbar-hide;
+    }
+
+    .nav-item-responsive {
+        @apply whitespace-nowrap flex-shrink-0;
+    }
+
     /* Card components */
     .card {
         @apply bg-white rounded-xl shadow-soft border border-neutral-200 overflow-hidden;
@@ -256,5 +265,15 @@
 
     .glass-dark {
         @apply bg-neutral-900/80 backdrop-blur-sm border border-neutral-700/20;
+    }
+
+    /* Scrollbar utilities */
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
     }
 }

@@ -22,7 +22,7 @@ interface Schedule {
         id: number;
         firstName: string;
         lastName: string;
-        Specialty?: {
+        specialtyData?: {
             id: number;
             name: string;
         };
@@ -295,7 +295,7 @@ export default function AdminSchedulePage() {
                                     <tr key={schedule.id}>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{format(new Date(schedule.date), 'dd/MM/yyyy', { locale: vi })}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{schedule.doctorData ? `${schedule.doctorData.firstName} ${schedule.doctorData.lastName}` : 'N/A'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{schedule.doctorData?.Specialty?.name || 'N/A'}</td>
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{schedule.doctorData?.specialtyData?.name || 'N/A'}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{getTimeLabel(schedule.timeType)}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{schedule.maxNumber}</td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{schedule.currentNumber || 0}</td>

@@ -43,6 +43,13 @@ export default function AppointmentsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+    const [searchTerm, setSearchTerm] = useState<string>('');
+    const [filterStatus, setFilterStatus] = useState<string>('all');
+    const [dateFilter, setDateFilter] = useState<string>('all');
+    const [sortBy, setSortBy] = useState<string>('date');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [itemsPerPage] = useState<number>(6);
 
     useEffect(() => {
         const fetchAppointments = async () => {
@@ -101,6 +108,105 @@ export default function AppointmentsPage() {
         }
     };
 
+    // Helper functions for filtering, sorting, and pagination
+    const getFilteredAppointments = () => {
+        let filtered = appointments;
+
+        // Filter by status
+        if (filterStatus !== 'all') {
+            filtered = filtered.filter(appointment => appointment.statusId === filterStatus);
+        }
+
+        // Filter by date
+        if (dateFilter !== 'all') {
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+            switch (dateFilter) {
+                case 'today':
+                    filtered = filtered.filter(appointment => appointment.date === todayStr);
+                    break;
+                case 'tomorrow':
+                    filtered = filtered.filter(appointment => appointment.date === tomorrowStr);
+                    break;
+                case 'upcoming':
+                    filtered = filtered.filter(appointment => appointment.date >= todayStr);
+                    break;
+                case 'past':
+                    filtered = filtered.filter(appointment => appointment.date < todayStr);
+                    break;
+            }
+        }
+
+        // Filter by search term
+        if (searchTerm) {
+            filtered = filtered.filter(appointment =>
+                `${appointment.doctorData?.firstName} ${appointment.doctorData?.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (appointment.doctorData?.specialtyData?.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (appointment.timeTypeData?.valueVi || '').toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
+        // Sort appointments
+        filtered.sort((a, b) => {
+            let aValue: string | number = '';
+            let bValue: string | number = '';
+
+            switch (sortBy) {
+                case 'date':
+                    aValue = new Date(a.date).getTime();
+                    bValue = new Date(b.date).getTime();
+                    break;
+                case 'doctor':
+                    aValue = `${a.doctorData?.firstName} ${a.doctorData?.lastName}` || '';
+                    bValue = `${b.doctorData?.firstName} ${b.doctorData?.lastName}` || '';
+                    break;
+                case 'specialty':
+                    aValue = a.doctorData?.specialtyData?.name || '';
+                    bValue = b.doctorData?.specialtyData?.name || '';
+                    break;
+                case 'timeType':
+                    aValue = a.timeTypeData?.valueVi || '';
+                    bValue = b.timeTypeData?.valueVi || '';
+                    break;
+                case 'status':
+                    aValue = a.statusData?.valueVi || '';
+                    bValue = b.statusData?.valueVi || '';
+                    break;
+                default:
+                    aValue = new Date(a.date).getTime();
+                    bValue = new Date(b.date).getTime();
+            }
+
+            if (typeof aValue === 'string' && typeof bValue === 'string') {
+                return sortOrder === 'asc'
+                    ? aValue.localeCompare(bValue)
+                    : bValue.localeCompare(aValue);
+            } else {
+                return sortOrder === 'asc'
+                    ? (aValue as number) - (bValue as number)
+                    : (bValue as number) - (aValue as number);
+            }
+        });
+
+        return filtered;
+    };
+
+    const getPaginatedAppointments = () => {
+        const filtered = getFilteredAppointments();
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        return filtered.slice(startIndex, endIndex);
+    };
+
+    const getTotalPages = () => {
+        const filtered = getFilteredAppointments();
+        return Math.ceil(filtered.length / itemsPerPage);
+    };
+
     const getAppointmentsByStatus = () => {
         const upcoming = appointments.filter(apt =>
             new Date(apt.date) >= new Date() && apt.statusId !== 'S3'
@@ -153,6 +259,113 @@ export default function AppointmentsPage() {
                     </div>
                 )}
 
+                {/* Search and Filter Controls */}
+                {appointments.length > 0 && (
+                    <Card className="mb-6">
+                        <CardBody className="p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
+                                {/* Search */}
+                                <div>
+                                    <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                        Tìm kiếm
+                                    </label>
+                                    <div className="relative">
+                                        <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                        </svg>
+                                        <input
+                                            type="text"
+                                            placeholder="Tìm theo bác sĩ, chuyên khoa..."
+                                            className="form-input pl-10"
+                                            value={searchTerm}
+                                            onChange={(e) => {
+                                                setSearchTerm(e.target.value);
+                                                setCurrentPage(1);
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Status Filter */}
+                                <div>
+                                    <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                        Trạng thái
+                                    </label>
+                                    <select
+                                        value={filterStatus}
+                                        onChange={(e) => {
+                                            setFilterStatus(e.target.value);
+                                            setCurrentPage(1);
+                                        }}
+                                        className="form-select"
+                                    >
+                                        <option value="all">Tất cả trạng thái</option>
+                                        <option value="S1">Chờ xác nhận</option>
+                                        <option value="S2">Đã xác nhận</option>
+                                        <option value="S3">Hoàn thành</option>
+                                        <option value="S4">Đã hủy</option>
+                                    </select>
+                                </div>
+
+                                {/* Date Filter */}
+                                <div>
+                                    <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                        Thời gian
+                                    </label>
+                                    <select
+                                        value={dateFilter}
+                                        onChange={(e) => {
+                                            setDateFilter(e.target.value);
+                                            setCurrentPage(1);
+                                        }}
+                                        className="form-select"
+                                    >
+                                        <option value="all">Tất cả</option>
+                                        <option value="today">Hôm nay</option>
+                                        <option value="tomorrow">Ngày mai</option>
+                                        <option value="upcoming">Sắp tới</option>
+                                        <option value="past">Đã qua</option>
+                                    </select>
+                                </div>
+
+                                {/* Sort By */}
+                                <div>
+                                    <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                        Sắp xếp theo
+                                    </label>
+                                    <select
+                                        value={sortBy}
+                                        onChange={(e) => setSortBy(e.target.value)}
+                                        className="form-select"
+                                    >
+                                        <option value="date">Ngày khám</option>
+                                        <option value="doctor">Bác sĩ</option>
+                                        <option value="specialty">Chuyên khoa</option>
+                                        <option value="timeType">Giờ khám</option>
+                                        <option value="status">Trạng thái</option>
+                                    </select>
+                                </div>
+
+                                {/* Sort Order */}
+                                <div className="flex items-end">
+                                    <button
+                                        onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                                        className="btn-secondary px-3 py-2 h-10"
+                                        title={sortOrder === 'asc' ? 'Tăng dần' : 'Giảm dần'}
+                                    >
+                                        {sortOrder === 'asc' ? '↑' : '↓'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Stats */}
+                            <div className="mt-4 text-sm text-neutral-600">
+                                Hiển thị {getPaginatedAppointments().length} trong tổng số {getFilteredAppointments().length} lịch khám
+                            </div>
+                        </CardBody>
+                    </Card>
+                )}
+
                 {appointments.length === 0 ? (
                     <Card className="text-center py-16">
                         <CardBody>
@@ -176,13 +389,45 @@ export default function AppointmentsPage() {
                         </CardBody>
                     </Card>
                 ) : (
-                    <div className="space-y-8">
-                        {/* Upcoming Appointments */}
-                        {upcoming.length > 0 && (
-                            <div>
-                                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        {/* Filtered Appointments */}
+                        {getPaginatedAppointments().length === 0 ? (
+                            <Card className="text-center py-16">
+                                <CardBody>
+                                    <div className="w-24 h-24 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                        <svg className="w-12 h-12 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+                                    <h3 className="text-xl font-semibold text-neutral-900 mb-2">
+                                        Không tìm thấy lịch khám nào
+                                    </h3>
+                                    <p className="text-neutral-600 mb-6">
+                                        {searchTerm || filterStatus !== 'all' || dateFilter !== 'all'
+                                            ? 'Thử thay đổi bộ lọc để xem thêm kết quả.'
+                                            : 'Bạn chưa có lịch khám nào phù hợp.'
+                                        }
+                                    </p>
+                                    {(searchTerm || filterStatus !== 'all' || dateFilter !== 'all') && (
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => {
+                                                setSearchTerm('');
+                                                setFilterStatus('all');
+                                                setDateFilter('all');
+                                                setCurrentPage(1);
+                                            }}
+                                        >
+                                            Xóa bộ lọc
+                                        </Button>
+                                    )}
+                                </CardBody>
+                            </Card>
+                        ) : (
+                            <div className="space-y-6">
+                                <div className="flex items-center justify-between">
                                     <h2 className="text-xl font-semibold text-neutral-900">
-                                        Lịch Khám Sắp Tới ({upcoming.length})
+                                        Danh Sách Lịch Khám
                                     </h2>
                                     <Button
                                         variant="outline"
@@ -195,35 +440,75 @@ export default function AppointmentsPage() {
                                         Đặt thêm lịch
                                     </Button>
                                 </div>
-                                <div className="grid gap-6">
-                                    {upcoming.map((appointment) => (
-                                        <AppointmentCard
-                                            key={appointment.id}
-                                            appointment={appointment}
-                                            onCancel={handleConfirmCancel}
-                                            isUpcoming={true}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
-                        )}
 
-                        {/* Past Appointments */}
-                        {past.length > 0 && (
-                            <div>
-                                <h2 className="text-xl font-semibold text-neutral-900 mb-6">
-                                    Lịch Sử Khám ({past.length})
-                                </h2>
-                                <div className="grid gap-4">
-                                    {past.map((appointment) => (
+                                <div className="grid gap-6">
+                                    {getPaginatedAppointments().map((appointment) => (
                                         <AppointmentCard
                                             key={appointment.id}
                                             appointment={appointment}
                                             onCancel={handleConfirmCancel}
-                                            isUpcoming={false}
+                                            isUpcoming={new Date(appointment.date) >= new Date() && appointment.statusId !== 'S3' && appointment.statusId !== 'S4'}
                                         />
                                     ))}
                                 </div>
+
+                                {/* Pagination */}
+                                {getTotalPages() > 1 && (
+                                    <div className="flex items-center justify-between mt-8">
+                                        <div className="text-sm text-neutral-600">
+                                            Hiển thị {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, getFilteredAppointments().length)} trong tổng số {getFilteredAppointments().length} lịch khám
+                                        </div>
+                                        <div className="flex items-center space-x-2">
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                                                disabled={currentPage === 1}
+                                            >
+                                                Trước
+                                            </Button>
+
+                                            {/* Page numbers */}
+                                            <div className="flex items-center space-x-1">
+                                                {Array.from({ length: Math.min(5, getTotalPages()) }, (_, i) => {
+                                                    let pageNum;
+                                                    if (getTotalPages() <= 5) {
+                                                        pageNum = i + 1;
+                                                    } else if (currentPage <= 3) {
+                                                        pageNum = i + 1;
+                                                    } else if (currentPage >= getTotalPages() - 2) {
+                                                        pageNum = getTotalPages() - 4 + i;
+                                                    } else {
+                                                        pageNum = currentPage - 2 + i;
+                                                    }
+
+                                                    return (
+                                                        <button
+                                                            key={pageNum}
+                                                            onClick={() => setCurrentPage(pageNum)}
+                                                            className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                                                                currentPage === pageNum
+                                                                    ? "bg-primary-600 text-white"
+                                                                    : "text-neutral-600 hover:bg-neutral-100"
+                                                            }`}
+                                                        >
+                                                            {pageNum}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => setCurrentPage(Math.min(getTotalPages(), currentPage + 1))}
+                                                disabled={currentPage === getTotalPages()}
+                                            >
+                                                Sau
+                                            </Button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

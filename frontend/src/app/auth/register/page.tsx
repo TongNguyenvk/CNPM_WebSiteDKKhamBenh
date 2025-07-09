@@ -11,6 +11,9 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [gender, setGender] = useState<boolean | ''>('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [address, setAddress] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -19,28 +22,27 @@ export default function RegisterPage() {
     setError('');
     setLoading(true);
 
+    // Validation
+    if (gender === '') {
+      setError('Vui lòng chọn giới tính');
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await registerUser({
         email,
         password,
         firstName,
         lastName,
+        gender: gender as boolean,
+        phoneNumber,
+        address,
       });
 
-      // Điều hướng dựa vào role từ backend
-      switch (response.role) {
-        case 'R1':
-          router.push('/patient/dashboard');
-          break;
-        case 'R2':
-          router.push('/doctor/dashboard');
-          break;
-        case 'R3':
-          router.push('/admin/dashboard');
-          break;
-        default:
-          router.push('/');
-      }
+      // Sau khi đăng ký thành công, chuyển hướng đến trang đăng nhập
+      // vì backend không trả về token ngay sau khi đăng ký
+      router.push('/auth/login?message=Đăng ký thành công! Vui lòng đăng nhập.');
     } catch (error: unknown) {
       const err = error as Error;
       setError(err.message || 'Đăng ký thất bại');
@@ -121,6 +123,44 @@ export default function RegisterPage() {
                   className="form-input"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Giới tính</label>
+                <select
+                  className="form-input"
+                  value={gender === '' ? '' : gender ? 'true' : 'false'}
+                  onChange={(e) => setGender(e.target.value === '' ? '' : e.target.value === 'true')}
+                  required
+                >
+                  <option value="">Chọn giới tính</option>
+                  <option value="true">Nam</option>
+                  <option value="false">Nữ</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Số điện thoại</label>
+                <input
+                  type="tel"
+                  placeholder="Nhập số điện thoại"
+                  className="form-input"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Địa chỉ</label>
+                <textarea
+                  placeholder="Nhập địa chỉ"
+                  className="form-input"
+                  rows={3}
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
                   required
                 />
               </div>

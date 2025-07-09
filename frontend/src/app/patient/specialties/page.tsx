@@ -20,6 +20,10 @@ export default function SpecialtiesPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [searchTerm, setSearchTerm] = useState('');
+    const [sortBy, setSortBy] = useState<string>('name');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [itemsPerPage] = useState<number>(9);
 
     useEffect(() => {
         const fetchSpecialties = async () => {
@@ -39,11 +43,60 @@ export default function SpecialtiesPage() {
         fetchSpecialties();
     }, []);
 
-    // Lọc danh sách chuyên khoa theo từ khóa tìm kiếm
-    const filteredSpecialties = specialties.filter(specialty => 
-        specialty.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        specialty.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Helper functions for filtering, sorting, and pagination
+    const getFilteredSpecialties = () => {
+        let filtered = specialties;
+
+        // Filter by search term
+        if (searchTerm) {
+            filtered = filtered.filter(specialty =>
+                specialty.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (specialty.description || '').toLowerCase().includes(searchTerm.toLowerCase())
+            );
+        }
+
+        // Sort specialties
+        filtered.sort((a, b) => {
+            let aValue: string = '';
+            let bValue: string = '';
+
+            switch (sortBy) {
+                case 'name':
+                    aValue = a.name || '';
+                    bValue = b.name || '';
+                    break;
+                case 'description':
+                    aValue = a.description || '';
+                    bValue = b.description || '';
+                    break;
+                default:
+                    aValue = a.name || '';
+                    bValue = b.name || '';
+            }
+
+            return sortOrder === 'asc'
+                ? aValue.localeCompare(bValue)
+                : bValue.localeCompare(aValue);
+        });
+
+        return filtered;
+    };
+
+    const getPaginatedSpecialties = () => {
+        const filtered = getFilteredSpecialties();
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        return filtered.slice(startIndex, endIndex);
+    };
+
+    const getTotalPages = () => {
+        const filtered = getFilteredSpecialties();
+        return Math.ceil(filtered.length / itemsPerPage);
+    };
+
+    const specialtiesToDisplay = getPaginatedSpecialties();
+    const totalSpecialties = getFilteredSpecialties().length;
+    const totalPages = getTotalPages();
 
     if (loading) {
         return <LoadingPage text="Đang tải danh sách chuyên khoa..." />;
@@ -85,32 +138,79 @@ export default function SpecialtiesPage() {
                 </div>
 
                 {/* Search and Filter */}
-                <div className="mb-8">
-                    <div className="max-w-md mx-auto">
-                        <div className="relative">
-                            <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                            </svg>
-                            <input
-                                type="text"
-                                placeholder="Tìm kiếm chuyên khoa..."
-                                className="form-input pl-10 w-full border border-gray-300 rounded-md py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                            />
-                            {searchTerm && (
-                                <button 
-                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
-                                    onClick={() => setSearchTerm('')}
-                                >
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <Card className="mb-8">
+                    <CardBody className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                            {/* Search */}
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                    Tìm kiếm chuyên khoa
+                                </label>
+                                <div className="relative">
+                                    <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                     </svg>
+                                    <input
+                                        type="text"
+                                        placeholder="Tìm theo tên, mô tả..."
+                                        className="form-input pl-10"
+                                        value={searchTerm}
+                                        onChange={(e) => {
+                                            setSearchTerm(e.target.value);
+                                            setCurrentPage(1);
+                                        }}
+                                    />
+                                    {searchTerm && (
+                                        <button
+                                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-neutral-600"
+                                            onClick={() => {
+                                                setSearchTerm('');
+                                                setCurrentPage(1);
+                                            }}
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Sort By */}
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                    Sắp xếp theo
+                                </label>
+                                <select
+                                    value={sortBy}
+                                    onChange={(e) => setSortBy(e.target.value)}
+                                    className="form-select"
+                                >
+                                    <option value="name">Tên chuyên khoa</option>
+                                    <option value="description">Mô tả</option>
+                                </select>
+                            </div>
+
+                            {/* Sort Order */}
+                            <div>
+                                <label className="block text-sm font-medium text-neutral-700 mb-2">
+                                    Thứ tự
+                                </label>
+                                <button
+                                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                                    className="btn-secondary px-3 py-2 w-full"
+                                >
+                                    {sortOrder === 'asc' ? '↑ A-Z' : '↓ Z-A'}
                                 </button>
-                            )}
+                            </div>
                         </div>
-                    </div>
-                </div>
+
+                        {/* Stats */}
+                        <div className="mt-4 text-sm text-neutral-600">
+                            Hiển thị {specialtiesToDisplay.length} trong tổng số {totalSpecialties} chuyên khoa
+                        </div>
+                    </CardBody>
+                </Card>
 
                 {/* Kết quả tìm kiếm */}
                 {searchTerm && (
@@ -123,7 +223,7 @@ export default function SpecialtiesPage() {
                 )}
 
                 {/* Specialties Grid */}
-                {filteredSpecialties.length === 0 ? (
+                {specialtiesToDisplay.length === 0 ? (
                     <Card className="text-center py-16">
                         <CardBody>
                             <div className="w-24 h-24 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -149,9 +249,67 @@ export default function SpecialtiesPage() {
                     </Card>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        {filteredSpecialties.map((specialty) => (
+                        {specialtiesToDisplay.map((specialty) => (
                             <SpecialtyCard key={specialty.id} specialty={specialty} />
                         ))}
+                    </div>
+                )}
+
+                {/* Pagination */}
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between mt-8">
+                        <div className="text-sm text-neutral-600">
+                            Hiển thị {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, totalSpecialties)} trong tổng số {totalSpecialties} chuyên khoa
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                                disabled={currentPage === 1}
+                            >
+                                Trước
+                            </Button>
+
+                            {/* Page numbers */}
+                            <div className="flex items-center space-x-1">
+                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                                    let pageNum;
+                                    if (totalPages <= 5) {
+                                        pageNum = i + 1;
+                                    } else if (currentPage <= 3) {
+                                        pageNum = i + 1;
+                                    } else if (currentPage >= totalPages - 2) {
+                                        pageNum = totalPages - 4 + i;
+                                    } else {
+                                        pageNum = currentPage - 2 + i;
+                                    }
+
+                                    return (
+                                        <button
+                                            key={pageNum}
+                                            onClick={() => setCurrentPage(pageNum)}
+                                            className={`px-3 py-1 text-sm rounded-md transition-colors ${
+                                                currentPage === pageNum
+                                                    ? "bg-primary-600 text-white"
+                                                    : "text-neutral-600 hover:bg-neutral-100"
+                                            }`}
+                                        >
+                                            {pageNum}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                                disabled={currentPage === totalPages}
+                            >
+                                Sau
+                            </Button>
+                        </div>
                     </div>
                 )}
             </div>
