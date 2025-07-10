@@ -128,7 +128,6 @@ function SpecialtyDetailContent() {
     return (
         <div className="p-6 mt-6">
             <div className="max-w-4xl mx-auto">
-
                 {/* Thông tin chuyên khoa */}
                 <div className="bg-white rounded-lg shadow-md overflow-hidden mb-8">
                     <div className="relative h-64">
