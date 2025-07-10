@@ -237,7 +237,7 @@ export default function AdminDashboard() {
                                 </div>
                                 <div>
                                     <h1 className="text-4xl font-bold bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
-                                        Dashboard Quản Trị
+                                        Dashboard quản trị
                                     </h1>
                                     <p className="text-neutral-600 text-lg">
                                         Tổng quan hệ thống và quản lý toàn bộ hoạt động phòng khám

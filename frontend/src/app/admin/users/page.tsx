@@ -390,9 +390,9 @@ export default function UsersPage() {
         <div className="min-h-screen bg-neutral-50">
             <div className="container py-8">
                 {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-neutral-900 mb-2">
-                        Quản Lý Người Dùng
+                <div className="mb-8 mt-8">
+                    <h1 className="text-3xl font-bold text-neutral-900 mb-2 ">
+                        Quản lý người dùng
                     </h1>
                     <p className="text-neutral-600">
                         Quản lý tài khoản bác sĩ, admin và theo dõi hoạt động người dùng
