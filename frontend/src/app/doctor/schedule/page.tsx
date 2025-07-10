@@ -75,9 +75,8 @@ export default function SchedulePage() {
     }
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <h1 className="text-2xl font-bold mb-8 text-blue-600 text-center">Lịch phân công</h1>
-
+        <div className="container mx-auto px-4 py-4">
+            <h1 className="text-3xl font-bold mb-8 text-blue-600">Lịch phân công</h1>
             <div className="bg-white rounded-lg shadow-md p-6 mb-6">
                 <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">

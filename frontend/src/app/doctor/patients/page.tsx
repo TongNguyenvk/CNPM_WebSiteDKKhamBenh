@@ -149,11 +149,11 @@ export default function PatientsPage() {
 
     return (
         <div className="min-h-screen bg-neutral-50">
-            <div className="container py-8">
+            <div className="container py-4">
                 {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-neutral-900 mb-2">
-                        Danh Sách Bệnh Nhân
+                        Danh sách bệnh nhân
                     </h1>
                     <p className="text-neutral-600">
                         Quản lý và theo dõi thông tin bệnh nhân của bạn
