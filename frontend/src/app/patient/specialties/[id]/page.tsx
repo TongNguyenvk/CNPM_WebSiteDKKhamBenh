@@ -34,7 +34,7 @@ export default async function SpecialtyDetailPage({ params }: PageProps) {
 
     return (
         <div className="container mx-auto p-4 ">
-            <div className="mb-4 ">
+            <div className="">
             </div>
             <ErrorBoundary>
                 <SpecialtyDetailClient specialtyId={specialtyId} />

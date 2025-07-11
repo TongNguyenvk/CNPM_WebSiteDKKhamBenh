@@ -298,9 +298,9 @@ export default function AppointmentsPage() {
         <div className="min-h-screen bg-neutral-50">
             <div className="container py-8">
                 {/* Header */}
-                <div className="mb-8">
+                <div className="mb-8 mt-8">
                     <h1 className="text-3xl font-bold text-neutral-900 mb-2">
-                        Quản Lý Lịch Khám
+                        Quản lý lịch khám
                     </h1>
                     <p className="text-neutral-600">
                         Quản lý lịch làm việc của bác sĩ và theo dõi tình trạng đặt lịch

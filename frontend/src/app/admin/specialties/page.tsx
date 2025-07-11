@@ -175,9 +175,9 @@ export default function SpecialtiesPage() {
         <div className="min-h-screen bg-neutral-50">
             <div className="container py-8">
                 {/* Header */}
-                <div className="mb-8">
+                <div className="mb-8 mt-8">
                     <h1 className="text-3xl font-bold text-neutral-900 mb-2">
-                        Quản Lý Chuyên Khoa
+                        Quản lý chuyên khoa
                     </h1>
                     <p className="text-neutral-600">
                         Quản lý các chuyên khoa y tế trong hệ thống

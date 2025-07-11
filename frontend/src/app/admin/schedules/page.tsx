@@ -223,7 +223,7 @@ export default function AdminSchedulePage() {
     }
 
     return (
-        <div className="container mx-auto px-4 py-8">
+        <div className="container mx-auto px-4 py-8 mt-8">
             <h1 className="text-2xl font-bold mb-8 text-blue-600 text-center">Quản lý lịch phân công</h1>
             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
                 <div className="flex gap-4 items-center">

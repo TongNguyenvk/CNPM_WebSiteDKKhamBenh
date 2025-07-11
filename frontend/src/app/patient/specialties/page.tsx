@@ -129,7 +129,7 @@ export default function SpecialtiesPage() {
                 {/* Header */}
                 <div className="text-center mb-12">
                     <h1 className="text-3xl font-bold text-neutral-900 mb-4">
-                        Chuyên Khoa Y Tế
+                        Chuyên khoa y tế
                     </h1>
                     <p className="text-neutral-600 max-w-2xl mx-auto">
                         Chọn chuyên khoa phù hợp với nhu cầu khám chữa bệnh của bạn.

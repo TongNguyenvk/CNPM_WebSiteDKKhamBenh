@@ -11,10 +11,8 @@ interface SpecialtyDetailFallbackProps {
 
 export default function SpecialtyDetailFallback({ specialtyId, error }: SpecialtyDetailFallbackProps) {
     return (
-        <div className="p-6 mt-6">
+        <div className="p-4 mt-6">
             <div className="max-w-4xl mx-auto">
-        
-
                 {/* Error message */}
                 <div className="bg-white rounded-lg shadow-md p-8 text-center">
                     <div className="text-red-600 text-6xl mb-4">⚠️</div>
