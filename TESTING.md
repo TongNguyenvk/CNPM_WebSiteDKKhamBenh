@@ -292,3 +292,192 @@ docker system prune -f
 - Zero high vulnerabilities
 - 95+ Lighthouse scores
 - <500KB bundle size
+
+---
+
+## 🧪 Advanced Testing Framework
+
+### Comprehensive Testing Setup
+
+We've implemented a modern testing framework with multiple testing levels:
+
+#### Frontend Testing Stack
+- **Jest**: JavaScript testing framework with jsdom environment
+- **React Testing Library**: Component testing with user-centric queries
+- **Playwright**: Cross-browser end-to-end testing
+- **MSW**: Mock Service Worker for API mocking
+
+#### Backend Testing Stack
+- **Jest**: Node.js testing framework
+- **Supertest**: HTTP assertion library for API testing
+- **Test Database**: Isolated MySQL test environment
+
+### Test Structure & Organization
+```
+frontend/
+├── __tests__/
+│   ├── unit/
+│   │   ├── components/    # React component tests
+│   │   └── utils/         # Utility function tests
+│   ├── integration/       # API integration tests
+│   └── e2e/              # Playwright E2E tests
+├── jest.setup.js         # Jest configuration
+└── playwright.config.ts  # Playwright configuration
+
+backend/
+├── __tests__/
+│   ├── unit/
+│   │   ├── models/        # Database model tests
+│   │   ├── utils/         # Utility function tests
+│   │   └── services/      # Business logic tests
+│   ├── integration/       # API endpoint tests
+│   └── e2e/              # Full workflow tests
+└── jest.setup.js         # Jest configuration
+```
+
+### Test Commands Reference
+
+#### Frontend Testing
+```bash
+npm test                   # Run all Jest tests
+npm run test:unit         # Unit tests only
+npm run test:integration  # Integration tests only
+npm run test:e2e          # Playwright E2E tests
+npm run test:coverage     # Generate coverage report
+npm run test:watch        # Watch mode for development
+npm run test:ci           # CI-optimized test run
+```
+
+#### Backend Testing
+```bash
+npm test                   # Run all Jest tests
+npm run test:unit         # Unit tests only
+npm run test:integration  # Integration tests only
+npm run test:e2e          # End-to-end API tests
+npm run test:coverage     # Generate coverage report
+npm run test:watch        # Watch mode for development
+npm run test:ci           # CI-optimized test run
+npm run test:legacy       # Legacy test suite (test.js)
+```
+
+### Coverage Requirements & Quality Gates
+- **Minimum Coverage**: 70% across all metrics
+- **Branch Coverage**: 70%
+- **Function Coverage**: 70%
+- **Line Coverage**: 70%
+- **Statement Coverage**: 70%
+
+### CI/CD Integration
+Tests are automatically executed in GitHub Actions:
+- **Pull Requests**: Unit + Integration tests with coverage reports
+- **Main Branch Push**: Full test suite including E2E tests
+- **Nightly Builds**: Comprehensive testing with performance metrics
+- **Release Pipeline**: Complete validation before deployment
+
+### Example Test Files Created
+1. **Frontend Unit Test**: `frontend/__tests__/unit/components/Button.test.tsx`
+2. **Frontend Integration Test**: `frontend/__tests__/integration/api.test.ts`
+3. **Frontend E2E Test**: `frontend/e2e/login.spec.ts`
+4. **Backend Unit Test**: `backend/__tests__/unit/utils/auth.test.js`
+5. **Backend Model Test**: `backend/__tests__/unit/models/User.test.js`
+6. **Backend Integration Test**: `backend/__tests__/integration/auth.test.js`
+
+### Getting Started with Testing
+1. **Install Dependencies**: `npm ci` in both frontend and backend directories
+2. **Run Tests Locally**: Use the test commands above
+3. **Write New Tests**: Follow the examples in the `__tests__` directories
+4. **Check Coverage**: Use `npm run test:coverage` to see coverage reports
+5. **Debug Tests**: Use `npm run test:watch` for interactive development
+
+## 🏠 Local Testing with Docker Database
+
+### Quick Start - Local Testing
+```bash
+# Option 1: Simple local testing (auto-detects database)
+npm run test:local
+
+# Option 2: Full Docker testing environment
+npm run test:local:docker
+
+# Option 3: Linux/macOS with Docker
+npm run test:local:bash
+
+# Option 4: Pre-commit testing (only tests changed files)
+powershell -ExecutionPolicy Bypass -File scripts/pre-commit-test.ps1
+```
+
+### Database Setup Options
+
+#### Option 1: Use Existing Docker Compose
+```bash
+# Start your existing database
+docker-compose up -d db-mysql
+
+# Run tests (will use localhost:3307)
+npm run test:local
+```
+
+#### Option 2: Use Test-specific Database
+```bash
+# Start test database
+docker-compose -f docker-compose.test.yml up -d test-db
+
+# Run tests (will use localhost:3306)
+npm run test:local
+```
+
+#### Option 3: Local MySQL Installation
+```bash
+# Install MySQL locally and create test database
+mysql -u root -p -e "CREATE DATABASE test_db;"
+
+# Run tests
+npm run test:local
+```
+
+### Pre-commit Workflow
+```bash
+# 1. Make your changes
+git add .
+
+# 2. Run pre-commit tests (only tests changed files)
+powershell -ExecutionPolicy Bypass -File scripts/pre-commit-test.ps1
+
+# 3. If tests pass, commit
+git commit -m "your message"
+
+# 4. Push to GitHub (CI/CD will run full test suite)
+git push
+```
+
+### Database Configuration
+The test scripts automatically detect and use available databases:
+
+1. **localhost:3306** - Local MySQL or Docker test database
+2. **localhost:3307** - Docker Compose production database
+3. **Auto-start** - Attempts to start Docker database if none found
+
+### Environment Variables for Testing
+```bash
+# Automatically set by test scripts
+NODE_ENV=test
+DB_HOST=localhost
+DB_PORT=3306 or 3307
+DB_NAME=test_db
+DB_USERNAME=root
+DB_PASSWORD=root or 123456 (depending on setup)
+JWT_SECRET=test-jwt-secret
+```
+
+## 📚 Testing Resources
+
+- [Jest Documentation](https://jestjs.io/docs/getting-started)
+- [React Testing Library](https://testing-library.com/docs/react-testing-library/intro/)
+- [Playwright Documentation](https://playwright.dev/)
+- [Supertest Documentation](https://github.com/visionmedia/supertest)
+- [MSW Documentation](https://mswjs.io/docs/)
+- [Testing Best Practices](https://kentcdodds.com/blog/common-mistakes-with-react-testing-library)
+
+---
+
+*This testing framework provides comprehensive coverage for unit, integration, and end-to-end testing scenarios. The setup is production-ready and integrated with CI/CD pipelines.*

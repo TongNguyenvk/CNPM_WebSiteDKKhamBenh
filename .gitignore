@@ -1,6 +1,6 @@
 /frontend/node_modules
 /backend/node_modules
-
+/node_modules
 # Dependencies
 
 
@@ -10,6 +10,7 @@
 .env.development.local
 .env.production.local
 .env.production
+.env.docker
 
 # Next.js build output
 .next

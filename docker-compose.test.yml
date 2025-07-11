@@ -1,0 +1,66 @@
+services:
+  # Test Database - Separate from production
+  test-db:
+    image: mysql:8.0
+    restart: always
+    environment:
+      - MYSQL_DATABASE=test_db
+      - MYSQL_ROOT_PASSWORD=root
+    ports:
+      - "3306:3306"  # Use standard port for testing
+    volumes:
+      - test_db_data:/var/lib/mysql
+    networks:
+      - test-network
+    # Health check to ensure DB is ready
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+      start_period: 40s
+
+  # Backend Testing Service
+  backend-test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=test
+      - DB_HOST=test-db
+      - DB_PORT=3306
+      - DB_NAME=test_db
+      - DB_USERNAME=root
+      - DB_PASSWORD=root
+      - JWT_SECRET=test-jwt-secret
+    depends_on:
+      test-db:
+        condition: service_healthy
+    networks:
+      - test-network
+    command: npm test
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  # Frontend Testing Service
+  frontend-test:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=test
+      - NEXT_PUBLIC_API_URL=http://backend-test:8080/api/
+    networks:
+      - test-network
+    command: npm test
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  test_db_data:
+
+networks:
+  test-network:
+    driver: bridge
