@@ -60,12 +60,7 @@ export default function Profile({ role }: ProfileProps) {
         try {
             setLoading(true);
             setError(null);
-            let data = await getUserProfile();
-            data = {
-                ...data,
-                firstName: data.lastName,
-                lastName: data.firstName
-            };
+            const data = await getUserProfile();
             setProfile(data);
             setFormData({
                 firstName: data.firstName,
@@ -253,9 +248,9 @@ export default function Profile({ role }: ProfileProps) {
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-primary-50/30">
-            <div className="container py-4">
+            <div className="container py-8">
                 {/* Enhanced Header with Profile Stats */}
-                <div className="m-6">
+                <div className="mb-8">
                     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                         <div>
                             <h1 className="text-4xl font-bold text-neutral-900 mb-2 bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
