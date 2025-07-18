@@ -254,6 +254,11 @@ exports.getBookingById = async (req, res) => {
                     model: db.Allcode,
                     as: 'statusData',
                     attributes: ['keyMap', 'valueVi', 'valueEn']
+                },
+                {
+                    model: db.Allcode,
+                    as: 'timeTypeData',
+                    attributes: ['keyMap', 'valueVi', 'valueEn']
                 }
             ]
         });

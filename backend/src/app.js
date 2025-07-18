@@ -56,6 +56,16 @@ app.use('/uploads/avatars', express.static(path.join(__dirname, '../uploads/avat
 // Swagger Documentation
 app.use('/api-docs', swagger.serve, swagger.setup);
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    message: 'Server is running',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development'
+  });
+});
+
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);

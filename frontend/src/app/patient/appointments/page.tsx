@@ -108,6 +108,10 @@ export default function AppointmentsPage() {
         }
     };
 
+    const handleAppointmentClick = (appointmentId: number) => {
+        router.push(`/patient/appointments/${appointmentId}`);
+    };
+
     // Helper functions for filtering, sorting, and pagination
     const getFilteredAppointments = () => {
         let filtered = appointments;
@@ -447,6 +451,7 @@ export default function AppointmentsPage() {
                                             key={appointment.id}
                                             appointment={appointment}
                                             onCancel={handleConfirmCancel}
+                                            onClick={handleAppointmentClick}
                                             isUpcoming={new Date(appointment.date) >= new Date() && appointment.statusId !== 'S3' && appointment.statusId !== 'S4'}
                                         />
                                     ))}
@@ -486,11 +491,10 @@ export default function AppointmentsPage() {
                                                         <button
                                                             key={pageNum}
                                                             onClick={() => setCurrentPage(pageNum)}
-                                                            className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                                                                currentPage === pageNum
-                                                                    ? "bg-primary-600 text-white"
-                                                                    : "text-neutral-600 hover:bg-neutral-100"
-                                                            }`}
+                                                            className={`px-3 py-1 text-sm rounded-md transition-colors ${currentPage === pageNum
+                                                                ? "bg-primary-600 text-white"
+                                                                : "text-neutral-600 hover:bg-neutral-100"
+                                                                }`}
                                                         >
                                                             {pageNum}
                                                         </button>
@@ -523,9 +527,10 @@ interface AppointmentCardProps {
     appointment: Appointment;
     onCancel: (id: number) => void;
     isUpcoming: boolean;
+    onClick?: (id: number) => void;
 }
 
-function AppointmentCard({ appointment, onCancel, isUpcoming }: AppointmentCardProps) {
+function AppointmentCard({ appointment, onCancel, isUpcoming, onClick }: AppointmentCardProps) {
     const appointmentDate = new Date(appointment.date);
     const isToday = appointmentDate.toDateString() === new Date().toDateString();
     const isTomorrow = appointmentDate.toDateString() === new Date(Date.now() + 86400000).toDateString();
@@ -538,9 +543,10 @@ function AppointmentCard({ appointment, onCancel, isUpcoming }: AppointmentCardP
 
     return (
         <Card className={cn(
-            "transition-all duration-200",
+            "transition-all duration-200 cursor-pointer hover:shadow-md",
             isUpcoming ? "border-l-4 border-l-primary-500" : "opacity-75"
-        )}>
+        )}
+            onClick={() => onClick?.(appointment.id)}>
             <CardBody className="p-6">
                 <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
                     {/* Doctor Info */}
@@ -607,7 +613,10 @@ function AppointmentCard({ appointment, onCancel, isUpcoming }: AppointmentCardP
                             <Button
                                 variant="error"
                                 size="sm"
-                                onClick={() => onCancel(appointment.id)}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onCancel(appointment.id);
+                                }}
                             >
                                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

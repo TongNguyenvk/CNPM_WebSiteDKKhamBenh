@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
 import Link from 'next/link';
+import { getAllDoctors } from '@/lib/api';
 import Image from 'next/image';
 import { Card, CardBody, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -41,8 +41,8 @@ export default function DoctorsPage() {
             try {
                 setLoading(true);
                 setError('');
-                const response = await axios.get('http://localhost:8080/api/doctors');
-                setDoctors(response.data.data || response.data);
+                const data = await getAllDoctors();
+                setDoctors(data);
             } catch (err: any) {
                 setError(err.message || 'Lỗi khi tải danh sách bác sĩ');
             } finally {
@@ -330,11 +330,10 @@ export default function DoctorsPage() {
                                         <button
                                             key={pageNum}
                                             onClick={() => setCurrentPage(pageNum)}
-                                            className={`px-3 py-1 text-sm rounded-md transition-colors ${
-                                                currentPage === pageNum
-                                                    ? "bg-primary-600 text-white"
-                                                    : "text-neutral-600 hover:bg-neutral-100"
-                                            }`}
+                                            className={`px-3 py-1 text-sm rounded-md transition-colors ${currentPage === pageNum
+                                                ? "bg-primary-600 text-white"
+                                                : "text-neutral-600 hover:bg-neutral-100"
+                                                }`}
                                         >
                                             {pageNum}
                                         </button>

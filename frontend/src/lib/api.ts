@@ -521,6 +521,7 @@ export const cancelBooking = async (bookingId: number): Promise<Appointment> => 
     }
 };
 
+
 // Schedule APIs
 export const createSchedule = async (data: {
     doctorId: number;
