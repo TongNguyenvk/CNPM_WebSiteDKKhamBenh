@@ -3,8 +3,8 @@ services:
     image: tongnguyen/frontend:latest
     container_name: cnpm_frontend
     environment:
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://35.241.100.111/api/}
-      - NODE_ENV=${NODE_ENV:-production}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - NODE_ENV=${NODE_ENV}
     expose:
       - "3000"
     depends_on:
@@ -17,15 +17,16 @@ services:
     image: tongnguyen/backend:latest
     container_name: cnpm_backend
     environment:
-      - NODE_ENV=${NODE_ENV:-production}
+      - NODE_ENV=${NODE_ENV}
       - PORT=8080
-      - DB_HOST=${DB_HOST:-db-mysql}
-      - DB_PORT=${DB_PORT:-3306}
-      - DB_NAME=${DB_NAME:-DBDKKHAMBENH}
-      - DB_USER=${DB_USER:-root}
-      - DB_PASSWORD=${DB_PASSWORD:-123456}
-      - DATABASE_URL=mysql://${DB_USER:-root}:${DB_PASSWORD:-123456}@${DB_HOST:-db-mysql}:${DB_PORT:-3306}/${DB_NAME:-DBDKKHAMBENH}
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://35.241.100.111}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DATABASE_URL=mysql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+      - JWT_SECRET=${JWT_SECRET}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
     expose:
       - "8080"
     depends_on:
@@ -52,8 +53,8 @@ services:
     image: mysql:8.0
     container_name: cnpm_mysql
     environment:
-      - MYSQL_DATABASE=${DB_NAME:-DBDKKHAMBENH}
-      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-123456}
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
     ports:
       - "3306:3306"
     volumes:
