@@ -1,22 +1,28 @@
- Website Đăng Ký Lịch Khám Bệnh
+# 🏥 Website Đăng Ký Lịch Khám Bệnh
 
 Ứng dụng web cho phép bệnh nhân đặt lịch khám bệnh trực tuyến.
 
 ## Mục lục
 
-- [Mô tả](#mô-tả)
-- [Yêu cầu](#yêu-cầu)
-- [Cài đặt](#cài-đặt)
-  - [Cài đặt Local](#cài-đặt-local)
-  - [Cài đặt Docker](#cài-đặt-docker)
-- [Cấu hình](#cấu-hình)
-  - [Biến môi trường](#biến-môi-trường)
-  - [Cấu hình Cơ Sở Dữ Liệu](#cấu-hình-cơ-sở-dữ-liệu)
-- [Chạy Ứng Dụng](#chạy-ứng-dụng)
-  - [Chạy Local](#chạy-local)
-  - [Chạy Docker](#chạy-docker)
-- [Cấu trúc thư mục](#cấu-trúc-thư-mục)
-- [Đóng góp](#đóng-góp)
+- [🏥 Website Đăng Ký Lịch Khám Bệnh](#-website-đăng-ký-lịch-khám-bệnh)
+  - [Mục lục](#mục-lục)
+  - [Mô tả](#mô-tả)
+  - [Yêu cầu](#yêu-cầu)
+  - [Cài đặt](#cài-đặt)
+    - [Cài đặt Local](#cài-đặt-local)
+    - [Cài đặt Docker](#cài-đặt-docker)
+  - [Cấu hình](#cấu-hình)
+    - [Biến môi trường](#biến-môi-trường)
+    - [Cấu hình Cơ Sở Dữ Liệu](#cấu-hình-cơ-sở-dữ-liệu)
+  - [Chạy Ứng Dụng](#chạy-ứng-dụng)
+    - [Chạy Local](#chạy-local)
+    - [Chạy Docker](#chạy-docker)
+  - [Cấu trúc thư mục](#cấu-trúc-thư-mục)
+  - [Chạy Ứng Dụng](#chạy-ứng-dụng-1)
+    - [Chạy Local](#chạy-local-1)
+    - [Chạy Docker](#chạy-docker-1)
+  - [Cấu trúc thư mục](#cấu-trúc-thư-mục-1)
+  - [Đóng góp](#đóng-góp)
 
 ## Mô tả
 
