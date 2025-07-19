@@ -1,19 +1,28 @@
 // API Configuration
 export const getApiUrl = () => {
+    const envApiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const nodeEnv = process.env.NODE_ENV;
+
+    // Debug logging
+    if (typeof window !== 'undefined') {
+        console.log('API Config Debug:', {
+            NEXT_PUBLIC_API_URL: envApiUrl,
+            NODE_ENV: nodeEnv,
+            isClient: true
+        });
+    }
+
+    // Always prioritize NEXT_PUBLIC_API_URL if set
+    if (envApiUrl) {
+        return envApiUrl;
+    }
+
     // For client-side (browser)
     if (typeof window !== 'undefined') {
-        // Always prioritize NEXT_PUBLIC_API_URL if set
-        if (process.env.NEXT_PUBLIC_API_URL) {
-            return process.env.NEXT_PUBLIC_API_URL;
+        // In production, use relative URL for same-origin requests
+        if (nodeEnv === 'production') {
+            return '/api/';
         }
-
-        // Fallback: auto-detect based on current host
-        if (process.env.NODE_ENV === 'production') {
-            const currentHost = window.location.hostname;
-            const protocol = window.location.protocol;
-            return `${protocol}//${currentHost}:8080/api/`;
-        }
-
         // Development fallback
         return 'http://localhost:8080/api/';
     }

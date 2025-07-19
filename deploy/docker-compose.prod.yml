@@ -1,69 +1,70 @@
-version: '3.8'
-
 services:
+  frontend:
+    image: tongnguyen/frontend:latest
+    container_name: cnpm_frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8080/api/
+      - NODE_ENV=production
+    expose:
+      - "3000"
+    depends_on:
+      - backend
+    networks:
+      - cnpm_network
+    restart: unless-stopped
+
+  backend:
+    image: tongnguyen/backend:latest
+    container_name: cnpm_backend
+    environment:
+      - NODE_ENV=production
+      - PORT=8080
+      - DB_HOST=db-mysql
+      - DB_PORT=3306
+      - DB_NAME=DBDKKHAMBENH
+      - DB_USER=root
+      - DB_PASSWORD=123456
+      - DATABASE_URL=mysql://root:123456@db-mysql:3306/DBDKKHAMBENH
+      - ALLOWED_ORIGINS=http://35.241.100.111
+    expose:
+      - "8080"
+    depends_on:
+      - db-mysql
+    networks:
+      - cnpm_network
+    restart: unless-stopped
+
   nginx:
-    image: nginx:alpine
+    image: nginx:latest
+    container_name: cnpm_nginx
     ports:
-      - "${FRONTEND_PORT:-80}:80"
+      - "80:80"
     volumes:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - frontend
       - backend
     networks:
-      - app-network
-    restart: unless-stopped
-
-  frontend:
-    image: tongnguyen/frontend:latest
-    expose:
-      - "3000"
-    environment:
-      - NODE_ENV=${NODE_ENV:-production}
-      - NEXT_PUBLIC_API_URL=/api/
-      - API_URL=http://backend:8080/api/
-    depends_on:
-      - backend
-    networks:
-      - app-network
-    restart: unless-stopped
-
-  backend:
-    image: tongnguyen/backend:latest
-    ports:
-      - "${BACKEND_PORT:-8080}:8080"
-    environment:
-      - NODE_ENV=${NODE_ENV:-production}
-      - PORT=8080
-      - DB_HOST=${DB_HOST:-db-mysql}
-      - DB_PORT=${DB_PORT:-3306}
-      - DB_NAME=${DB_NAME:-DBDKKHAMBENH}
-      - DB_USER=${DB_USER:-root}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DATABASE_URL=mysql://${DB_USER:-root}:${DB_PASSWORD}@${DB_HOST:-db-mysql}:${DB_PORT:-3306}/${DB_NAME:-DBDKKHAMBENH}
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
-    depends_on:
-      - db-mysql
-    networks:
-      - app-network
+      - cnpm_network
     restart: unless-stopped
 
   db-mysql:
     image: mysql:8.0
-    restart: always
+    container_name: cnpm_mysql
     environment:
-      - MYSQL_DATABASE=${DB_NAME:-DBDKKHAMBENH}
-      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
+      - MYSQL_DATABASE=DBDKKHAMBENH
+      - MYSQL_ROOT_PASSWORD=123456
     ports:
-      - "${DB_EXTERNAL_PORT:-3306}:3306"
+      - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
     networks:
-      - app-network
+      - cnpm_network
+    restart: always
 
 volumes:
   db_data:
 
 networks:
-  app-network:
+  cnpm_network:
     driver: bridge
