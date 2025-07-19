@@ -25,7 +25,7 @@ docker-compose -f docker-compose.prod.yml down || echo "⚠️ No existing conta
 
 # Start the new containers
 echo "🔄 Starting new containers..."
-docker-compose -f docker-compose.prod.yml up -d
+docker-compose -f docker-compose.prod.yml --env-file .env up -d
 
 # Show container status
 echo "📊 Container status:"

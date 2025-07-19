@@ -3,8 +3,8 @@ services:
     image: tongnguyen/frontend:latest
     container_name: cnpm_frontend
     environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8080/api/
-      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://35.241.100.111/api/}
+      - NODE_ENV=${NODE_ENV:-production}
     expose:
       - "3000"
     depends_on:
@@ -17,15 +17,15 @@ services:
     image: tongnguyen/backend:latest
     container_name: cnpm_backend
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=${NODE_ENV:-production}
       - PORT=8080
-      - DB_HOST=db-mysql
-      - DB_PORT=3306
-      - DB_NAME=DBDKKHAMBENH
-      - DB_USER=root
-      - DB_PASSWORD=123456
-      - DATABASE_URL=mysql://root:123456@db-mysql:3306/DBDKKHAMBENH
-      - ALLOWED_ORIGINS=http://35.241.100.111
+      - DB_HOST=${DB_HOST:-db-mysql}
+      - DB_PORT=${DB_PORT:-3306}
+      - DB_NAME=${DB_NAME:-DBDKKHAMBENH}
+      - DB_USER=${DB_USER:-root}
+      - DB_PASSWORD=${DB_PASSWORD:-123456}
+      - DATABASE_URL=mysql://${DB_USER:-root}:${DB_PASSWORD:-123456}@${DB_HOST:-db-mysql}:${DB_PORT:-3306}/${DB_NAME:-DBDKKHAMBENH}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://35.241.100.111}
     expose:
       - "8080"
     depends_on:
@@ -52,8 +52,8 @@ services:
     image: mysql:8.0
     container_name: cnpm_mysql
     environment:
-      - MYSQL_DATABASE=DBDKKHAMBENH
-      - MYSQL_ROOT_PASSWORD=123456
+      - MYSQL_DATABASE=${DB_NAME:-DBDKKHAMBENH}
+      - MYSQL_ROOT_PASSWORD=${DB_PASSWORD:-123456}
     ports:
       - "3306:3306"
     volumes:
