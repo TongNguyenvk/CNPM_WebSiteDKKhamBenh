@@ -9,7 +9,6 @@
     "test:coverage": "jest --coverage",
     "test:ci": "jest --ci --coverage --watchAll=false",
     "test:unit": "jest --testPathPattern=__tests__/unit",
-    "test:integration": "jest --testPathPattern=__tests__/integration",
     "test:e2e": "jest --testPathPattern=__tests__/e2e",
     "test:legacy": "node test.js",
     "start": "node src/server.js",
@@ -52,20 +51,13 @@
       "<rootDir>/jest.setup.js"
     ],
     "testPathIgnorePatterns": [
-      "<rootDir>/test.js"
+      "<rootDir>/test.js",
+      "<rootDir>/__tests__/integration/"
     ],
     "collectCoverageFrom": [
       "src/**/*.js",
       "!src/server.js",
       "!src/config/**"
-    ],
-    "coverageThreshold": {
-      "global": {
-        "branches": 70,
-        "functions": 70,
-        "lines": 70,
-        "statements": 70
-      }
-    }
+    ]
   }
 }

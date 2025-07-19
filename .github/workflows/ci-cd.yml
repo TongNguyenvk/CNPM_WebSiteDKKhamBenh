@@ -176,34 +176,58 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.GCP_SSH_PRIVATE_KEY }}
 
+      - name: 🔍 Debug SSH Connection
+        run: |
+          echo "Testing SSH connection..."
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 ${{ secrets.GCP_USER }}@${{ secrets.GCP_HOST }} "echo 'SSH connection successful!'"
+          echo "Checking SSH agent..."
+          ssh-add -l
+
       - name: 📋 Copy deployment files
         run: |
           scp -o StrictHostKeyChecking=no -r deploy/ ${{ secrets.GCP_USER }}@${{ secrets.GCP_HOST }}:~/
-          scp -o StrictHostKeyChecking=no .env.production ${{ secrets.GCP_USER }}@${{ secrets.GCP_HOST }}:~/deploy/.env.template
 
       - name: 🚀 Deploy application
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.GCP_USER }}@${{ secrets.GCP_HOST }} << 'EOF'
-            cd ~/deploy
-
-            # Create .env file from template
-            cp .env.template .env
-
-            # Replace placeholders with actual values
-            sed -i "s/YOUR_STATIC_IP/${{ secrets.GCP_STATIC_IP }}/g" .env
-            sed -i "s/YOUR_SECURE_PASSWORD/${{ secrets.DB_PASSWORD }}/g" .env
-
-            # Make deploy script executable
-            chmod +x deploy.sh
-
-            # Run deployment
-            ./deploy.sh
-          EOF
+          ssh -o StrictHostKeyChecking=no ${{ secrets.GCP_USER }}@${{ secrets.GCP_HOST }} '
+            cd ~/deploy &&
+            echo "📁 Current directory:" && pwd &&
+            echo "📋 Files in deploy directory:" && ls -la &&
+            echo "🔧 Creating .env file..." &&
+            cat > .env << "ENVEOF"
+            NODE_ENV=production
+            FRONTEND_PORT=80
+            BACKEND_PORT=8080
+            DB_EXTERNAL_PORT=3306
+            NEXT_PUBLIC_API_URL=http://${{ secrets.GCP_HOST }}/api/
+            ALLOWED_ORIGINS=http://${{ secrets.GCP_HOST }}
+            DB_HOST=db-mysql
+            DB_PORT=3306
+            DB_NAME=DBDKKHAMBENH
+            DB_USER=root
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            ENVEOF
+            echo "✅ .env file created" &&
+            echo "📋 .env file contents:" && cat .env &&
+            echo "🔧 Making deploy script executable..." &&
+            chmod +x deploy.sh &&
+            echo "🚀 Starting deployment..." &&
+            ./deploy.sh &&
+            echo "🔍 Checking running containers:" &&
+            docker ps
+          '
 
       - name: 🔍 Health check
         run: |
-          sleep 30
-          curl -f http://${{ secrets.GCP_STATIC_IP }}/api/health || exit 1
+          echo "⏳ Waiting for services to start..."
+          sleep 60
+          echo "🔍 Debug: GCP_HOST = '${{ secrets.GCP_HOST }}'"
+          echo "🔍 Testing health check endpoint..."
+          if [ -z "${{ secrets.GCP_HOST }}" ]; then
+            echo "❌ GCP_HOST secret is empty!"
+            exit 1
+          fi
+          curl -f "http://${{ secrets.GCP_HOST }}:8080/api/health" || exit 1
           echo "✅ Application deployed successfully!"
 
   # ==================== NOTIFICATIONS ====================
