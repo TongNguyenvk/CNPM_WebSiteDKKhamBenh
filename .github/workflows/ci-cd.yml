@@ -212,7 +212,7 @@ jobs:
             echo "❌ GCP_HOST secret is empty!"
             exit 1
           fi
-          curl -f "http://${{ secrets.GCP_HOST }}:8080/api/health" || exit 1
+          curl -f "http://${{ secrets.GCP_HOST }}/health" || exit 1
           echo "✅ Application deployed successfully!"
 
   # ==================== NOTIFICATIONS ====================
