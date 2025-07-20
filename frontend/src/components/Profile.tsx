@@ -23,11 +23,16 @@ interface UserProfile {
     image?: string;
     createdAt?: string;
     updatedAt?: string;
-    Specialty?: {
+    specialtyData?: {
+        id: number;
         name: string;
+        description?: string;
+        image?: string;
     };
     positionData?: {
+        keyMap: string;
         valueVi: string;
+        valueEn: string;
     };
 }
 
@@ -409,7 +414,7 @@ export default function Profile({ role }: ProfileProps) {
                                     {/* User Info */}
                                     <div className="space-y-3 mb-6">
                                         <h2 className="text-2xl font-bold text-neutral-900">
-                                            {profile?.lastName} {profile?.firstName}
+                                            {profile?.firstName} {profile?.lastName}
                                         </h2>
 
                                         <div className="flex items-center justify-center space-x-2 text-primary-600 bg-primary-50 rounded-full px-4 py-2 mx-auto w-fit">
@@ -524,7 +529,7 @@ export default function Profile({ role }: ProfileProps) {
 
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 <Input
-                                                    label="Họ"
+                                                    label="Tên"
                                                     name="firstName"
                                                     value={formData.firstName}
                                                     onChange={handleInputChange}
@@ -533,7 +538,7 @@ export default function Profile({ role }: ProfileProps) {
                                                 />
 
                                                 <Input
-                                                    label="Tên"
+                                                    label="Họ"
                                                     name="lastName"
                                                     value={formData.lastName}
                                                     onChange={handleInputChange}
@@ -617,7 +622,7 @@ export default function Profile({ role }: ProfileProps) {
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     <Input
                                                         label="Chuyên khoa"
-                                                        value={profile?.Specialty?.name || ''}
+                                                        value={profile?.specialtyData?.name || ''}
                                                         disabled
                                                         helperText="Thông tin này không thể thay đổi"
                                                         className="bg-neutral-50"
@@ -779,7 +784,7 @@ export default function Profile({ role }: ProfileProps) {
                                                                         </svg>
                                                                     </div>
                                                                     <p className="text-lg font-medium text-neutral-900">
-                                                                        {profile?.Specialty?.name || <span className="text-neutral-400 italic font-normal">Chưa cập nhật</span>}
+                                                                        {profile?.specialtyData?.name || <span className="text-neutral-400 italic font-normal">Chưa cập nhật</span>}
                                                                     </p>
                                                                 </div>
                                                             </div>
