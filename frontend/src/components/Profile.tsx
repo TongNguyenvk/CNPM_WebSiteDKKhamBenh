@@ -409,7 +409,7 @@ export default function Profile({ role }: ProfileProps) {
                                     {/* User Info */}
                                     <div className="space-y-3 mb-6">
                                         <h2 className="text-2xl font-bold text-neutral-900">
-                                            {profile?.firstName} {profile?.lastName}
+                                            {profile?.lastName} {profile?.firstName}
                                         </h2>
 
                                         <div className="flex items-center justify-center space-x-2 text-primary-600 bg-primary-50 rounded-full px-4 py-2 mx-auto w-fit">
@@ -525,8 +525,8 @@ export default function Profile({ role }: ProfileProps) {
                                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 <Input
                                                     label="Họ"
-                                                    name="lastName"
-                                                    value={formData.lastName}
+                                                    name="firstName"
+                                                    value={formData.firstName}
                                                     onChange={handleInputChange}
                                                     required
                                                     className="transition-all duration-200 focus:scale-[1.02]"
@@ -534,8 +534,8 @@ export default function Profile({ role }: ProfileProps) {
 
                                                 <Input
                                                     label="Tên"
-                                                    name="firstName"
-                                                    value={formData.firstName}
+                                                    name="lastName"
+                                                    value={formData.lastName}
                                                     onChange={handleInputChange}
                                                     required
                                                     className="transition-all duration-200 focus:scale-[1.02]"
@@ -688,13 +688,13 @@ export default function Profile({ role }: ProfileProps) {
                                                         <div className="space-y-2">
                                                             <label className="text-sm font-medium text-neutral-500 uppercase tracking-wide">Họ</label>
                                                             <p className="text-lg font-medium text-neutral-900 bg-neutral-50 rounded-lg px-4 py-3">
-                                                                {profile?.lastName || <span className="text-neutral-400 italic font-normal">Chưa cập nhật</span>}
+                                                                {profile?.firstName || <span className="text-neutral-400 italic font-normal">Chưa cập nhật</span>}
                                                             </p>
                                                         </div>
                                                         <div className="space-y-2">
                                                             <label className="text-sm font-medium text-neutral-500 uppercase tracking-wide">Tên</label>
                                                             <p className="text-lg font-medium text-neutral-900 bg-neutral-50 rounded-lg px-4 py-3">
-                                                                {profile?.firstName || <span className="text-neutral-400 italic font-normal">Chưa cập nhật</span>}
+                                                                {profile?.lastName || <span className="text-neutral-400 italic font-normal">Chưa cập nhật</span>}
                                                             </p>
                                                         </div>
                                                     </div>
