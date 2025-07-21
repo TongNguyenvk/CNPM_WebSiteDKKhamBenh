@@ -43,8 +43,8 @@
 1.  Clone kho lưu trữ:
 
     ```bash
-    git clone https://github.com/your-username/your-repository.git
-    cd your-repository
+    git clone https://github.com/TongNguyenvk/CNPM_WebSiteDKKhamBenh.git
+    cd CNPM_WebSiteDKKhamBenh
     ```
 
 2.  Cài đặt các dependencies cho frontend:
