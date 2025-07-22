@@ -54,7 +54,7 @@ app.use(express.json());
 app.use('/uploads/avatars', express.static(path.join(__dirname, '../uploads/avatars')));
 
 // Swagger Documentation
-app.use('/api-docs', swagger.serve, swagger.setup);
+app.use('/api/docs', swagger.serve, swagger.setup);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

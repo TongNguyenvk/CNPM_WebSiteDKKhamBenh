@@ -8,20 +8,19 @@
   - [Mục lục](#mục-lục)
   - [Mô tả](#mô-tả)
   - [Yêu cầu](#yêu-cầu)
-  - [Cài đặt](#cài-đặt)
-    - [Cài đặt Local](#cài-đặt-local)
-    - [Cài đặt Docker](#cài-đặt-docker)
-  - [Cấu hình](#cấu-hình)
-    - [Biến môi trường](#biến-môi-trường)
-    - [Cấu hình Cơ Sở Dữ Liệu](#cấu-hình-cơ-sở-dữ-liệu)
-  - [Chạy Ứng Dụng](#chạy-ứng-dụng)
-    - [Chạy Local](#chạy-local)
-    - [Chạy Docker](#chạy-docker)
-  - [Cấu trúc thư mục](#cấu-trúc-thư-mục)
-  - [Chạy Ứng Dụng](#chạy-ứng-dụng-1)
-    - [Chạy Local](#chạy-local-1)
-    - [Chạy Docker](#chạy-docker-1)
-  - [Cấu trúc thư mục](#cấu-trúc-thư-mục-1)
+  - [🚀 Cài đặt](#-cài-đặt)
+    - [💻 Cài đặt Local (Development)](#-cài-đặt-local-development)
+    - [🐳 Cài đặt với Docker (Khuyến nghị)](#-cài-đặt-với-docker-khuyến-nghị)
+    - [⚡ Cài đặt nhanh (Quick Start)](#-cài-đặt-nhanh-quick-start)
+  - [⚙️ Cấu hình](#️-cấu-hình)
+    - [🔐 Biến môi trường Backend](#-biến-môi-trường-backend)
+    - [🌐 Biến môi trường Frontend](#-biến-môi-trường-frontend)
+    - [🗄️ Cấu hình Database](#️-cấu-hình-database)
+  - [🚀 Chạy Ứng Dụng](#-chạy-ứng-dụng)
+    - [💻 Development Mode](#-development-mode)
+    - [🐳 Docker Mode](#-docker-mode)
+    - [🧪 Testing Mode](#-testing-mode)
+  - [📁 Cấu trúc thư mục](#-cấu-trúc-thư-mục)
   - [Đóng góp](#đóng-góp)
 
 ## Mô tả
@@ -36,176 +35,208 @@
 - [Docker](https://www.docker.com/) (tùy chọn)
 - [Docker Compose](https://docs.docker.com/compose/install/) (tùy chọn)
 
-## Cài đặt
+## 🚀 Cài đặt
 
-### Cài đặt Local
+### 💻 Cài đặt Local (Development)
 
-1.  Clone kho lưu trữ:
+1. **Clone repository:**
+   ```bash
+   git clone https://github.com/TongNguyenvk/CNPM_WebSiteDKKhamBenh.git
+   cd CNPM_WebSiteDKKhamBenh
+   ```
 
-    ```bash
-    git clone https://github.com/TongNguyenvk/CNPM_WebSiteDKKhamBenh.git
-    cd CNPM_WebSiteDKKhamBenh
-    ```
+2. **Cài đặt dependencies cho Backend:**
+   ```bash
+   cd backend
+   npm install
+   ```
 
-2.  Cài đặt các dependencies cho frontend:
+3. **Cài đặt dependencies cho Frontend:**
+   ```bash
+   cd ../frontend
+   npm install
+   ```
 
-    ```bash
-    cd frontend
-    npm install
-    ```
+4. **Thiết lập cơ sở dữ liệu MySQL:**
+   ```sql
+   CREATE DATABASE cnpm_hospital_booking;
+   ```
 
-3.  Cài đặt các dependencies cho backend:
+5. **Chạy migrations và seeders:**
+   ```bash
+   cd backend
+   npm run migrate
+   npm run seed
+   ```
 
-    ```bash
-    cd ../backend
-    npm install
-    ```
+### 🐳 Cài đặt với Docker (Khuyến nghị)
 
-### Cài đặt Docker
+1. **Đảm bảo đã cài đặt Docker và Docker Compose**
 
-1.  Đảm bảo bạn đã cài đặt [Docker](https://www.docker.com/) và [Docker Compose](https://docs.docker.com/compose/install/).
+2. **Chạy toàn bộ ứng dụng:**
+   ```bash
+   docker-compose up -d
+   ```
 
-## Cấu hình
+3. **Kiểm tra trạng thái containers:**
+   ```bash
+   docker-compose ps
+   ```
 
-### Biến môi trường
+### ⚡ Cài đặt nhanh (Quick Start)
 
-1.  Tạo file `.env` trong thư mục `backend` và thiết lập các biến môi trường cần thiết. Bạn có thể sao chép từ file `.env.example` (nếu có) và thay đổi các giá trị cho phù hợp với môi trường của bạn.
+```bash
+# Clone và cài đặt
+git clone https://github.com/TongNguyenvk/CNPM_WebSiteDKKhamBenh.git
+cd CNPM_WebSiteDKKhamBenh
 
-    ```
-    PORT=8080
-    DATABASE_URL=mysql://root:your_mysql_password@localhost:3306/your_database_name
-    JWT_SECRET=your_jwt_secret_key
-    # ... các biến môi trường khác
-    ```
+# Chạy với Docker
+docker-compose up -d
 
-    **Quan trọng:** Không commit file `.env` lên kho lưu trữ.
+# Hoặc chạy local
+npm run dev
+```
 
-### Cấu hình Cơ Sở Dữ Liệu
+## ⚙️ Cấu hình
 
-1.  Tạo một cơ sở dữ liệu MySQL (hoặc PostgreSQL) với tên `your_database_name`.
-2.  Cấu hình thông tin kết nối cơ sở dữ liệu trong file `backend/config/config.json` hoặc thông qua biến môi trường `DATABASE_URL`.
+### 🔐 Biến môi trường Backend
 
-    Ví dụ (`config/config.json`):
+Tạo file `.env` trong thư mục `backend`:
 
-    ```json
-    {
-      "development": {
-        "username": "your_username",
-        "password": "your_password",
-        "database": "your_database_name",
-        "host": "127.0.0.1",
-        "dialect": "mysql"
-      },
-      "test": {
-        // ...
-      },
-      "production": {
-        // ...
-      }
-    }
-    ```
+```bash
+# Server Configuration
+PORT=8080
+NODE_ENV=development
 
-## Chạy Ứng Dụng
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=3306
+DB_NAME=cnpm_hospital_booking
+DB_USER=root
+DB_PASSWORD=your_mysql_password
 
-### Chạy Local
+# JWT Configuration
+JWT_SECRET=your_super_secret_jwt_key_here
+JWT_EXPIRES_IN=7d
 
-1.  Chạy backend:
+# Email Configuration (optional)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your_email@gmail.com
+EMAIL_PASS=your_app_password
 
-    ```bash
-    cd backend
-    npm run dev
-    ```
+# Upload Configuration
+UPLOAD_PATH=./uploads
+MAX_FILE_SIZE=5MB
+```
 
-2.  Chạy frontend:
+### 🌐 Biến môi trường Frontend
 
-    ```bash
-    cd frontend
-    npm run dev
-    ```
+Tạo file `.env.local` trong thư mục `frontend`:
 
-    Truy cập ứng dụng frontend tại `http://localhost:3000`.
+```bash
+# API Configuration
+NEXT_PUBLIC_API_URL=http://localhost:8080/api
+NEXT_PUBLIC_UPLOAD_URL=http://localhost:8080/uploads
 
-### Chạy Docker
+# App Configuration
+NEXT_PUBLIC_APP_NAME="Website Đăng Ký Khám Bệnh"
+NEXT_PUBLIC_APP_VERSION=1.0.0
+```
 
-1.  Chạy lệnh sau trong thư mục gốc của dự án:
+### 🗄️ Cấu hình Database
 
-    ```bash
-    docker-compose up --build
-    ```
+1. **Tạo database MySQL:**
+   ```sql
+   CREATE DATABASE cnpm_hospital_booking CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+   ```
 
-    Lệnh này sẽ build các Docker images và khởi động các containers cho frontend, backend và cơ sở dữ liệu.
+2. **Import dữ liệu mẫu:**
+   ```bash
+   cd backend
+   npm run migrate  # Chạy migrations
+   npm run seed     # Import dữ liệu mẫu
+   ```
 
-2.  Truy cập ứng dụng:
+## 🚀 Chạy Ứng Dụng
 
-    *   Frontend: Truy cập `http://localhost:3000`.
-    *   Backend: Truy cập `http://localhost:8080` để kiểm tra các API.
+### 💻 Development Mode
 
-## Cấu trúc thư mục
-<pre   },
-      "production": {
-        // ...
-      }
-    }
-    ```
+**Cách 1: Chạy đồng thời Frontend + Backend**
+```bash
+npm run dev
+```
 
-## Chạy Ứng Dụng
+**Cách 2: Chạy riêng từng service**
+```bash
+# Terminal 1 - Backend
+npm run dev:backend
 
-### Chạy Local
+# Terminal 2 - Frontend
+npm run dev:frontend
+```
 
-1.  Chạy backend:
+**Truy cập ứng dụng:**
+- 🌐 **Frontend**: http://localhost:3000
+- 🔧 **Backend API**: http://localhost:8080
+- 📊 **API Documentation**: http://localhost:8080/api-docs
 
-    ```bash
-    cd backend
-    npm run dev
-    ```
+### 🐳 Docker Mode
 
-2.  Chạy frontend:
+**Chạy toàn bộ stack:**
+```bash
+npm run docker:up
+```
 
-    ```bash
-    cd frontend
-    npm run dev
-    ```
+**Các lệnh Docker hữu ích:**
+```bash
+npm run docker:down    # Dừng containers
+npm run docker:logs    # Xem logs
+npm run docker:clean   # Dọn dẹp containers và images
+```
 
-    Truy cập ứng dụng frontend tại `http://localhost:3000`.
+### 🧪 Testing Mode
 
-### Chạy Docker
+```bash
+npm run test           # Chạy tất cả tests
+npm run test:frontend  # Test frontend only
+npm run test:backend   # Test backend only
+```
 
-1.  Chạy lệnh sau trong thư mục gốc của dự án:
+## 📁 Cấu trúc thư mục
 
-    ```bash
-    docker-compose up --build
-    ```
-
-    Lệnh này sẽ build các Docker images và khởi động các containers cho frontend, backend và cơ sở dữ liệu.
-
-2.  Truy cập ứng dụng:
-
-    *   Frontend: Truy cập `http://localhost:3000`.
-    *   Backend: Truy cập `http://localhost:8080` để kiểm tra các API.
-
-## Cấu trúc thư mục
-<pre>
-your-repository/
-├── .git/
-├── .gitignore
-├── docker-compose.yml
-├── README.md
-├── frontend/
-│ ├── src/
-│ ├── public/
-│ ├── package.json
-│ ├── next.config.js
-│ └── Dockerfile
-└── backend/
-├── src/
-├── config/
-├── models/
-├── migrations/
-├── seeders/
-├── package.json
-├── server.js
-└── Dockerfile
-</pre>
+```
+CNPM_WebSiteDKKhamBenh/
+├── 📁 frontend/                 # Next.js Frontend
+│   ├── 📁 src/
+│   │   ├── 📁 app/              # App Router pages
+│   │   ├── 📁 components/       # React components
+│   │   ├── 📁 lib/              # Utilities & API calls
+│   │   └── 📁 hooks/            # Custom React hooks
+│   ├── 📁 public/               # Static assets
+│   ├── 📄 package.json
+│   ├── 📄 next.config.js
+│   └── 🐳 Dockerfile
+│
+├── 📁 backend/                  # Node.js Backend
+│   ├── 📁 src/
+│   │   ├── 📁 controllers/      # API controllers
+│   │   ├── 📁 models/           # Database models
+│   │   ├── 📁 routes/           # API routes
+│   │   ├── 📁 middleware/       # Express middleware
+│   │   └── 📁 lib/              # Utilities
+│   ├── 📁 migrations/           # Database migrations
+│   ├── 📁 seeders/              # Database seeders
+│   ├── 📁 uploads/              # File uploads
+│   ├── 📄 package.json
+│   └── 🐳 Dockerfile
+│
+├── 📁 scripts/                  # Build & deployment scripts
+├── 📁 .github/                  # GitHub Actions workflows
+├── 🐳 docker-compose.yml        # Docker configuration
+├── 📄 package.json              # Root package.json
+└── 📖 README.md                 # This file
+```
 ## Đóng góp
 
 Chúng tôi hoan nghênh mọi đóng góp cho dự án này. Vui lòng tạo một pull request với các thay đổi của bạn.
