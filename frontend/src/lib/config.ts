@@ -21,10 +21,10 @@ export const getApiUrl = () => {
     if (typeof window !== 'undefined') {
         // In production, use relative URL for same-origin requests
         if (nodeEnv === 'production') {
-            return '/api/';
+            return '/api';  // Remove trailing slash
         }
         // Development fallback
-        return 'http://localhost:8080/api/';
+        return 'http://localhost:8080/api';
     }
 
     // For server-side (SSR/API routes)
