@@ -208,36 +208,19 @@ export default function DoctorDetailPage() {
                 </div>
             )}
 
-            {/* Mô tả chi tiết */}
+            {/* Thông tin bổ sung */}
             {doctor && (
                 <div className="p-4 border rounded-lg shadow-sm bg-white">
-                    <h2 className="text-xl font-semibold mb-4">Thông tin chi tiết</h2>
+                    <h2 className="text-xl font-semibold mb-4">Giới thiệu</h2>
                     <div className="space-y-4">
-
-
-                        {/* Hiển thị mô tả HTML */}
-                        {doctor.doctorDetail?.descriptionHTML && (
+                        {doctor.doctorDetail?.descriptionMarkdown ? (
                             <div className="prose max-w-none">
-                                <h3 className="text-lg font-medium text-gray-800 mb-2">Giới thiệu</h3>
-                                <div
-                                    className="text-gray-600"
-                                    dangerouslySetInnerHTML={{ __html: doctor.doctorDetail.descriptionHTML }}
-                                />
-                            </div>
-                        )}
-
-                        {/* Hiển thị mô tả Markdown */}
-                        {doctor.doctorDetail?.descriptionMarkdown && (
-                            <div className="prose max-w-none">
-                                <h3 className="text-lg font-medium text-gray-800 mb-2">Thông tin bổ sung</h3>
-                                <div className="text-gray-600 whitespace-pre-wrap">
+                                <div className="text-gray-600 whitespace-pre-wrap leading-relaxed">
                                     {doctor.doctorDetail.descriptionMarkdown}
                                 </div>
                             </div>
-                        )}
-
-                        {(!doctor.doctorDetail || (!doctor.doctorDetail.descriptionHTML && !doctor.doctorDetail.descriptionMarkdown)) && (
-                            <p className="text-gray-500 italic">Chưa có thông tin chi tiết</p>
+                        ) : (
+                            <p className="text-gray-500 italic">Chưa có thông tin</p>
                         )}
                     </div>
                 </div>
