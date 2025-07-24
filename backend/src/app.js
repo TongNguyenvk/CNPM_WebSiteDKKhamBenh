@@ -15,7 +15,11 @@ const app = express();
 
 // Dynamic CORS configuration for different environments
 const getAllowedOrigins = () => {
-  const origins = ['http://localhost:3000']; // Local development
+  const origins = [
+    'http://localhost:3000',  // Local development
+    'https://a2t.io.vn',      // Production domain with SSL
+    'http://a2t.io.vn'        // Production domain without SSL (fallback)
+  ];
 
   // Add Docker/production origins
   if (process.env.NODE_ENV === 'production') {
