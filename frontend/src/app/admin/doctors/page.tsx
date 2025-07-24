@@ -21,10 +21,14 @@ interface Doctor {
         description?: string;
         image?: string;
     };
+    doctorDetail?: {
+        descriptionMarkdown?: string;
+        descriptionHTML?: string;
+    };
 }
 
 interface Specialty {
-    id: number;
+    id?: number;
     name: string;
 }
 
@@ -50,7 +54,8 @@ export default function DoctorsPage() {
         positionId: '',
         phoneNumber: '',
         address: '',
-        gender: true
+        gender: true,
+        description: ''
     });
 
     useEffect(() => {
@@ -86,7 +91,9 @@ export default function DoctorsPage() {
         try {
             await createDoctor({
                 ...formData,
-                specialtyId: Number(formData.specialtyId)
+                specialtyId: Number(formData.specialtyId),
+                descriptionMarkdown: formData.description,
+                descriptionHTML: formData.description
             });
             toast.success('Tạo bác sĩ thành công');
             setIsCreateModalOpen(false);
@@ -99,7 +106,8 @@ export default function DoctorsPage() {
                 positionId: '',
                 phoneNumber: '',
                 address: '',
-                gender: true
+                gender: true,
+                description: ''
             });
             loadDoctors();
         } catch (error) {
@@ -112,7 +120,9 @@ export default function DoctorsPage() {
         try {
             await updateDoctor(selectedDoctor.id, {
                 ...formData,
-                specialtyId: Number(formData.specialtyId)
+                specialtyId: Number(formData.specialtyId),
+                descriptionMarkdown: formData.description,
+                descriptionHTML: formData.description
             });
             toast.success('Cập nhật bác sĩ thành công');
             setIsEditModalOpen(false);
@@ -270,7 +280,7 @@ export default function DoctorsPage() {
                             >
                                 <option value="all">Tất cả chuyên khoa</option>
                                 {specialties.map(specialty => (
-                                    <option key={specialty.id} value={specialty.id.toString()}>
+                                    <option key={specialty.id || 0} value={specialty.id?.toString() || ''}>
                                         {specialty.name}
                                     </option>
                                 ))}
@@ -331,6 +341,7 @@ export default function DoctorsPage() {
                                 <th className="px-4 py-2 border text-left">Tên</th>
                                 <th className="px-4 py-2 border text-left">Chuyên khoa</th>
                                 <th className="px-4 py-2 border text-left">Số điện thoại</th>
+                                <th className="px-4 py-2 border text-left">Mô tả</th>
                                 <th className="px-4 py-2 border text-left">Thao tác</th>
                             </tr>
                         </thead>
@@ -343,6 +354,17 @@ export default function DoctorsPage() {
                                     <td className="px-4 py-2 border">{doctor.lastName}</td>
                                     <td className="px-4 py-2 border">{doctor.specialtyData?.name || 'Chưa cập nhật'}</td>
                                     <td className="px-4 py-2 border">{doctor.phoneNumber || 'Chưa cập nhật'}</td>
+                                    <td className="px-4 py-2 border">
+                                        {doctor.doctorDetail?.descriptionMarkdown ? (
+                                            <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                                                Có mô tả
+                                            </span>
+                                        ) : (
+                                            <span className="px-2 py-1 bg-gray-100 text-gray-600 rounded-full text-xs">
+                                                Chưa có
+                                            </span>
+                                        )}
+                                    </td>
                                     <td className="px-4 py-2 border">
                                         <div className="flex gap-2">
                                             <button
@@ -357,7 +379,8 @@ export default function DoctorsPage() {
                                                         positionId: doctor.positionId || '',
                                                         phoneNumber: doctor.phoneNumber || '',
                                                         address: doctor.address || '',
-                                                        gender: doctor.gender || true
+                                                        gender: doctor.gender || true,
+                                                        description: doctor.doctorDetail?.descriptionMarkdown || ''
                                                     });
                                                     setIsEditModalOpen(true);
                                                 }}
@@ -412,11 +435,10 @@ export default function DoctorsPage() {
                                         <button
                                             key={pageNum}
                                             onClick={() => setCurrentPage(pageNum)}
-                                            className={`px-3 py-2 text-sm rounded-lg transition-colors ${
-                                                currentPage === pageNum
-                                                    ? "bg-blue-600 text-white"
-                                                    : "text-neutral-600 hover:bg-neutral-100"
-                                            }`}
+                                            className={`px-3 py-2 text-sm rounded-lg transition-colors ${currentPage === pageNum
+                                                ? "bg-blue-600 text-white"
+                                                : "text-neutral-600 hover:bg-neutral-100"
+                                                }`}
                                         >
                                             {pageNum}
                                         </button>
@@ -438,91 +460,109 @@ export default function DoctorsPage() {
                 {/* Create Doctor Modal */}
                 {isCreateModalOpen && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                        <div className="bg-white p-6 rounded-xl w-96 shadow-2xl">
+                        <div className="bg-white p-8 rounded-xl w-full max-w-2xl shadow-2xl">
                             <h2 className="text-xl font-bold text-gray-800 mb-6">Thêm bác sĩ mới</h2>
                             <div className="space-y-6">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Email</label>
-                                    <input
-                                        type="email"
-                                        value={formData.email}
-                                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Email</label>
+                                        <input
+                                            type="email"
+                                            value={formData.email}
+                                            onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Mật khẩu</label>
+                                        <input
+                                            type="password"
+                                            value={formData.password}
+                                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Họ</label>
+                                        <input
+                                            type="text"
+                                            value={formData.firstName}
+                                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Tên</label>
+                                        <input
+                                            type="text"
+                                            value={formData.lastName}
+                                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Chuyên khoa</label>
+                                        <select
+                                            value={formData.specialtyId}
+                                            onChange={(e) => setFormData({ ...formData, specialtyId: e.target.value })}
+                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        >
+                                            <option value="">Chọn chuyên khoa</option>
+                                            {specialties.map((specialty) => (
+                                                <option key={specialty.id || 0} value={specialty.id || ''}>
+                                                    {specialty.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Vị trí</label>
+                                        <select
+                                            value={formData.positionId}
+                                            onChange={(e) => setFormData({ ...formData, positionId: e.target.value })}
+                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        >
+                                            <option value="">Chọn vị trí</option>
+                                            <option value="P0">Bác sĩ</option>
+                                            <option value="P1">Thạc sĩ</option>
+                                            <option value="P2">Tiến sĩ</option>
+                                            <option value="P3">Phó giáo sư</option>
+                                            <option value="P4">Giáo sư</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Số điện thoại</label>
+                                        <input
+                                            type="text"
+                                            value={formData.phoneNumber}
+                                            onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Địa chỉ</label>
+                                        <input
+                                            type="text"
+                                            value={formData.address}
+                                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        />
+                                    </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Mật khẩu</label>
-                                    <input
-                                        type="password"
-                                        value={formData.password}
-                                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                    <label className="block text-sm font-medium text-gray-700">Mô tả bác sĩ</label>
+                                    <textarea
+                                        value={formData.description}
+                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                        rows={4}
                                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Họ</label>
-                                    <input
-                                        type="text"
-                                        value={formData.firstName}
-                                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Tên</label>
-                                    <input
-                                        type="text"
-                                        value={formData.lastName}
-                                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Chuyên khoa</label>
-                                    <select
-                                        value={formData.specialtyId}
-                                        onChange={(e) => setFormData({ ...formData, specialtyId: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    >
-                                        <option value="">Chọn chuyên khoa</option>
-                                        {specialties.map((specialty) => (
-                                            <option key={specialty.id} value={specialty.id}>
-                                                {specialty.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Vị trí</label>
-                                    <select
-                                        value={formData.positionId}
-                                        onChange={(e) => setFormData({ ...formData, positionId: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    >
-                                        <option value="">Chọn vị trí</option>
-                                        <option value="P0">Bác sĩ</option>
-                                        <option value="P1">Thạc sĩ</option>
-                                        <option value="P2">Tiến sĩ</option>
-                                        <option value="P3">Phó giáo sư</option>
-                                        <option value="P4">Giáo sư</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Số điện thoại</label>
-                                    <input
-                                        type="text"
-                                        value={formData.phoneNumber}
-                                        onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Địa chỉ</label>
-                                    <input
-                                        type="text"
-                                        value={formData.address}
-                                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        placeholder="Nhập mô tả chi tiết về bác sĩ..."
                                     />
                                 </div>
                                 <div className="flex justify-end gap-4 mt-6">
@@ -547,7 +587,7 @@ export default function DoctorsPage() {
                 {/* Edit Doctor Modal */}
                 {isEditModalOpen && (
                     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                        <div className="bg-white p-8 rounded-xl w-full max-w-md shadow-2xl transform transition-all duration-300 ease-in-out hover:shadow-3xl">
+                        <div className="bg-white p-8 rounded-xl w-full max-w-2xl shadow-2xl transform transition-all duration-300 ease-in-out hover:shadow-3xl">
                             <h2 className="text-2xl font-bold text-gray-900 mb-6 border-b-2 border-blue-500 pb-2">Cập nhật thông tin bác sĩ</h2>
                             <div className="space-y-5">
                                 <div>
@@ -559,70 +599,86 @@ export default function DoctorsPage() {
                                         className="mt-1 block w-full rounded-md border-gray-300 bg-gray-100 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3"
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Họ</label>
-                                    <input
-                                        type="text"
-                                        value={formData.firstName}
-                                        onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3"
-                                    />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Họ</label>
+                                        <input
+                                            type="text"
+                                            value={formData.firstName}
+                                            onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Tên</label>
+                                        <input
+                                            type="text"
+                                            value={formData.lastName}
+                                            onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Chuyên khoa</label>
+                                        <select
+                                            value={formData.specialtyId}
+                                            onChange={(e) => setFormData({ ...formData, specialtyId: e.target.value })}
+                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3"
+                                        >
+                                            <option value="">Chọn chuyên khoa</option>
+                                            {specialties.map((specialty) => (
+                                                <option key={specialty.id || 0} value={specialty.id || ''}>
+                                                    {specialty.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Vị trí</label>
+                                        <select
+                                            value={formData.positionId}
+                                            onChange={(e) => setFormData({ ...formData, positionId: e.target.value })}
+                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3"
+                                        >
+                                            <option value="">Chọn vị trí</option>
+                                            <option value="P0">Bác sĩ</option>
+                                            <option value="P1">Thạc sĩ</option>
+                                            <option value="P2">Tiến sĩ</option>
+                                            <option value="P3">Phó giáo sư</option>
+                                            <option value="P4">Giáo sư</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Số điện thoại</label>
+                                        <input
+                                            type="text"
+                                            value={formData.phoneNumber}
+                                            onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700">Địa chỉ</label>
+                                        <input
+                                            type="text"
+                                            value={formData.address}
+                                            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                                            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3"
+                                        />
+                                    </div>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700">Tên</label>
-                                    <input
-                                        type="text"
-                                        value={formData.lastName}
-                                        onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                                    <label className="block text-sm font-medium text-gray-700">Mô tả bác sĩ</label>
+                                    <textarea
+                                        value={formData.description}
+                                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                        rows={4}
                                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Chuyên khoa</label>
-                                    <select
-                                        value={formData.specialtyId}
-                                        onChange={(e) => setFormData({ ...formData, specialtyId: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3"
-                                    >
-                                        <option value="">Chọn chuyên khoa</option>
-                                        {specialties.map((specialty) => (
-                                            <option key={specialty.id} value={specialty.id}>
-                                                {specialty.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Vị trí</label>
-                                    <select
-                                        value={formData.positionId}
-                                        onChange={(e) => setFormData({ ...formData, positionId: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3"
-                                    >
-                                        <option value="">Chọn vị trí</option>
-                                        <option value="P0">Bác sĩ</option>
-                                        <option value="P1">Thạc sĩ</option>
-                                        <option value="P2">Tiến sĩ</option>
-                                        <option value="P3">Phó giáo sư</option>
-                                        <option value="P4">Giáo sư</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Số điện thoại</label>
-                                    <input
-                                        type="text"
-                                        value={formData.phoneNumber}
-                                        onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700">Địa chỉ</label>
-                                    <input
-                                        type="text"
-                                        value={formData.address}
-                                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition duration-200 text-lg py-3"
+                                        placeholder="Nhập mô tả chi tiết về bác sĩ..."
                                     />
                                 </div>
                                 <div className="flex justify-end gap-4 mt-6">
