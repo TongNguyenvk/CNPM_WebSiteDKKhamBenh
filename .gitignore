@@ -12,6 +12,9 @@
 .env.production
 .env.docker
 
+frontend/.env.production
+backend/.env.production
+
 # Next.js build output
 .next
 out
