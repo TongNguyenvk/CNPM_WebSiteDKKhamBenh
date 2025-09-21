@@ -24,9 +24,7 @@ const getAllowedOrigins = () => {
   ];
 
   // Add Docker/production origins
-  if (process.env.NODE_ENV === 'production') {
-    origins.push('http://frontend:3000'); // Docker internal communication
-  }
+ 
 
   // Add any additional origins from environment variable
   if (process.env.ALLOWED_ORIGINS) {

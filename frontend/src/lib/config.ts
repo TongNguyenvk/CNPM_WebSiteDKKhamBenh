@@ -1,34 +1,35 @@
 // API Configuration
+const normalize = (url: string) => {
+    if (!url) return url;
+    return url.endsWith('/') ? url.slice(0, -1) : url;
+};
+
 export const getApiUrl = () => {
     const envApiUrl = process.env.NEXT_PUBLIC_API_URL;
     const nodeEnv = process.env.NODE_ENV;
+    const apiUrlSrv = process.env.API_URL;
 
-    // Debug logging
-    if (typeof window !== 'undefined') {
-        console.log('API Config Debug:', {
-            NEXT_PUBLIC_API_URL: envApiUrl,
-            NODE_ENV: nodeEnv,
-            isClient: true
-        });
-    }
+    // If explicitly provided, use it (normalize to no trailing slash)
+    if (envApiUrl) return normalize(envApiUrl);
 
-    // Always prioritize NEXT_PUBLIC_API_URL if set
-    if (envApiUrl) {
-        return envApiUrl;
-    }
+    const isBrowser = typeof window !== 'undefined';
 
-    // For client-side (browser)
-    if (typeof window !== 'undefined') {
-        // In production, use relative URL for same-origin requests
-        if (nodeEnv === 'production') {
-            return '/api';  // Remove trailing slash
+    if (isBrowser) {
+        // Detect "local docker" scenario: hostname = localhost or 127.* and production build used
+        const host = window.location.hostname;
+        const isLocalHostName = /^(localhost|127\.|0\.0\.0\.0)/.test(host);
+
+        if (nodeEnv === 'production' && !isLocalHostName) {
+            // Real production behind reverse proxy (nginx) -> relative path keeps same origin HTTPS
+            return '/api';
         }
-        // Development fallback
+        // Local development (docker or standalone) fallback
+        // Use explicit http to avoid accidental https on non‑TLS backend
         return 'http://localhost:8080/api';
     }
 
-    // For server-side (SSR/API routes)
-    return process.env.API_URL || 'http://backend:8080/api/';
+    // Server side (SSR) inside container: prefer API_URL then fallback to service name
+    return normalize(apiUrlSrv || 'http://backend:8080/api');
 };
 
 export const API_BASE_URL = getApiUrl();
