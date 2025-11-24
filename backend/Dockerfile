@@ -7,8 +7,12 @@ WORKDIR /app
 # Sao chép các file package.json và package-lock.json (hoặc yarn.lock)
 COPY package*.json ./
 
-# Cài đặt các dependencies
-RUN npm install
+# Cài đặt các dependencies với timeout và retry
+RUN npm config set fetch-timeout 600000 && \
+    npm config set fetch-retries 5 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm install --loglevel verbose
 
 # Sao chép toàn bộ source code của ứng dụng
 COPY . .
@@ -17,7 +21,7 @@ COPY . .
 EXPOSE 8080
 
 # Thiết lập biến môi trường
-ENV NODE_ENV production
+ENV NODE_ENV=production
 
 # Lệnh để chạy ứng dụng
 CMD ["npm", "start"]

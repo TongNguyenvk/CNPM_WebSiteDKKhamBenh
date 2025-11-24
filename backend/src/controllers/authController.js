@@ -13,37 +13,63 @@ const loginUser = async (req, res) => {
 
         // Kiểm tra đầu vào
         if (!email || !password) {
-            return res.status(400).json({ message: 'Vui lòng nhập email và mật khẩu' });
+            return res.status(400).json({ 
+                success: false,
+                message: 'Vui lòng nhập email và mật khẩu',
+                field: !email ? 'email' : 'password'
+            });
         }
 
+        // Tìm user theo email
         const user = await User.findOne({ where: { email } });
 
-        if (user && (await bcrypt.compare(password, user.password))) {
-            // Tạo JWT token
-            const payload = {
-                userId: user.id,
-                email: user.email,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                role: user.roleId
-            };
-            const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-            res.json({
-                message: 'Đăng nhập thành công',
-                token: token,
-                userId: user.id,
-                email: user.email,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                role: user.roleId
+        // Kiểm tra xem email có tồn tại không
+        if (!user) {
+            return res.status(401).json({ 
+                success: false,
+                message: 'Email không tồn tại trong hệ thống',
+                field: 'email'
             });
-        } else {
-            res.status(401).json({ message: 'Thông tin đăng nhập không hợp lệ' });
         }
+
+        // Kiểm tra mật khẩu
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        
+        if (!isPasswordValid) {
+            return res.status(401).json({ 
+                success: false,
+                message: 'Mật khẩu không chính xác',
+                field: 'password'
+            });
+        }
+
+        // Đăng nhập thành công - Tạo JWT token
+        const payload = {
+            userId: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            role: user.roleId
+        };
+        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+        res.json({
+            success: true,
+            message: 'Đăng nhập thành công',
+            token: token,
+            userId: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            role: user.roleId
+        });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Lỗi server', error: error.message });
+        res.status(500).json({ 
+            success: false,
+            message: 'Lỗi server', 
+            error: error.message 
+        });
     }
 };
 
