@@ -56,6 +56,8 @@ app.use(cors(corsOptions));
 app.use(express.json());
 // Cho phép truy cập ảnh tĩnh trong uploads/avatars
 app.use('/uploads/avatars', express.static(path.join(__dirname, '../uploads/avatars')));
+// Cho phép truy cập ảnh tĩnh trong uploads/specialties
+app.use('/uploads/specialties', express.static(path.join(__dirname, '../uploads/specialties')));
 
 // Swagger Documentation
 app.use('/api/docs', swagger.serve, swagger.setup);

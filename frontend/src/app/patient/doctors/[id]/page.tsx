@@ -1,25 +1,21 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
-import { getDoctorById, getDoctorSchedules } from "@/lib/api";
-import Link from "next/link";
-import { BackButton } from "@/components/ui/BackButton";
+import { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { getDoctorById, getDoctorSchedules } from '@/lib/api';
+import { format, addDays } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import { toast } from 'react-hot-toast';
+import { getAvatarUrl } from '@/lib/utils';
 
 interface Schedule {
     id: number;
     date: string;
-    doctorId: number;
     timeType: string;
     maxNumber: number;
     currentNumber?: number;
-    createdAt?: string;
-    updatedAt?: string;
-    timeTypeData?: {
-        valueVi: string;
-        valueEn?: string;
-    };
+    timeTypeData?: { valueVi: string };
 }
 
 interface Doctor {
@@ -30,275 +26,276 @@ interface Doctor {
     address?: string;
     phoneNumber?: string;
     gender?: boolean;
-    roleId?: string;
-    positionId?: string;
     image?: string;
-    specialtyId?: number;
-    createdAt?: string;
-    updatedAt?: string;
-    doctorDetail?: {
-        descriptionMarkdown?: string;
-        descriptionHTML?: string;
-    } | null;
-    Specialty?: {
-        id: number;
-        name: string;
-    };
-    specialtyData?: {
-        id: number;
-        name: string;
-        description?: string;
-    };
-    positionData?: {
-        keyMap: string;
-        valueVi: string;
-        valueEn: string;
-    };
+    Specialty?: { id: number; name: string };
+    specialtyData?: { id: number; name: string; description?: string };
+    positionData?: { keyMap: string; valueVi: string };
+    doctorDetail?: { descriptionMarkdown?: string; descriptionHTML?: string } | null;
 }
 
 export default function DoctorDetailPage() {
     const params = useParams<{ id: string }>();
     const router = useRouter();
-    const id = params?.id;
-
-    // State để lưu trạng thái đăng nhập
-    const [isLoggedIn, setIsLogin] = useState<boolean>(false);
-
     const [doctor, setDoctor] = useState<Doctor | null>(null);
     const [schedules, setSchedules] = useState<Schedule[]>([]);
-    const [dates, setDates] = useState<string[]>([]);
-    const [selectedDate, setSelectedDate] = useState<string>("");
-    const [isLoadingSchedules, setIsLoadingSchedules] = useState<boolean>(false);
-    const [bookingError, setBookingError] = useState<string | null>(null);
-    const [bookingSuccess, setBookingSuccess] = useState<string | null>(null);
-    const [generalError, setGeneralError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [loadingSchedules, setLoadingSchedules] = useState(false);
+    const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
 
-    // Effect để kiểm tra trạng thái đăng nhập
     useEffect(() => {
-        const token = localStorage.getItem("token");
-        if (token) setIsLogin(true);
-    }, []);
+        if (!params?.id) return;
+        fetchDoctor();
+    }, [params?.id]);
 
-    // Effect để tạo danh sách ngày và fetch dữ liệu ban đầu
     useEffect(() => {
-        setBookingError(null);
-        setBookingSuccess(null);
-        if (!id) {
-            setGeneralError("Không tìm thấy ID bác sĩ.");
-            return;
+        if (!params?.id || !selectedDate) return;
+        fetchSchedules();
+    }, [params?.id, selectedDate]);
+
+    const fetchDoctor = async () => {
+        try {
+            setLoading(true);
+            const data = await getDoctorById(Number(params?.id));
+            setDoctor(data);
+        } catch (error) {
+            toast.error('Lỗi khi tải thông tin bác sĩ');
+        } finally {
+            setLoading(false);
         }
-        const doctorId = Number(id);
-        if (isNaN(doctorId)) {
-            setGeneralError("ID bác sĩ không hợp lệ.");
-            return;
-        }
-
-        const today = new Date();
-        const nextDays = Array.from({ length: 4 }, (_, i) => {
-            const date = new Date(today);
-            date.setDate(today.getDate() + i);
-            return date.toISOString().split("T")[0];
-        });
-        setDates(nextDays);
-        const initialDate = nextDays[0];
-        setSelectedDate(initialDate);
-
-        const fetchInitialData = async () => {
-            setGeneralError(null);
-            try {
-                const response = await getDoctorById(Number(id));
-                console.log('Doctor API response:', response);
-                console.log('Specialty data:', response?.Specialty);
-                console.log('SpecialtyData:', response?.specialtyData);
-                setDoctor(response);
-            } catch (error: unknown) {
-                const err = error as Error;
-                setGeneralError(err.message || 'Lỗi khi tải thông tin bác sĩ');
-                setDoctor(null);
-                setSchedules([]);
-            }
-        };
-        fetchInitialData();
-    }, [id]);
-
-    // Effect để fetch lịch khi selectedDate hoặc id thay đổi
-    useEffect(() => {
-        setBookingError(null);
-        setBookingSuccess(null);
-        if (!id || !selectedDate) return;
-        const doctorId = Number(id);
-        if (isNaN(doctorId)) return;
-
-        const fetchSchedulesForDate = async () => {
-            setIsLoadingSchedules(true);
-            setGeneralError(null);
-            try {
-                const scheduleData = await getDoctorSchedules(doctorId, selectedDate);
-                setSchedules(scheduleData);
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            } catch (err: any) {
-                console.error(`Lỗi khi fetch lịch cho ngày ${selectedDate}:`, err);
-                setGeneralError(err.message || `Không thể tải lịch khám cho ngày ${selectedDate}.`);
-                setSchedules([]);
-            } finally {
-                setIsLoadingSchedules(false);
-            }
-        };
-        fetchSchedulesForDate();
-    }, [selectedDate, id]);
-
-    // Hàm xử lý đặt lịch
-    const handleBookingClick = async (scheduleItem: Schedule) => {
-        setBookingError(null);
-        setBookingSuccess(null);
-
-        if (!isLoggedIn) {
-            setBookingError("Vui lòng đăng nhập để đặt lịch.");
-            router.push(`/auth/login?redirect=/patient/doctors/${id}`);
-            return;
-        }
-
-        if (!doctor) {
-            setBookingError("Không tìm thấy thông tin bác sĩ.");
-            return;
-        }
-
-        router.push(`/patient/book_appointment?doctorId=${doctor.id}&scheduleId=${scheduleItem.id}&date=${scheduleItem.date}&timeType=${scheduleItem.timeType}`);
     };
 
-    return (
-        <div className="max-w-4xl mx-auto p-4 space-y-6">
-            <BackButton />
+    const fetchSchedules = async () => {
+        try {
+            setLoadingSchedules(true);
+            const data = await getDoctorSchedules(Number(params?.id), selectedDate);
+            setSchedules(data);
+        } catch (error) {
+            setSchedules([]);
+        } finally {
+            setLoadingSchedules(false);
+        }
+    };
 
-            {/* Thông tin bác sĩ */}
-            {doctor && (
-                <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 p-4 border rounded-lg shadow-sm bg-white">
-                    <div className="flex-shrink-0">
-                        <Image
-                            src={doctor.image ? `http://localhost:8080/images/${doctor.image}` : "/images/default-doctor.jpg"}
-                            alt={`${doctor.firstName} ${doctor.lastName}`}
-                            width={120}
-                            height={120}
-                            className="rounded-full object-cover border-2 border-gray-200"
-                            priority
-                        />
+    const handleBookAppointment = (schedule: Schedule) => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            toast.error('Vui lòng đăng nhập để đặt lịch');
+            router.push(`/auth/login?redirect=/patient/doctors/${params?.id}`);
+            return;
+        }
+        router.push(`/patient/book_appointment?doctorId=${doctor?.id}&scheduleId=${schedule.id}&date=${selectedDate}&timeType=${schedule.timeType}`);
+    };
+
+    const dateOptions = Array.from({ length: 7 }, (_, i) => {
+        const date = addDays(new Date(), i);
+        return {
+            value: format(date, 'yyyy-MM-dd'),
+            label: i === 0 ? 'Hôm nay' : i === 1 ? 'Ngày mai' : format(date, 'EEEE, dd/MM', { locale: vi })
+        };
+    });
+
+    if (loading) {
+        return (
+            <div className="h-full flex items-center justify-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+            </div>
+        );
+    }
+
+    if (!doctor) {
+        return (
+            <div className="h-full flex items-center justify-center">
+                <div className="text-center">
+                    <p className="text-gray-500 mb-4">Không tìm thấy thông tin bác sĩ</p>
+                    <button
+                        onClick={() => router.push('/patient/doctors')}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                        Quay lại
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    const specialtyName = doctor.specialtyData?.name || doctor.Specialty?.name || 'Chưa cập nhật';
+
+    return (
+        <div className="h-full flex flex-col">
+            {/* Header */}
+            <div className="px-6 py-4 border-b bg-white flex-shrink-0">
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => router.push('/patient/doctors')}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition"
+                    >
+                        <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <div>
+                        <h1 className="text-xl font-bold text-gray-900">Thông tin bác sĩ</h1>
+                        <p className="text-sm text-gray-500">Xem chi tiết và đặt lịch khám</p>
                     </div>
-                    <div className="flex-1">
-                        <h1 className="text-2xl font-bold text-blue-700">
-                            {doctor.firstName} {doctor.lastName}
-                        </h1>
-                        <div className="mt-2 space-y-2">
-                            <p className="text-gray-600">
-                                <span className="font-semibold">Chuyên khoa:</span> {doctor.specialtyData?.name || doctor.Specialty?.name || "Chưa cập nhật"}
-                            </p>
-                            <p className="text-gray-600">
-                                <span className="font-semibold">Vị trí:</span> {doctor.positionData?.valueVi || "Chưa cập nhật"}
-                            </p>
-                            <p className="text-gray-600">
-                                <span className="font-semibold">Địa chỉ:</span> {doctor.address || "Chưa cập nhật"}
-                            </p>
-                            <p className="text-gray-600">
-                                <span className="font-semibold">Số điện thoại:</span> {doctor.phoneNumber || "Chưa cập nhật"}
-                            </p>
-                            <p className="text-gray-600">
-                                <span className="font-semibold">Email:</span> {doctor.email || "Chưa cập nhật"}
-                            </p>
+                </div>
+            </div>
+
+            {/* Content */}
+            <div className="flex-1 overflow-auto p-6">
+                <div className="max-w-4xl mx-auto space-y-6">
+                    {/* Doctor Info Card */}
+                    <div className="bg-white rounded-xl border overflow-hidden">
+                        <div className="p-6">
+                            <div className="flex flex-col sm:flex-row items-start gap-6">
+                                <div className="w-32 h-32 bg-blue-100 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">
+                                    {doctor.image ? (
+                                        <Image
+                                            src={getAvatarUrl(doctor.image)}
+                                            alt=""
+                                            width={128}
+                                            height={128}
+                                            className="w-32 h-32 rounded-xl object-cover"
+                                            unoptimized
+                                        />
+                                    ) : (
+                                        <svg className="w-16 h-16 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                    )}
+                                </div>
+                                <div className="flex-1">
+                                    <h2 className="text-2xl font-bold text-gray-900">
+                                        BS. {doctor.firstName} {doctor.lastName}
+                                    </h2>
+                                    <p className="text-gray-600 mt-1">{doctor.positionData?.valueVi || 'Bác sĩ'}</p>
+                                    <span className="inline-block mt-2 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium">
+                                        {specialtyName}
+                                    </span>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Email</p>
+                                                <p className="font-medium text-gray-900">{doctor.email || 'Chưa cập nhật'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Điện thoại</p>
+                                                <p className="font-medium text-gray-900">{doctor.phoneNumber || 'Chưa cập nhật'}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3 sm:col-span-2">
+                                            <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+                                                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                </svg>
+                                            </div>
+                                            <div>
+                                                <p className="text-sm text-gray-500">Địa chỉ</p>
+                                                <p className="font-medium text-gray-900">{doctor.address || 'Chưa cập nhật'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Description */}
+                    {doctor.doctorDetail?.descriptionMarkdown && (
+                        <div className="bg-white rounded-xl border p-6">
+                            <h3 className="font-semibold text-gray-900 mb-4">Giới thiệu</h3>
+                            <div className="prose prose-sm max-w-none text-gray-600">
+                                <p className="whitespace-pre-wrap">{doctor.doctorDetail.descriptionMarkdown}</p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Schedule Booking */}
+                    <div className="bg-white rounded-xl border p-6">
+                        <h3 className="font-semibold text-gray-900 mb-4">Đặt lịch khám</h3>
+
+                        {/* Date Selection */}
+                        <div className="mb-6">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Chọn ngày khám</label>
+                            <div className="flex flex-wrap gap-2">
+                                {dateOptions.map(opt => (
+                                    <button
+                                        key={opt.value}
+                                        onClick={() => setSelectedDate(opt.value)}
+                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+                                            selectedDate === opt.value
+                                                ? 'bg-blue-600 text-white'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                        }`}
+                                    >
+                                        {opt.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Time Slots */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Chọn giờ khám</label>
+                            {loadingSchedules ? (
+                                <div className="flex items-center justify-center py-8">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                                </div>
+                            ) : schedules.length === 0 ? (
+                                <div className="text-center py-8 bg-gray-50 rounded-xl">
+                                    <svg className="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <p className="text-gray-500">Không có lịch khám trong ngày này</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                    {schedules.map(sch => {
+                                        const isFull = (sch.currentNumber || 0) >= sch.maxNumber;
+                                        return (
+                                            <button
+                                                key={sch.id}
+                                                onClick={() => !isFull && handleBookAppointment(sch)}
+                                                disabled={isFull}
+                                                className={`p-4 rounded-xl border text-left transition ${
+                                                    isFull
+                                                        ? 'bg-gray-100 border-gray-200 cursor-not-allowed opacity-60'
+                                                        : 'bg-white border-gray-200 hover:border-blue-500 hover:bg-blue-50'
+                                                }`}
+                                            >
+                                                <p className="font-medium text-gray-900">{sch.timeTypeData?.valueVi || sch.timeType}</p>
+                                                <div className="flex items-center justify-between mt-2">
+                                                    <span className={`text-sm ${isFull ? 'text-red-600' : 'text-green-600'}`}>
+                                                        {isFull ? 'Đã đầy' : `Còn ${sch.maxNumber - (sch.currentNumber || 0)} chỗ`}
+                                                    </span>
+                                                    {!isFull && (
+                                                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                        </svg>
+                                                    )}
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
-            )}
-
-            {/* Thông tin bổ sung */}
-            {doctor && (
-                <div className="p-4 border rounded-lg shadow-sm bg-white">
-                    <h2 className="text-xl font-semibold mb-4">Giới thiệu</h2>
-                    <div className="space-y-4">
-                        {doctor.doctorDetail?.descriptionMarkdown ? (
-                            <div className="prose max-w-none">
-                                <div className="text-gray-600 whitespace-pre-wrap leading-relaxed">
-                                    {doctor.doctorDetail.descriptionMarkdown}
-                                </div>
-                            </div>
-                        ) : (
-                            <p className="text-gray-500 italic">Chưa có thông tin</p>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {!doctor && !generalError && !isLoadingSchedules && (
-                <p className="text-center text-gray-500">Đang tải thông tin bác sĩ...</p>
-            )}
-
-            {/* Chọn ngày */}
-            <div className="p-4 border rounded-lg shadow-sm bg-white">
-                <label htmlFor="date-select" className="font-semibold block mb-2 text-gray-700">
-                    Chọn ngày khám:
-                </label>
-                <select
-                    id="date-select"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="w-full sm:w-auto border px-3 py-2 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                    disabled={isLoadingSchedules}
-                >
-                    {dates.map((date) => (
-                        <option key={date} value={date}>
-                            {new Date(date + 'T00:00:00').toLocaleDateString("vi-VN", {
-                                weekday: 'long',
-                                year: 'numeric',
-                                month: 'long',
-                                day: 'numeric'
-                            })}
-                        </option>
-                    ))}
-                </select>
-            </div>
-
-            {/* Hiển thị lỗi chung */}
-            {generalError && (
-                <div className="p-3 border border-red-300 bg-red-50 text-red-700 rounded-lg">
-                    <p><strong>Lỗi:</strong> {generalError}</p>
-                </div>
-            )}
-
-            {/* Hiển thị lỗi/thành công khi đặt lịch */}
-            {bookingError && (
-                <div className="mb-4 p-3 border border-red-300 bg-red-50 text-red-700 rounded-lg">
-                    <p><strong>Lỗi:</strong> {bookingError}</p>
-                </div>
-            )}
-
-            {bookingSuccess && (
-                <div className="mb-4 p-3 border border-green-300 bg-green-50 text-green-700 rounded-lg">
-                    <p><strong>Thành công:</strong> {bookingSuccess}</p>
-                </div>
-            )}
-
-            {/* Lịch khám */}
-            <div className="p-4 border rounded-lg shadow-sm bg-white">
-                <h2 className="text-xl font-semibold mb-4">Lịch khám</h2>
-                {isLoadingSchedules ? (
-                    <p className="text-center text-gray-500">Đang tải lịch khám...</p>
-                ) : schedules.length > 0 ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                        {schedules.map((schedule) => (
-                            <div
-                                key={schedule.id}
-                                className="p-4 border rounded-lg hover:shadow-md transition-shadow cursor-pointer"
-                                onClick={() => handleBookingClick(schedule)}
-                            >
-                                <p className="font-medium">{schedule.timeTypeData?.valueVi}</p>
-                                <p className="text-sm text-gray-600">
-                                    Số lượng: {schedule.currentNumber || 0}/{schedule.maxNumber}
-                                </p>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <p className="text-center text-gray-500">Không có lịch khám cho ngày này</p>
-                )}
             </div>
         </div>
     );
-} 
+}

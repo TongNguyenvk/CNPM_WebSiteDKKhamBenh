@@ -52,9 +52,22 @@ const registerUser = async (req, res) => {
 const getUser = async (req, res) => {
     try {
         const userId = req.params.id;
+        const db = require('../models');
 
         const user = await User.findByPk(userId, {
-            attributes: { exclude: ['password'] } // Không trả về password
+            attributes: { exclude: ['password'] }, // Không trả về password
+            include: [
+                {
+                    model: db.Specialty,
+                    as: 'specialtyData',
+                    attributes: ['id', 'name']
+                },
+                {
+                    model: db.Allcode,
+                    as: 'positionData',
+                    attributes: ['keyMap', 'valueVi', 'valueEn']
+                }
+            ]
         });
 
         if (!user) {
@@ -270,7 +283,7 @@ const registerAdmin = async (req, res) => {
             phoneNumber,
             address,
             roleId: "R3",
-            positionId: "P0", // Admin không có position
+            positionId: null, // Admin không có position
             image
         });
 
@@ -284,6 +297,14 @@ const registerAdmin = async (req, res) => {
         });
     } catch (error) {
         console.error(error);
+        // Handle Sequelize validation errors
+        if (error.name === 'SequelizeValidationError') {
+            const messages = error.errors.map(e => e.message);
+            return res.status(400).json({ message: messages.join(', ') });
+        }
+        if (error.name === 'SequelizeForeignKeyConstraintError') {
+            return res.status(400).json({ message: 'Dữ liệu không hợp lệ (foreign key constraint)' });
+        }
         res.status(500).json({ message: 'Lỗi server', error: error.message });
     }
 };

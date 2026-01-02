@@ -9,6 +9,7 @@ const getDoctorSchedules = async (req, res) => {
     try {
         const doctorId = Number(req.params.doctorId);
         const requestedDate = req.query.date;
+        const includeAll = req.query.includeAll === 'true'; // Cho phép lấy tất cả status
 
         if (isNaN(doctorId)) {
             return res.status(400).json({
@@ -48,13 +49,21 @@ const getDoctorSchedules = async (req, res) => {
 
         console.log(`Querying schedules for doctor ${doctorId} between ${startQueryDate} and ${endQueryDate}`);
 
+        // Điều kiện where
+        const whereCondition = {
+            doctorId,
+            date: {
+                [Op.between]: [startQueryDate, endQueryDate]
+            }
+        };
+
+        // Nếu không phải includeAll, chỉ lấy lịch đã approved (cho bệnh nhân xem)
+        if (!includeAll) {
+            whereCondition.status = 'approved';
+        }
+
         const schedules = await Schedule.findAll({
-            where: {
-                doctorId,
-                date: {
-                    [Op.between]: [startQueryDate, endQueryDate]
-                }
-            },
+            where: whereCondition,
             include: [
                 {
                     model: Allcode,
@@ -193,12 +202,19 @@ const createSchedule = async (req, res) => {
             });
         }
 
+        // Xác định status dựa trên role của người tạo
+        // Admin (R3) tạo -> approved ngay
+        // Bác sĩ (R2) tạo -> pending (chờ duyệt)
+        const isAdmin = req.user && req.user.roleId === 'R3';
+        const status = isAdmin ? 'approved' : 'pending';
+
         const newSchedule = await Schedule.create({
             doctorId,
             date,
             timeType,
             maxNumber: maxNumber || 1,
-            currentNumber: 0
+            currentNumber: 0,
+            status
         });
 
         // Include timeTypeData in response
@@ -208,9 +224,13 @@ const createSchedule = async (req, res) => {
             ]
         });
 
+        const message = isAdmin 
+            ? 'Tạo lịch khám thành công' 
+            : 'Đăng ký lịch khám thành công, đang chờ Admin duyệt';
+
         res.status(201).json({
             success: true,
-            message: 'Tạo lịch khám thành công',
+            message,
             data: scheduleWithTimeType
         });
     } catch (error) {
@@ -286,11 +306,140 @@ const getDoctorSchedule = async (req, res) => {
         return res.status(500).json({ message: "Lỗi server" });
     }
 };
+
+// Duyệt lịch khám (chỉ Admin)
+const approveSchedule = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const schedule = await Schedule.findByPk(id);
+        if (!schedule) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Không tìm thấy lịch khám' 
+            });
+        }
+
+        if (schedule.status === 'approved') {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Lịch khám này đã được duyệt trước đó' 
+            });
+        }
+
+        schedule.status = 'approved';
+        await schedule.save();
+
+        // Lấy lại schedule với đầy đủ thông tin
+        const updatedSchedule = await Schedule.findByPk(id, {
+            include: [
+                { model: Allcode, as: 'timeTypeData', attributes: ['valueVi', 'valueEn'] },
+                {
+                    model: User,
+                    as: 'doctorData',
+                    attributes: ['id', 'firstName', 'lastName', 'email'],
+                    include: [
+                        { model: Specialty, as: 'specialtyData', attributes: ['id', 'name'] }
+                    ]
+                }
+            ]
+        });
+
+        res.status(200).json({ 
+            success: true, 
+            message: 'Duyệt lịch khám thành công',
+            data: updatedSchedule 
+        });
+    } catch (error) {
+        console.error('Error approving schedule:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Lỗi khi duyệt lịch khám', 
+            error: error.message 
+        });
+    }
+};
+
+// Từ chối lịch khám (chỉ Admin)
+const rejectSchedule = async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        const schedule = await Schedule.findByPk(id);
+        if (!schedule) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'Không tìm thấy lịch khám' 
+            });
+        }
+
+        if (schedule.status === 'rejected') {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Lịch khám này đã bị từ chối trước đó' 
+            });
+        }
+
+        schedule.status = 'rejected';
+        await schedule.save();
+
+        res.status(200).json({ 
+            success: true, 
+            message: 'Đã từ chối lịch khám',
+            data: schedule 
+        });
+    } catch (error) {
+        console.error('Error rejecting schedule:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Lỗi khi từ chối lịch khám', 
+            error: error.message 
+        });
+    }
+};
+
+// Lấy danh sách lịch chờ duyệt (chỉ Admin)
+const getPendingSchedules = async (req, res) => {
+    try {
+        const schedules = await Schedule.findAll({
+            where: { status: 'pending' },
+            include: [
+                { model: Allcode, as: 'timeTypeData', attributes: ['valueVi', 'valueEn'] },
+                {
+                    model: User,
+                    as: 'doctorData',
+                    attributes: ['id', 'firstName', 'lastName', 'email', 'phoneNumber', 'image'],
+                    include: [
+                        { model: Specialty, as: 'specialtyData', attributes: ['id', 'name'] }
+                    ]
+                }
+            ],
+            order: [['createdAt', 'ASC']]
+        });
+
+        res.status(200).json({ 
+            success: true, 
+            data: schedules,
+            count: schedules.length
+        });
+    } catch (error) {
+        console.error('Error getting pending schedules:', error);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Lỗi khi lấy danh sách lịch chờ duyệt', 
+            error: error.message 
+        });
+    }
+};
+
 module.exports = {
     getDoctorSchedules,
     deleteSchedule,
     createSchedule,
     updateSchedule,
     getAllSchedules,
-    getScheduleById
+    getScheduleById,
+    approveSchedule,
+    rejectSchedule,
+    getPendingSchedules
 };

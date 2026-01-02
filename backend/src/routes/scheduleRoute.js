@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const scheduleController = require('../controllers/scheduleController');
-const protect = require('../middleware/authMiddleware'); // Nếu bạn muốn bảo vệ route này
+const { protect, authorizeRoles, checkScheduleOwnerOrAdmin } = require('../middleware/authMiddleware');
 
 /**
  * @swagger
@@ -80,7 +80,7 @@ router.get('/:id', scheduleController.getScheduleById);
  *       401:
  *         description: Không có quyền truy cập
  */
-router.post('/', scheduleController.createSchedule);
+router.post('/', protect, authorizeRoles('R2', 'R3'), checkScheduleOwnerOrAdmin, scheduleController.createSchedule);
 
 /**
  * @swagger
@@ -117,7 +117,7 @@ router.post('/', scheduleController.createSchedule);
  *       404:
  *         description: Không tìm thấy lịch khám
  */
-router.put('/:id', scheduleController.updateSchedule);
+router.put('/:id', protect, authorizeRoles('R2', 'R3'), checkScheduleOwnerOrAdmin, scheduleController.updateSchedule);
 
 /**
  * @swagger
@@ -142,7 +142,7 @@ router.put('/:id', scheduleController.updateSchedule);
  *       404:
  *         description: Không tìm thấy lịch khám
  */
-router.delete('/:id', scheduleController.deleteSchedule);
+router.delete('/:id', protect, authorizeRoles('R2', 'R3'), checkScheduleOwnerOrAdmin, scheduleController.deleteSchedule);
 
 /**
  * @swagger
@@ -170,5 +170,71 @@ router.delete('/:id', scheduleController.deleteSchedule);
  *         description: Không tìm thấy bác sĩ
  */
 router.get("/doctor/:doctorId", scheduleController.getDoctorSchedules);
+
+/**
+ * @swagger
+ * /api/schedules/pending:
+ *   get:
+ *     summary: Lấy danh sách lịch chờ duyệt (chỉ Admin)
+ *     tags: [Schedules]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Danh sách lịch chờ duyệt
+ *       401:
+ *         description: Không có quyền truy cập
+ */
+router.get("/pending/list", protect, authorizeRoles('R3'), scheduleController.getPendingSchedules);
+
+/**
+ * @swagger
+ * /api/schedules/{id}/approve:
+ *   put:
+ *     summary: Duyệt lịch khám (chỉ Admin)
+ *     tags: [Schedules]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID của lịch khám
+ *     responses:
+ *       200:
+ *         description: Duyệt thành công
+ *       401:
+ *         description: Không có quyền truy cập
+ *       404:
+ *         description: Không tìm thấy lịch khám
+ */
+router.put("/:id/approve", protect, authorizeRoles('R3'), scheduleController.approveSchedule);
+
+/**
+ * @swagger
+ * /api/schedules/{id}/reject:
+ *   put:
+ *     summary: Từ chối lịch khám (chỉ Admin)
+ *     tags: [Schedules]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID của lịch khám
+ *     responses:
+ *       200:
+ *         description: Từ chối thành công
+ *       401:
+ *         description: Không có quyền truy cập
+ *       404:
+ *         description: Không tìm thấy lịch khám
+ */
+router.put("/:id/reject", protect, authorizeRoles('R3'), scheduleController.rejectSchedule);
 
 module.exports = router;

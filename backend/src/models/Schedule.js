@@ -47,6 +47,12 @@ const Schedule = sequelize.define('Schedule', {
     type: DataTypes.INTEGER,
     allowNull: false,
     defaultValue: 0
+  },
+  status: {
+    type: DataTypes.ENUM('pending', 'approved', 'rejected'),
+    allowNull: false,
+    defaultValue: 'approved',
+    comment: 'Trạng thái duyệt: pending (chờ duyệt), approved (đã duyệt), rejected (từ chối)'
   }
 }, {
   tableName: 'Schedules',

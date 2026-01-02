@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createBooking, getDoctorById, getScheduleById } from "@/lib/api";
+import { getAvatarUrl } from "@/lib/utils";
 
 interface Schedule {
     id: number;
@@ -144,11 +145,12 @@ function BookAppointmentInner() {
                         <h2 className="text-xl font-semibold mb-4">Thông tin bác sĩ</h2>
                         <div className="flex items-center space-x-4">
                             <Image
-                                src={doctor.image ? `http://localhost:8080/images/${doctor.image}` : '/images/default-doctor.jpg'}
+                                src={getAvatarUrl(doctor.image)}
                                 alt={`${doctor.firstName} ${doctor.lastName}`}
                                 width={64}
                                 height={64}
                                 className="w-16 h-16 rounded-full object-cover"
+                                unoptimized
                             />
                             <div>
                                 <p className="font-medium">{doctor.firstName} {doctor.lastName}</p>

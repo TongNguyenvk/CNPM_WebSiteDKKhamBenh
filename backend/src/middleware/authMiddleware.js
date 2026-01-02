@@ -50,4 +50,54 @@ const authorizeRoles = (...roles) => {
   };
 };
 
-module.exports = { protect, authorizeRoles };
+// Middleware kiểm tra user chỉ được sửa thông tin của chính mình (hoặc admin)
+const checkOwnerOrAdmin = (req, res, next) => {
+  const requestedUserId = parseInt(req.params.id, 10);
+  const currentUserId = req.user.id;
+  const isAdmin = req.user.roleId === 'R3';
+
+  if (currentUserId !== requestedUserId && !isAdmin) {
+    return res.status(403).json({ message: 'Bạn chỉ có thể chỉnh sửa thông tin của chính mình' });
+  }
+  next();
+};
+
+// Middleware kiểm tra bác sĩ chỉ được quản lý schedule của chính mình (hoặc admin)
+const checkScheduleOwnerOrAdmin = async (req, res, next) => {
+  try {
+    const isAdmin = req.user.roleId === 'R3';
+    
+    // Admin có toàn quyền
+    if (isAdmin) {
+      return next();
+    }
+
+    // Với POST (tạo mới), kiểm tra doctorId trong body
+    if (req.method === 'POST') {
+      const { doctorId } = req.body;
+      if (parseInt(doctorId, 10) !== req.user.id) {
+        return res.status(403).json({ message: 'Bạn chỉ có thể tạo lịch cho chính mình' });
+      }
+      return next();
+    }
+
+    // Với PUT/DELETE, kiểm tra schedule có thuộc về bác sĩ này không
+    const { Schedule } = require('../models');
+    const scheduleId = req.params.id;
+    const schedule = await Schedule.findByPk(scheduleId);
+    
+    if (!schedule) {
+      return res.status(404).json({ message: 'Không tìm thấy lịch khám' });
+    }
+
+    if (schedule.doctorId !== req.user.id) {
+      return res.status(403).json({ message: 'Bạn chỉ có thể chỉnh sửa lịch của chính mình' });
+    }
+
+    next();
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server', error: error.message });
+  }
+};
+
+module.exports = { protect, authorizeRoles, checkOwnerOrAdmin, checkScheduleOwnerOrAdmin };

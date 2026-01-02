@@ -4,11 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { getPatientAppointments } from '@/lib/api';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Card, CardBody, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge, StatusBadge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { LoadingPage } from '@/components/ui/loading';
-import { cn, formatDate, formatTime } from '@/lib/utils';
+import { cn, formatDate, getAvatarUrl } from '@/lib/utils';
 
 interface Appointment {
     id: number;
@@ -29,21 +25,28 @@ interface Appointment {
         valueVi: string;
         valueEn: string;
     };
+    timeTypeData?: {
+        valueVi: string;
+    };
 }
+
+const statusConfig: Record<string, { label: string; color: string; bg: string }> = {
+    S1: { label: 'Chờ xác nhận', color: 'text-yellow-700', bg: 'bg-yellow-100' },
+    S2: { label: 'Đã xác nhận', color: 'text-blue-700', bg: 'bg-blue-100' },
+    S3: { label: 'Hoàn thành', color: 'text-green-700', bg: 'bg-green-100' },
+    S4: { label: 'Đã hủy', color: 'text-red-700', bg: 'bg-red-100' },
+};
 
 export default function PatientDashboard() {
     const { user, loading } = useAuth();
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [error, setError] = useState('');
+    const [isLoading, setIsLoading] = useState(true);
     const [stats, setStats] = useState({
         totalAppointments: 0,
         upcomingAppointments: 0,
         completedAppointments: 0,
         cancelledAppointments: 0,
-        thisMonthAppointments: 0,
-        lastAppointmentDate: null as string | null,
-        favoriteDoctor: null as string | null,
-        totalDoctorsVisited: 0
     });
 
     useEffect(() => {
@@ -55,369 +58,250 @@ export default function PatientDashboard() {
                 const data = await getPatientAppointments(user.userId);
                 setAppointments(data);
 
-                // Calculate statistics
                 const today = new Date();
-                const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-
-                const upcoming = data.filter(apt =>
+                const upcoming = data.filter((apt: Appointment) =>
                     new Date(apt.date) >= today && apt.statusId !== 'S3' && apt.statusId !== 'S4'
                 ).length;
-
-                const completed = data.filter(apt => apt.statusId === 'S3').length;
-                const cancelled = data.filter(apt => apt.statusId === 'S4').length;
-
-                const thisMonth = data.filter(apt =>
-                    new Date(apt.date) >= startOfMonth
-                ).length;
-
-                // Find last appointment
-                const sortedAppointments = data
-                    .filter(apt => apt.statusId === 'S3')
-                    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-                const lastAppointment = sortedAppointments[0];
-
-                // Find favorite doctor (most visited)
-                const doctorCounts = data.reduce((acc, apt) => {
-                    if (apt.doctorData) {
-                        const doctorName = `${apt.doctorData.firstName} ${apt.doctorData.lastName}`;
-                        acc[doctorName] = (acc[doctorName] || 0) + 1;
-                    }
-                    return acc;
-                }, {} as Record<string, number>);
-
-                const favoriteDoctor = Object.keys(doctorCounts).length > 0
-                    ? Object.keys(doctorCounts).reduce((a, b) => doctorCounts[a] > doctorCounts[b] ? a : b)
-                    : null;
-
-                const totalDoctors = Object.keys(doctorCounts).length;
+                const completed = data.filter((apt: Appointment) => apt.statusId === 'S3').length;
+                const cancelled = data.filter((apt: Appointment) => apt.statusId === 'S4').length;
 
                 setStats({
                     totalAppointments: data.length,
                     upcomingAppointments: upcoming,
                     completedAppointments: completed,
                     cancelledAppointments: cancelled,
-                    thisMonthAppointments: thisMonth,
-                    lastAppointmentDate: lastAppointment?.date || null,
-                    favoriteDoctor,
-                    totalDoctorsVisited: totalDoctors
                 });
             } catch (error: unknown) {
                 const err = error as Error;
                 setError(err.message || 'Lỗi khi tải lịch hẹn');
+            } finally {
+                setIsLoading(false);
             }
         };
 
         fetchAppointments();
     }, [user]);
 
-    if (loading) {
-        return <LoadingPage text="Đang tải dashboard..." />;
-    }
-
-    if (error) {
+    if (loading || isLoading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-neutral-50">
-                <Card className="max-w-md mx-4">
-                    <CardBody className="text-center py-8">
-                        <div className="w-16 h-16 bg-error-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg className="w-8 h-8 text-error-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                            </svg>
-                        </div>
-                        <h3 className="text-lg font-semibold text-neutral-900 mb-2">Có lỗi xảy ra</h3>
-                        <p className="text-neutral-600 mb-6">{error}</p>
-                        <Button onClick={() => window.location.reload()}>
-                            Thử lại
-                        </Button>
-                    </CardBody>
-                </Card>
+            <div className="h-full flex items-center justify-center bg-gray-50">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
             </div>
         );
     }
 
-    const upcomingAppointments = appointments.filter(apt =>
-        new Date(apt.date) >= new Date() && apt.statusId !== 'S3'
-    ).slice(0, 3);
-
-    const recentAppointments = appointments.slice(0, 5);
+    const upcomingAppointments = appointments
+        .filter(apt => new Date(apt.date) >= new Date() && apt.statusId !== 'S3' && apt.statusId !== 'S4')
+        .slice(0, 5);
 
     return (
-        <div className="min-h-screen bg-neutral-50">
-            <div className="container py-8">
+        <div className="h-full overflow-auto bg-gray-50">
+            <div className="p-6">
                 {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-neutral-900 mb-2">
-                        Chào mừng, {user?.firstName}! 👋
+                <div className="mb-6">
+                    <h1 className="text-2xl font-bold text-gray-900">
+                        Xin chào, {user?.firstName}! 👋
                     </h1>
-                    <p className="text-neutral-600">
-                        Quản lý lịch khám và theo dõi sức khỏe của bạn
-                    </p>
+                    <p className="text-gray-600 mt-1">Quản lý lịch khám và theo dõi sức khỏe của bạn</p>
                 </div>
 
-                {/* Quick Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                    <Card>
-                        <CardBody className="flex items-center space-x-4">
-                            <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center">
-                                <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {error && (
+                    <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+                        {error}
+                    </div>
+                )}
+
+                {/* Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div className="bg-white rounded-xl p-5 border shadow-sm">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                 </svg>
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-neutral-900">{stats.upcomingAppointments}</p>
-                                <p className="text-sm text-neutral-600">Lịch sắp tới</p>
+                                <p className="text-2xl font-bold text-gray-900">{stats.upcomingAppointments}</p>
+                                <p className="text-sm text-gray-600">Lịch sắp tới</p>
                             </div>
-                        </CardBody>
-                    </Card>
+                        </div>
+                    </div>
 
-                    <Card>
-                        <CardBody className="flex items-center space-x-4">
-                            <div className="w-12 h-12 bg-success-100 rounded-xl flex items-center justify-center">
-                                <svg className="w-6 h-6 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="bg-white rounded-xl p-5 border shadow-sm">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                             </div>
                             <div>
-                                <p className="text-2xl font-bold text-neutral-900">{stats.completedAppointments}</p>
-                                <p className="text-sm text-neutral-600">Đã hoàn thành</p>
+                                <p className="text-2xl font-bold text-gray-900">{stats.completedAppointments}</p>
+                                <p className="text-sm text-gray-600">Đã hoàn thành</p>
                             </div>
-                        </CardBody>
-                    </Card>
+                        </div>
+                    </div>
 
-                    <Card>
-                        <CardBody className="flex items-center space-x-4">
-                            <div className="w-12 h-12 bg-accent-100 rounded-xl flex items-center justify-center">
-                                <svg className="w-6 h-6 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold text-neutral-900">{stats.totalAppointments}</p>
-                                <p className="text-sm text-neutral-600">Tổng lịch khám</p>
-                            </div>
-                        </CardBody>
-                    </Card>
-                </div>
-
-                {/* Additional Stats Row */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                    <Card className="hover:shadow-lg transition-shadow">
-                        <CardBody className="text-center">
-                            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                </svg>
-                            </div>
-                            <p className="text-lg font-semibold text-neutral-900">{stats.thisMonthAppointments}</p>
-                            <p className="text-xs text-neutral-600">Lịch tháng này</p>
-                        </CardBody>
-                    </Card>
-
-                    <Card className="hover:shadow-lg transition-shadow">
-                        <CardBody className="text-center">
-                            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                                <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div className="bg-white rounded-xl p-5 border shadow-sm">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center">
+                                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                             </div>
-                            <p className="text-lg font-semibold text-neutral-900">{stats.cancelledAppointments}</p>
-                            <p className="text-xs text-neutral-600">Đã hủy</p>
-                        </CardBody>
-                    </Card>
+                            <div>
+                                <p className="text-2xl font-bold text-gray-900">{stats.cancelledAppointments}</p>
+                                <p className="text-sm text-gray-600">Đã hủy</p>
+                            </div>
+                        </div>
+                    </div>
 
-                    <Card className="hover:shadow-lg transition-shadow">
-                        <CardBody className="text-center">
-                            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                    <div className="bg-white rounded-xl p-5 border shadow-sm">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p className="text-2xl font-bold text-gray-900">{stats.totalAppointments}</p>
+                                <p className="text-sm text-gray-600">Tổng lịch khám</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Quick Actions */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <Link href="/patient/specialties" className="bg-white rounded-xl p-5 border shadow-sm hover:shadow-md transition-shadow group">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
+                                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p className="font-medium text-gray-900">Chuyên khoa</p>
+                                <p className="text-sm text-gray-500">Xem danh sách</p>
+                            </div>
+                        </div>
+                    </Link>
+
+                    <Link href="/patient/doctors" className="bg-white rounded-xl p-5 border shadow-sm hover:shadow-md transition-shadow group">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200 transition-colors">
                                 <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
                             </div>
-                            <p className="text-lg font-semibold text-neutral-900">{stats.totalDoctorsVisited}</p>
-                            <p className="text-xs text-neutral-600">Bác sĩ đã khám</p>
-                        </CardBody>
-                    </Card>
+                            <div>
+                                <p className="font-medium text-gray-900">Bác sĩ</p>
+                                <p className="text-sm text-gray-500">Tìm bác sĩ</p>
+                            </div>
+                        </div>
+                    </Link>
 
-                    <Card className="hover:shadow-lg transition-shadow">
-                        <CardBody className="text-center">
-                            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <Link href="/patient/book_appointment" className="bg-white rounded-xl p-5 border shadow-sm hover:shadow-md transition-shadow group">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center group-hover:bg-orange-200 transition-colors">
+                                <svg className="w-5 h-5 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                                 </svg>
                             </div>
-                            <p className="text-lg font-semibold text-neutral-900">
-                                {stats.lastAppointmentDate
-                                    ? new Date(stats.lastAppointmentDate).toLocaleDateString('vi-VN')
-                                    : 'Chưa có'
-                                }
-                            </p>
-                            <p className="text-xs text-neutral-600">Lần khám cuối</p>
-                        </CardBody>
-                    </Card>
-                </div>
-
-                {/* Quick Actions */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                    <Link href="/patient/specialties">
-                        <Card hover className="h-full">
-                            <CardBody className="text-center py-8">
-                                <div className="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                    <svg className="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                    </svg>
-                                </div>
-                                <CardTitle as="h3" className="text-lg mb-2">Chuyên Khoa</CardTitle>
-                                <CardDescription>Xem danh sách các chuyên khoa</CardDescription>
-                            </CardBody>
-                        </Card>
+                            <div>
+                                <p className="font-medium text-gray-900">Đặt lịch</p>
+                                <p className="text-sm text-gray-500">Đặt lịch khám</p>
+                            </div>
+                        </div>
                     </Link>
 
-                    <Link href="/patient/appointments">
-                        <Card hover className="h-full">
-                            <CardBody className="text-center py-8">
-                                <div className="w-16 h-16 bg-success-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                    <svg className="w-8 h-8 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                                    </svg>
-                                </div>
-                                <CardTitle as="h3" className="text-lg mb-2">Lịch Đã Đặt</CardTitle>
-                                <CardDescription>Quản lý các lịch khám của bạn</CardDescription>
-                            </CardBody>
-                        </Card>
-                    </Link>
-
-                    <Link href="/patient/doctors">
-                        <Card hover className="h-full">
-                            <CardBody className="text-center py-8">
-                                <div className="w-16 h-16 bg-accent-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                    <svg className="w-8 h-8 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                </div>
-                                <CardTitle as="h3" className="text-lg mb-2">Bác Sĩ</CardTitle>
-                                <CardDescription>Tìm kiếm bác sĩ phù hợp</CardDescription>
-                            </CardBody>
-                        </Card>
-                    </Link>
-
-                    <Link href="/patient/profile">
-                        <Card hover className="h-full">
-                            <CardBody className="text-center py-8">
-                                <div className="w-16 h-16 bg-secondary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                                    <svg className="w-8 h-8 text-secondary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                </div>
-                                <CardTitle as="h3" className="text-lg mb-2">Hồ Sơ</CardTitle>
-                                <CardDescription>Cập nhật thông tin cá nhân</CardDescription>
-                            </CardBody>
-                        </Card>
+                    <Link href="/patient/profile" className="bg-white rounded-xl p-5 border shadow-sm hover:shadow-md transition-shadow group">
+                        <div className="flex items-center gap-4">
+                            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
+                                <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p className="font-medium text-gray-900">Hồ sơ</p>
+                                <p className="text-sm text-gray-500">Thông tin cá nhân</p>
+                            </div>
+                        </div>
                     </Link>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Upcoming Appointments */}
-                    <Card>
-                        <CardHeader>
-                            <div className="flex items-center justify-between">
-                                <CardTitle>Lịch Khám Sắp Tới</CardTitle>
-                                <Link href="/patient/appointments">
-                                    <Button variant="ghost" size="sm">
-                                        Xem tất cả
-                                    </Button>
+                {/* Upcoming Appointments */}
+                <div className="bg-white rounded-xl border shadow-sm">
+                    <div className="px-5 py-4 border-b flex items-center justify-between">
+                        <h2 className="font-semibold text-gray-900">Lịch khám sắp tới</h2>
+                        <Link href="/patient/appointments" className="text-sm text-blue-600 hover:text-blue-700">
+                            Xem tất cả →
+                        </Link>
+                    </div>
+                    <div className="p-5">
+                        {upcomingAppointments.length === 0 ? (
+                            <div className="text-center py-8">
+                                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                </div>
+                                <p className="text-gray-600 mb-4">Chưa có lịch khám sắp tới</p>
+                                <Link
+                                    href="/patient/book_appointment"
+                                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    </svg>
+                                    Đặt lịch khám
                                 </Link>
                             </div>
-                        </CardHeader>
-                        <CardBody>
-                            {upcomingAppointments.length > 0 ? (
-                                <div className="space-y-4">
-                                    {upcomingAppointments.map((appointment) => (
-                                        <div key={appointment.id} className="flex items-center space-x-4 p-4 bg-neutral-50 rounded-xl">
-                                            <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
-                                                <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                </svg>
-                                            </div>
-                                            <div className="flex-1">
-                                                <p className="font-medium text-neutral-900">
-                                                    BS. {appointment.doctorData?.firstName} {appointment.doctorData?.lastName}
-                                                </p>
-                                                <p className="text-sm text-neutral-600">
-                                                    {appointment.doctorData?.Specialty?.name || 'Chưa có thông tin'}
-                                                </p>
-                                                <div className="flex items-center space-x-4 mt-1">
-                                                    <span className="text-sm text-neutral-500">
-                                                        {formatDate(appointment.date)}
-                                                    </span>
-                                                    <StatusBadge status={appointment.statusId} size="sm" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="text-center py-8">
-                                    <div className="w-16 h-16 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <svg className="w-8 h-8 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                    </div>
-                                    <p className="text-neutral-600 mb-4">Chưa có lịch khám sắp tới</p>
-                                    <Link href="/patient/specialties">
-                                        <Button size="sm">Đặt lịch khám</Button>
-                                    </Link>
-                                </div>
-                            )}
-                        </CardBody>
-                    </Card>
-
-                    {/* Recent Appointments */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Lịch Sử Khám Bệnh</CardTitle>
-                        </CardHeader>
-                        <CardBody>
-                            {recentAppointments.length > 0 ? (
-                                <div className="space-y-4">
-                                    {recentAppointments.map((appointment) => (
-                                        <div key={appointment.id} className="flex items-center justify-between p-4 border border-neutral-200 rounded-xl">
-                                            <div className="flex items-center space-x-3">
-                                                {appointment.doctorData?.image ? (
+                        ) : (
+                            <div className="space-y-3">
+                                {upcomingAppointments.map((apt) => {
+                                    const status = statusConfig[apt.statusId] || statusConfig.S1;
+                                    return (
+                                        <div key={apt.id} className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                                                {apt.doctorData?.image ? (
                                                     <Image
-                                                        src={appointment.doctorData.image}
-                                                        alt={`${appointment.doctorData?.firstName} ${appointment.doctorData?.lastName}`}
-                                                        width={40}
-                                                        height={40}
-                                                        className="w-10 h-10 rounded-full object-cover"
+                                                        src={getAvatarUrl(apt.doctorData?.image)}
+                                                        alt=""
+                                                        width={48}
+                                                        height={48}
+                                                        className="w-12 h-12 rounded-full object-cover"
+                                                        unoptimized
                                                     />
                                                 ) : (
-                                                    <div className="w-10 h-10 bg-neutral-200 rounded-full flex items-center justify-center">
-                                                        <svg className="w-5 h-5 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                                        </svg>
-                                                    </div>
+                                                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                    </svg>
                                                 )}
-                                                <div>
-                                                    <p className="font-medium text-neutral-900 text-sm">
-                                                        BS. {appointment.doctorData?.firstName} {appointment.doctorData?.lastName}
-                                                    </p>
-                                                    <p className="text-xs text-neutral-500">
-                                                        {formatDate(appointment.date)}
-                                                    </p>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-medium text-gray-900">
+                                                    BS. {apt.doctorData?.firstName} {apt.doctorData?.lastName}
+                                                </p>
+                                                <p className="text-sm text-gray-500">
+                                                    {apt.doctorData?.Specialty?.name || 'Chưa có thông tin'}
+                                                </p>
+                                                <div className="flex items-center gap-3 mt-1 text-sm text-gray-500">
+                                                    <span>{formatDate(apt.date)}</span>
+                                                    <span>•</span>
+                                                    <span>{apt.timeTypeData?.valueVi || apt.timeType}</span>
                                                 </div>
                                             </div>
-                                            <StatusBadge status={appointment.statusId} size="sm" />
+                                            <span className={cn('px-2.5 py-1 rounded-full text-xs font-medium', status.bg, status.color)}>
+                                                {status.label}
+                                            </span>
                                         </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="text-center py-8">
-                                    <p className="text-neutral-600">Chưa có lịch sử khám bệnh</p>
-                                </div>
-                            )}
-                        </CardBody>
-                    </Card>
+                                    );
+                                })}
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
     );
-} 
+}

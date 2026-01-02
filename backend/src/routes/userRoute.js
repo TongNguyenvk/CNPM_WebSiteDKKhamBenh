@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const userController = require('../controllers/userController');
-const { protect, authorizeRoles } = require('../middleware/authMiddleware'); // Import đúng các middleware
+const { protect, authorizeRoles, checkOwnerOrAdmin } = require('../middleware/authMiddleware'); // Import đúng các middleware
 const multer = require('multer');
 const path = require('path');
 
@@ -299,7 +299,7 @@ router.get('/:id', protect, userController.getUser);
  *       404:
  *         description: Không tìm thấy người dùng
  */
-router.put('/:id', protect, userController.updateUser);
+router.put('/:id', protect, checkOwnerOrAdmin, userController.updateUser);
 
 /**
  * @swagger
@@ -324,7 +324,7 @@ router.put('/:id', protect, userController.updateUser);
  *       404:
  *         description: Không tìm thấy người dùng
  */
-router.delete('/:id', protect, userController.deleteUser);
+router.delete('/:id', protect, authorizeRoles('R3'), userController.deleteUser);
 
 // Upload profile image
 router.post('/profile/image', protect, upload.single('image'), userController.uploadProfileImage);

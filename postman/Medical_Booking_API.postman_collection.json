@@ -1,0 +1,244 @@
+{
+"info": {
+"_postman_id": "medical-booking-api",
+"name": "Medical Booking API",
+"description": "API Collection for Medical Booking System",
+"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+},
+"variable": [
+{"key": "baseUrl", "value": "http://localhost:8080/api"},
+{"key": "token", "value": ""},
+{"key": "userId", "value": ""},
+{"key": "doctorId", "value": ""},
+{"key": "patientId", "value": ""},
+{"key": "specialtyId", "value": ""},
+{"key": "scheduleId", "value": ""},
+{"key": "bookingId", "value": ""}
+],
+"item": [
+{
+"name": "1. Authentication",
+"item": [
+{
+"name": "Login - Admin",
+"event": [{"listen": "test", "script": {"exec": ["if(pm.response.code===200){var d=pm.response.json();pm.collectionVariables.set('token',d.token);pm.collectionVariables.set('userId',d.userId);}"], "type": "text/javascript"}}],
+"request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"email\":\"admin@example.com\",\"password\":\"123456\"}"}, "url": "{{baseUrl}}/auth/login"}
+},
+{
+"name": "Login - Doctor",
+"event": [{"listen": "test", "script": {"exec": ["if(pm.response.code===200){var d=pm.response.json();pm.collectionVariables.set('token',d.token);pm.collectionVariables.set('userId',d.userId);pm.collectionVariables.set('doctorId',d.userId);}"], "type": "text/javascript"}}],
+"request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"email\":\"doctor16@example.com\",\"password\":\"123456\"}"}, "url": "{{baseUrl}}/auth/login"}
+},
+{
+"name": "Login - Patient",
+"event": [{"listen": "test", "script": {"exec": ["if(pm.response.code===200){var d=pm.response.json();pm.collectionVariables.set('token',d.token);pm.collectionVariables.set('userId',d.userId);pm.collectionVariables.set('patientId',d.userId);}"], "type": "text/javascript"}}],
+"request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"email\":\"patient@example.com\",\"password\":\"123456\"}"}, "url": "{{baseUrl}}/auth/login"}
+},
+{
+"name": "Get Current User",
+"request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/auth/me"}
+}
+]
+},
+{
+"name": "2. Users",
+"item": [
+{
+"name": "Register Patient",
+"request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"}], "body": {"mode": "raw", "raw": "{\"email\":\"newpatient@example.com\",\"password\":\"123456\",\"firstName\":\"Nguyen\",\"lastName\":\"Van A\",\"phoneNumber\":\"0901234567\",\"address\":\"123 ABC Street\",\"gender\":true}"}, "url": "{{baseUrl}}/users/register-patient"}
+},
+{
+"name": "Register Doctor (Admin)",
+"request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"},{"key": "Authorization", "value": "Bearer {{token}}"}], "body": {"mode": "raw", "raw": "{\"email\":\"newdoctor@example.com\",\"password\":\"123456\",\"firstName\":\"Tran\",\"lastName\":\"Van B\",\"phoneNumber\":\"0909876543\",\"address\":\"456 XYZ Street\",\"gender\":true,\"specialtyId\":1,\"positionId\":\"P1\"}"}, "url": "{{baseUrl}}/users/register-doctor"}
+},
+{
+"name": "Register Admin (Admin)",
+"request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"},{"key": "Authorization", "value": "Bearer {{token}}"}], "body": {"mode": "raw", "raw": "{\"email\":\"newadmin@example.com\",\"password\":\"123456\",\"firstName\":\"Le\",\"lastName\":\"Van C\",\"phoneNumber\":\"0905555555\",\"address\":\"789 DEF Street\",\"gender\":false}"}, "url": "{{baseUrl}}/users/register-admin"}
+},
+{
+"name": "Get All Users By Role (Admin)",
+"request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/users/all"}
+},
+{
+"name": "Get User By ID",
+"request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/users/{{userId}}"}
+},
+{
+"name": "Update User",
+"request": {"method": "PUT", "header": [{"key": "Content-Type", "value": "application/json"},{"key": "Authorization", "value": "Bearer {{token}}"}], "body": {"mode": "raw", "raw": "{\"firstName\":\"Updated\",\"lastName\":\"Name\",\"phoneNumber\":\"0901111111\",\"address\":\"New Address\"}"}, "url": "{{baseUrl}}/users/{{userId}}"}
+},
+{
+"name": "Delete User (Admin)",
+"request": {"method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/users/{{userId}}"}
+},
+{
+"name": "Upload Profile Image",
+"request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "body": {"mode": "formdata", "formdata": [{"key": "image", "type": "file", "src": ""}]}, "url": "{{baseUrl}}/users/profile/image"}
+}
+]
+},
+{
+"name": "3. Doctors",
+"item": [
+{
+"name": "Get All Doctors",
+"event": [{"listen": "test", "script": {"exec": ["if(pm.response.code===200){var d=pm.response.json();if(d.length>0)pm.collectionVariables.set('doctorId',d[0].id);}"], "type": "text/javascript"}}],
+"request": {"method": "GET", "url": "{{baseUrl}}/doctor"}
+},
+{
+"name": "Get Doctor By ID",
+"request": {"method": "GET", "url": "{{baseUrl}}/doctor/{{doctorId}}"}
+},
+{
+"name": "Get Doctors By Specialty",
+"request": {"method": "GET", "url": "{{baseUrl}}/doctor/specialty/{{specialtyId}}"}
+},
+{
+"name": "Create Doctor",
+"request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"},{"key": "Authorization", "value": "Bearer {{token}}"}], "body": {"mode": "raw", "raw": "{\"userId\":1,\"specialtyId\":1,\"description\":\"Doctor description\"}"}, "url": "{{baseUrl}}/doctor"}
+},
+{
+"name": "Update Doctor",
+"request": {"method": "PUT", "header": [{"key": "Content-Type", "value": "application/json"},{"key": "Authorization", "value": "Bearer {{token}}"}], "body": {"mode": "raw", "raw": "{\"specialtyId\":2,\"description\":\"Updated description\"}"}, "url": "{{baseUrl}}/doctor/{{doctorId}}"}
+},
+{
+"name": "Delete Doctor",
+"request": {"method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/doctor/{{doctorId}}"}
+}
+]
+},
+{
+"name": "4. Specialties",
+"item": [
+{
+"name": "Get All Specialties",
+"event": [{"listen": "test", "script": {"exec": ["if(pm.response.code===200){var d=pm.response.json();if(d.length>0)pm.collectionVariables.set('specialtyId',d[0].id);}"], "type": "text/javascript"}}],
+"request": {"method": "GET", "url": "{{baseUrl}}/specialties"}
+},
+{
+"name": "Get Specialty By ID",
+"request": {"method": "GET", "url": "{{baseUrl}}/specialties/{{specialtyId}}"}
+},
+{
+"name": "Create Specialty (Admin)",
+"event": [{"listen": "test", "script": {"exec": ["if(pm.response.code===201){var d=pm.response.json();pm.collectionVariables.set('specialtyId',d.specialty.id);}"], "type": "text/javascript"}}],
+"request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"},{"key": "Authorization", "value": "Bearer {{token}}"}], "body": {"mode": "raw", "raw": "{\"name\":\"New Specialty\",\"description\":\"Specialty description\"}"}, "url": "{{baseUrl}}/specialties"}
+},
+{
+"name": "Update Specialty (Admin)",
+"request": {"method": "PUT", "header": [{"key": "Content-Type", "value": "application/json"},{"key": "Authorization", "value": "Bearer {{token}}"}], "body": {"mode": "raw", "raw": "{\"name\":\"Updated Specialty\",\"description\":\"Updated description\"}"}, "url": "{{baseUrl}}/specialties/{{specialtyId}}"}
+},
+{
+"name": "Delete Specialty (Admin)",
+"request": {"method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/specialties/{{specialtyId}}"}
+},
+{
+"name": "Upload Specialty Image (Admin)",
+"request": {"method": "POST", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "body": {"mode": "formdata", "formdata": [{"key": "image", "type": "file", "src": ""}]}, "url": "{{baseUrl}}/specialties/upload"}
+}
+]
+},
+{
+"name": "5. Schedules",
+"item": [
+{
+"name": "Get All Schedules",
+"event": [{"listen": "test", "script": {"exec": ["if(pm.response.code===200){var d=pm.response.json();if(d.data&&d.data.length>0)pm.collectionVariables.set('scheduleId',d.data[0].id);}"], "type": "text/javascript"}}],
+"request": {"method": "GET", "url": "{{baseUrl}}/schedule"}
+},
+{
+"name": "Get Schedule By ID",
+"request": {"method": "GET", "url": "{{baseUrl}}/schedule/{{scheduleId}}"}
+},
+{
+"name": "Get Doctor Schedules",
+"request": {"method": "GET", "url": {"raw": "{{baseUrl}}/schedule/doctor/{{doctorId}}?date=2026-01-03&includeAll=true", "host": ["{{baseUrl}}"], "path": ["schedule","doctor","{{doctorId}}"], "query": [{"key": "date", "value": "2026-01-03"},{"key": "includeAll", "value": "true"}]}}
+},
+{
+"name": "Create Schedule (Doctor/Admin)",
+"event": [{"listen": "test", "script": {"exec": ["if(pm.response.code===201){var d=pm.response.json();if(d.data)pm.collectionVariables.set('scheduleId',d.data.id);}"], "type": "text/javascript"}}],
+"request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"},{"key": "Authorization", "value": "Bearer {{token}}"}], "body": {"mode": "raw", "raw": "{\"doctorId\":26,\"date\":\"2026-01-10\",\"timeType\":\"T1\",\"maxNumber\":10}"}, "url": "{{baseUrl}}/schedule"}
+},
+{
+"name": "Update Schedule",
+"request": {"method": "PUT", "header": [{"key": "Content-Type", "value": "application/json"},{"key": "Authorization", "value": "Bearer {{token}}"}], "body": {"mode": "raw", "raw": "{\"maxNumber\":15}"}, "url": "{{baseUrl}}/schedule/{{scheduleId}}"}
+},
+{
+"name": "Delete Schedule",
+"request": {"method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/schedule/{{scheduleId}}"}
+},
+{
+"name": "Get Pending Schedules (Admin)",
+"request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/schedule/pending/list"}
+},
+{
+"name": "Approve Schedule (Admin)",
+"request": {"method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/schedule/{{scheduleId}}/approve"}
+},
+{
+"name": "Reject Schedule (Admin)",
+"request": {"method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/schedule/{{scheduleId}}/reject"}
+}
+]
+},
+{
+"name": "6. Bookings",
+"item": [
+{
+"name": "Create Booking (Patient)",
+"event": [{"listen": "test", "script": {"exec": ["if(pm.response.code===201){var d=pm.response.json();if(d.data)pm.collectionVariables.set('bookingId',d.data.id);}"], "type": "text/javascript"}}],
+"request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"},{"key": "Authorization", "value": "Bearer {{token}}"}], "body": {"mode": "raw", "raw": "{\"statusId\":\"S1\",\"doctorId\":26,\"patientId\":28,\"date\":\"2026-01-10\",\"timeType\":\"T1\"}"}, "url": "{{baseUrl}}/bookings"}
+},
+{
+"name": "Get Booking By ID",
+"request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/bookings/{{bookingId}}"}
+},
+{
+"name": "Get Bookings By Doctor",
+"request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/bookings/doctor/{{doctorId}}"}
+},
+{
+"name": "Get Bookings By Patient",
+"request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/bookings/patient/{{patientId}}"}
+},
+{
+"name": "Update Booking Status",
+"request": {"method": "PUT", "header": [{"key": "Content-Type", "value": "application/json"},{"key": "Authorization", "value": "Bearer {{token}}"}], "body": {"mode": "raw", "raw": "{\"statusId\":\"S2\"}"}, "url": "{{baseUrl}}/bookings/{{bookingId}}/status"}
+},
+{
+"name": "Cancel Booking",
+"request": {"method": "PUT", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/bookings/cancel/{{bookingId}}"}
+}
+]
+},
+{
+"name": "7. Allcodes (Admin)",
+"item": [
+{
+"name": "Get All Types",
+"request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/allcode/types"}
+},
+{
+"name": "Get Codes By Type",
+"request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": {"raw": "{{baseUrl}}/allcode/type?type=POSITION", "host": ["{{baseUrl}}"], "path": ["allcode","type"], "query": [{"key": "type", "value": "POSITION"}]}}
+},
+{
+"name": "Get Code By Key",
+"request": {"method": "GET", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/allcode/P1"}
+},
+{
+"name": "Create Code",
+"request": {"method": "POST", "header": [{"key": "Content-Type", "value": "application/json"},{"key": "Authorization", "value": "Bearer {{token}}"}], "body": {"mode": "raw", "raw": "{\"keyMap\":\"TEST1\",\"type\":\"TEST\",\"valueVi\":\"Test Vi\",\"valueEn\":\"Test En\"}"}, "url": "{{baseUrl}}/allcode"}
+},
+{
+"name": "Update Code",
+"request": {"method": "PUT", "header": [{"key": "Content-Type", "value": "application/json"},{"key": "Authorization", "value": "Bearer {{token}}"}], "body": {"mode": "raw", "raw": "{\"valueVi\":\"Updated Vi\",\"valueEn\":\"Updated En\"}"}, "url": "{{baseUrl}}/allcode/TEST1"}
+},
+{
+"name": "Delete Code",
+"request": {"method": "DELETE", "header": [{"key": "Authorization", "value": "Bearer {{token}}"}], "url": "{{baseUrl}}/allcode/TEST1"}
+}
+]
+}
+]
+}

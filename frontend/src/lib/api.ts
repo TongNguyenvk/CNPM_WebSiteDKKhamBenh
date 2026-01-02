@@ -104,6 +104,7 @@ export interface Schedule {
     timeType: string;
     maxNumber: number;
     currentNumber?: number;
+    status?: 'pending' | 'approved' | 'rejected';
     createdAt?: string;
     updatedAt?: string;
     timeTypeData?: TimeState;
@@ -111,6 +112,18 @@ export interface Schedule {
         firstName: string;
         lastName: string;
         Specialty?: {
+            name: string;
+        };
+    };
+    doctorData?: {
+        id: number;
+        firstName: string;
+        lastName: string;
+        email?: string;
+        phoneNumber?: string;
+        image?: string;
+        specialtyData?: {
+            id: number;
             name: string;
         };
     };
@@ -173,6 +186,17 @@ interface UserProfile {
     image?: string;
     createdAt?: string;
     updatedAt?: string;
+    specialtyId?: number;
+    positionId?: string;
+    specialtyData?: {
+        id: number;
+        name: string;
+    };
+    positionData?: {
+        keyMap: string;
+        valueVi: string;
+        valueEn: string;
+    };
 }
 
 interface UpdateUserProfileData {
@@ -404,11 +428,12 @@ export interface DoctorSchedule {
 
 export const getDoctorSchedules = async (
     doctorId: number,
-    date: string
+    date: string,
+    includeAll: boolean = true // Mặc định lấy tất cả (cho bác sĩ xem)
 ): Promise<DoctorSchedule[]> => {
     try {
         const res = await apiClient.get(`/schedule/doctor/${doctorId}`, {
-            params: { date }
+            params: { date, includeAll: includeAll.toString() }
         });
         console.log('API getDoctorSchedules response:', res.data);
         if (res.data && res.data.success && Array.isArray(res.data.data)) {
@@ -418,6 +443,25 @@ export const getDoctorSchedules = async (
     } catch (error: any) {
         if (error.response?.status === 404) return [];
         throw new Error(error.response?.data?.message || 'Lỗi khi lấy lịch phân công');
+    }
+};
+
+// API lấy lịch cho bệnh nhân (chỉ lấy lịch đã approved)
+export const getDoctorSchedulesForPatient = async (
+    doctorId: number,
+    date: string
+): Promise<DoctorSchedule[]> => {
+    try {
+        const res = await apiClient.get(`/schedule/doctor/${doctorId}`, {
+            params: { date, includeAll: 'false' }
+        });
+        if (res.data && res.data.success && Array.isArray(res.data.data)) {
+            return res.data.data as DoctorSchedule[];
+        }
+        return [];
+    } catch (error: any) {
+        if (error.response?.status === 404) return [];
+        throw new Error(error.response?.data?.message || 'Lỗi khi lấy lịch khám');
     }
 };
 
@@ -631,6 +675,52 @@ export const deleteDoctorSchedule = async (scheduleId: number): Promise<void> =>
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi xóa lịch khám');
+    }
+};
+
+// Schedule Approval APIs (Admin only)
+export const getPendingSchedules = async (): Promise<Schedule[]> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.get<{ success: boolean; data: Schedule[]; count: number }>('/schedule/pending/list', {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data.data || [];
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi lấy danh sách lịch chờ duyệt');
+    }
+};
+
+export const approveSchedule = async (scheduleId: number): Promise<Schedule> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.put<{ success: boolean; data: Schedule }>(`/schedule/${scheduleId}/approve`, {}, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data.data;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi duyệt lịch khám');
+    }
+};
+
+export const rejectSchedule = async (scheduleId: number): Promise<Schedule> => {
+    try {
+        const token = localStorage.getItem('token');
+        const response = await apiClient.put<{ success: boolean; data: Schedule }>(`/schedule/${scheduleId}/reject`, {}, {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        });
+        return response.data.data;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+        throw new Error(error.response?.data?.message || 'Lỗi khi từ chối lịch khám');
     }
 };
 

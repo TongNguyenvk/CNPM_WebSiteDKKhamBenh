@@ -5,7 +5,8 @@ import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input, Textarea } from '@/components/ui/input';
 import { LoadingPage } from '@/components/ui/loading';
-import { cn, getRoleText } from '@/lib/utils';
+import { cn, getRoleText, getAvatarUrl } from '@/lib/utils';
+import { toast } from 'react-hot-toast';
 
 interface ProfileProps {
     role: 'admin' | 'doctor' | 'patient';
@@ -106,12 +107,14 @@ export default function Profile({ role }: ProfileProps) {
         // Validate file type
         if (!file.type.startsWith('image/')) {
             setError('Vui lòng chọn file hình ảnh');
+            toast.error('Vui lòng chọn file hình ảnh');
             return;
         }
 
         // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
             setError('Kích thước file không được vượt quá 5MB');
+            toast.error('Kích thước file không được vượt quá 5MB');
             return;
         }
 
@@ -119,6 +122,7 @@ export default function Profile({ role }: ProfileProps) {
         const reader = new FileReader();
         reader.onloadend = () => {
             setImagePreview(reader.result as string);
+            toast.success('Đã chọn ảnh. Nhấn "Lưu thay đổi" để cập nhật.');
         };
         reader.readAsDataURL(file);
     };
@@ -190,6 +194,7 @@ export default function Profile({ role }: ProfileProps) {
             // Refresh profile data
             await fetchProfile();
             setSuccess('Cập nhật thông tin thành công');
+            toast.success('Cập nhật thông tin thành công!');
             setIsEditing(false);
             setSelectedFile(null);
             setImagePreview(null);
@@ -200,6 +205,7 @@ export default function Profile({ role }: ProfileProps) {
         } catch (error: unknown) {
             const err = error as Error;
             setError(err.message || 'Cập nhật thông tin thất bại');
+            toast.error(err.message || 'Cập nhật thông tin thất bại');
             setUploadProgress(0);
         }
     };
@@ -252,22 +258,22 @@ export default function Profile({ role }: ProfileProps) {
     const completeness = getProfileCompleteness();
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-primary-50/30">
-            <div className="container py-8">
+        <div className="h-full bg-gradient-to-br from-neutral-50 via-white to-primary-50/30 overflow-y-auto">
+            <div className="py-6 px-4 md:py-8 md:px-6 max-w-6xl mx-auto">
                 {/* Enhanced Header with Profile Stats */}
-                <div className="mb-8">
-                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                        <div>
-                            <h1 className="text-4xl font-bold text-neutral-900 mb-2 bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
+                <div className="mb-6">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                            <h1 className="text-2xl md:text-4xl font-bold text-neutral-900 mb-2 bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent">
                                 Hồ sơ cá nhân
                             </h1>
-                            <p className="text-neutral-600 text-lg">
+                            <p className="text-neutral-600 text-sm md:text-lg">
                                 Quản lý thông tin cá nhân và cài đặt tài khoản của bạn
                             </p>
                         </div>
 
                         {/* Profile Completeness Card */}
-                        <div className="bg-white rounded-2xl p-6 shadow-medium border border-neutral-200/50 min-w-[280px]">
+                        <div className="bg-white rounded-2xl p-4 md:p-6 shadow-medium border border-neutral-200/50 w-full lg:w-auto lg:min-w-[280px] flex-shrink-0">
                             <div className="flex items-center justify-between mb-3">
                                 <span className="text-sm font-medium text-neutral-600">Độ hoàn thiện hồ sơ</span>
                                 <span className="text-2xl font-bold text-primary-600">{completeness}%</span>
@@ -336,13 +342,13 @@ export default function Profile({ role }: ProfileProps) {
                     </div>
                 )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
                     {/* Enhanced Profile Card */}
                     <div className="lg:col-span-1">
                         <Card className="overflow-hidden bg-gradient-to-br from-white to-primary-50/30 border-0 shadow-large">
-                            <CardBody className="text-center p-8 relative">
+                            <CardBody className="text-center p-4 md:p-8 relative">
                                 {/* Background Pattern */}
-                                <div className="absolute inset-0 opacity-5">
+                                <div className="absolute inset-0 opacity-5 overflow-hidden">
                                     <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500 rounded-full -translate-y-16 translate-x-16"></div>
                                     <div className="absolute bottom-0 left-0 w-24 h-24 bg-secondary-500 rounded-full translate-y-12 -translate-x-12"></div>
                                 </div>
@@ -351,7 +357,7 @@ export default function Profile({ role }: ProfileProps) {
                                 <div className="relative z-10">
                                     <div
                                         className={cn(
-                                            "relative w-36 h-36 mx-auto mb-6 group",
+                                            "relative w-28 h-28 md:w-36 md:h-36 mx-auto mb-6 group",
                                             isEditing && "cursor-pointer"
                                         )}
                                         onDragOver={isEditing ? handleDragOver : undefined}
@@ -360,12 +366,12 @@ export default function Profile({ role }: ProfileProps) {
                                         onClick={isEditing ? () => fileInputRef.current?.click() : () => setShowImageModal(true)}
                                     >
                                         <div className={cn(
-                                            "w-36 h-36 rounded-full border-4 border-white shadow-large overflow-hidden transition-all duration-300",
+                                            "w-28 h-28 md:w-36 md:h-36 rounded-full border-4 border-white shadow-large overflow-hidden transition-all duration-300",
                                             isEditing && "group-hover:scale-105",
                                             isDragOver && "border-primary-500 scale-105"
                                         )}>
                                             <img
-                                                src={imagePreview || (profile?.image ? (profile.image.startsWith('http') ? profile.image : `http://localhost:8080${profile.image}?${Date.now()}`) : "/images/default-avatar.png")}
+                                                src={imagePreview || (profile?.image ? `${getAvatarUrl(profile.image)}?${Date.now()}` : "/images/default-avatar.png")}
                                                 alt="Profile"
                                                 className="w-full h-full object-cover"
                                             />
@@ -853,7 +859,7 @@ export default function Profile({ role }: ProfileProps) {
                     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4" onClick={() => setShowImageModal(false)}>
                         <div className="relative max-w-2xl max-h-[80vh]">
                             <img
-                                src={profile.image.startsWith('http') ? profile.image : `http://localhost:8080${profile.image}`}
+                                src={getAvatarUrl(profile.image)}
                                 alt="Profile"
                                 className="max-w-full max-h-full object-contain rounded-lg"
                             />

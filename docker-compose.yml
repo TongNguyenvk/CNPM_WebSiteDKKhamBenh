@@ -31,6 +31,8 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-123456}
       - DATABASE_URL=mysql://${DB_USER:-root}:${DB_PASSWORD:-123456}@${DB_HOST:-db-mysql}:${DB_PORT:-3306}/${DB_NAME:-DBDKKHAMBENH}
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,http://frontend:3000}
+    volumes:
+      - ./backend/uploads:/app/uploads
     depends_on:
       - db-mysql
     networks:

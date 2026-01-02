@@ -124,3 +124,69 @@ export function getRoleText(role: string): string {
 export function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
+
+// API Base URL - remove trailing /api if present
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/api\/?$/, '');
+
+/**
+ * Get full image URL from backend
+ * @param imagePath - The image path stored in database (e.g., "/uploads/avatars/xxx.jpg" or "uploads/avatars/xxx.jpg")
+ * @param type - Type of image: 'avatar' | 'specialty' | 'auto' (auto-detect from path)
+ * @returns Full URL to the image
+ */
+export function getImageUrl(imagePath: string | null | undefined, type: 'avatar' | 'specialty' | 'auto' = 'auto'): string {
+  // Return default image if no path provided
+  if (!imagePath) {
+    return type === 'specialty' ? '/images/default-specialty.jpg' : '/images/default-avatar.png';
+  }
+
+  // If already a full URL (http/https), return as is
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
+  }
+
+  // Normalize the path - remove leading slash if present
+  let normalizedPath = imagePath.startsWith('/') ? imagePath : `/${imagePath}`;
+
+  // If path already contains /uploads/, use it directly
+  if (normalizedPath.includes('/uploads/')) {
+    return `${API_BASE_URL}${normalizedPath}`;
+  }
+
+  // Otherwise, construct the path based on type
+  if (type === 'auto') {
+    // Try to detect type from path
+    if (normalizedPath.includes('avatar') || normalizedPath.includes('user')) {
+      type = 'avatar';
+    } else if (normalizedPath.includes('specialty') || normalizedPath.includes('specialties')) {
+      type = 'specialty';
+    } else {
+      // Default to avatar for user images
+      type = 'avatar';
+    }
+  }
+
+  // Construct full URL
+  const folder = type === 'specialty' ? 'specialties' : 'avatars';
+  
+  // If path is just a filename, add the folder
+  if (!normalizedPath.includes('/')) {
+    return `${API_BASE_URL}/uploads/${folder}/${imagePath}`;
+  }
+
+  return `${API_BASE_URL}${normalizedPath}`;
+}
+
+/**
+ * Get avatar URL for a user
+ */
+export function getAvatarUrl(imagePath: string | null | undefined): string {
+  return getImageUrl(imagePath, 'avatar');
+}
+
+/**
+ * Get specialty image URL
+ */
+export function getSpecialtyImageUrl(imagePath: string | null | undefined): string {
+  return getImageUrl(imagePath, 'specialty');
+}

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { LoadingPage } from '@/components/ui/loading';
 import { BackButton } from '@/components/ui/BackButton';
 import { toast } from 'react-hot-toast';
+import { getAvatarUrl } from '@/lib/utils';
 
 interface Appointment {
     id: number;
@@ -187,22 +188,14 @@ export default function AppointmentDetailPage() {
                         <h3 className="text-lg font-semibold mb-4">Thông tin bác sĩ</h3>
                         <div className="flex items-start space-x-4">
                             <div className="relative">
-                                {appointment.doctorData?.image ? (
-                                    <Image
-                                        src={`http://localhost:8080/images/${appointment.doctorData.image}`}
-                                        alt={`${appointment.doctorData?.firstName || ''} ${appointment.doctorData?.lastName || ''}`}
-                                        width={80}
-                                        height={80}
-                                        className="w-20 h-20 rounded-full object-cover"
-                                        unoptimized
-                                    />
-                                ) : (
-                                    <div className="w-20 h-20 bg-neutral-200 rounded-full flex items-center justify-center">
-                                        <span className="text-neutral-600 text-xl font-medium">
-                                            {appointment.doctorData?.firstName?.charAt(0)}{appointment.doctorData?.lastName?.charAt(0)}
-                                        </span>
-                                    </div>
-                                )}
+                                <Image
+                                    src={getAvatarUrl(appointment.doctorData?.image)}
+                                    alt={`${appointment.doctorData?.firstName || ''} ${appointment.doctorData?.lastName || ''}`}
+                                    width={80}
+                                    height={80}
+                                    className="w-20 h-20 rounded-full object-cover"
+                                    unoptimized
+                                />
                             </div>
                             <div className="flex-1">
                                 <h4 className="text-xl font-semibold text-neutral-900">

@@ -1,32 +1,22 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { getAllDoctors, getAllSchedules, createDoctorSchedule, updateDoctorSchedule, deleteDoctorSchedule, getTimeStates } from '@/lib/api';
-import { toast } from 'react-hot-toast';
-import { Card, CardBody, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input, Select } from '@/components/ui/input';
-import { LoadingPage } from '@/components/ui/loading';
-import { Modal, ModalBody, ModalFooter } from '@/components/ui/modal';
-import { format, parseISO, isToday, isTomorrow, isPast } from 'date-fns';
+import { useState, useEffect, useMemo } from 'react';
+import { getAllSchedules, getAllDoctors, getTimeStates, createDoctorSchedule, updateDoctorSchedule, deleteDoctorSchedule } from '@/lib/api';
+import { SlidePanel, DataTable } from '@/components/ui';
+import { format, parseISO, isPast } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { cn } from '@/lib/utils';
+import { toast } from 'react-hot-toast';
 
 interface Doctor {
     id: number;
     firstName: string;
     lastName: string;
-    Specialty?: {
-        name: string;
-    };
+    Specialty?: { name: string };
 }
 
 interface TimeState {
     keyMap: string;
-    type: string;
     valueVi: string;
-    valueEn: string;
 }
 
 interface Schedule {
@@ -41,827 +31,362 @@ interface Schedule {
 }
 
 export default function AppointmentsPage() {
-    const [doctors, setDoctors] = useState<Doctor[]>([]);
     const [schedules, setSchedules] = useState<Schedule[]>([]);
+    const [doctors, setDoctors] = useState<Doctor[]>([]);
     const [timeStates, setTimeStates] = useState<TimeState[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedDoctor, setSelectedDoctor] = useState<string>('');
-    const [searchTerm, setSearchTerm] = useState<string>('');
-    const [dateFilter, setDateFilter] = useState<string>('all');
-    const [statusFilter, setStatusFilter] = useState<string>('all');
-    const [sortBy, setSortBy] = useState<string>('date');
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-    const [currentPage, setCurrentPage] = useState<number>(1);
-    const [itemsPerPage] = useState<number>(10);
-    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-    const [selectedSchedule, setSelectedSchedule] = useState<Schedule | null>(null);
-    const [formData, setFormData] = useState({
-        doctorId: '',
-        date: '',
-        timeType: '',
-        maxNumber: 20
-    });
+    const [filterDoctor, setFilterDoctor] = useState('');
+    const [filterDate, setFilterDate] = useState('');
+    const [filterStatus, setFilterStatus] = useState('');
+    const [isPanelOpen, setIsPanelOpen] = useState(false);
+    const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
+    const [formData, setFormData] = useState({ doctorId: '', date: '', timeType: '', maxNumber: 10 });
+    const [submitting, setSubmitting] = useState(false);
 
-    useEffect(() => {
-        loadDoctors();
-        loadSchedules();
-        loadTimeStates();
-    }, []);
+    useEffect(() => { loadData(); }, []);
 
-    const loadTimeStates = async () => {
+    const loadData = async () => {
+        setLoading(true);
         try {
-            const data = await getTimeStates();
-            setTimeStates(data);
-            if (data.length > 0) {
-                setFormData(prev => ({ ...prev, timeType: data[0].keyMap }));
-            }
+            const [schedulesData, doctorsData, timeData] = await Promise.all([
+                getAllSchedules(),
+                getAllDoctors(),
+                getTimeStates()
+            ]);
+            setSchedules(schedulesData);
+            setDoctors(doctorsData);
+            setTimeStates(timeData);
         } catch (error) {
-            toast.error('Lỗi khi tải danh sách thời gian');
-        }
-    };
-
-    const loadDoctors = async () => {
-        try {
-            const data = await getAllDoctors();
-            setDoctors(data);
-        } catch (error) {
-            toast.error('Lỗi khi tải danh sách bác sĩ');
-        }
-    };
-
-    const loadSchedules = async () => {
-        try {
-            const data = await getAllSchedules();
-            setSchedules(data);
-        } catch (error) {
-            toast.error('Lỗi khi tải danh sách lịch khám');
+            toast.error('Lỗi khi tải dữ liệu');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleCreateSchedule = async () => {
-        try {
-            await createDoctorSchedule({
-                ...formData,
-                doctorId: Number(formData.doctorId)
-            });
-            toast.success('Tạo lịch khám thành công');
-            setIsCreateModalOpen(false);
-            loadSchedules();
-        } catch (error) {
-            toast.error('Lỗi khi tạo lịch khám');
-        }
-    };
+    const filteredSchedules = useMemo(() => {
+        return schedules.filter(s => {
+            if (filterDoctor && s.doctorId !== Number(filterDoctor)) return false;
+            if (filterDate && format(new Date(s.date), 'yyyy-MM-dd') !== filterDate) return false;
+            if (filterStatus) {
+                const date = parseISO(s.date);
+                const current = s.currentNumber || 0;
+                if (filterStatus === 'available' && (isPast(date) || current >= s.maxNumber)) return false;
+                if (filterStatus === 'full' && (isPast(date) || current < s.maxNumber)) return false;
+                if (filterStatus === 'past' && !isPast(date)) return false;
+            }
+            return true;
+        });
+    }, [schedules, filterDoctor, filterDate, filterStatus]);
 
-    const handleUpdateSchedule = async () => {
-        if (!selectedSchedule) return;
-        try {
-            await updateDoctorSchedule(selectedSchedule.id, {
-                date: formData.date,
-                timeType: formData.timeType,
-                maxNumber: Number(formData.maxNumber)
-            });
-            toast.success('Cập nhật lịch khám thành công');
-            setIsEditModalOpen(false);
-            loadSchedules();
-        } catch (error) {
-            toast.error('Lỗi khi cập nhật lịch khám');
-        }
-    };
-
-    const handleDeleteSchedule = async (scheduleId: number) => {
-        if (!confirm('Bạn có chắc chắn muốn xóa lịch khám này?')) return;
-        try {
-            await deleteDoctorSchedule(scheduleId);
-            toast.success('Xóa lịch khám thành công');
-            loadSchedules();
-        } catch (error) {
-            toast.error('Lỗi khi xóa lịch khám');
-        }
-    };
-
-    // Removed old filteredSchedules - now using getFilteredSchedules() function
-
-    const getDateLabel = (dateString: string) => {
-        const date = parseISO(dateString);
-        if (isToday(date)) return 'Hôm nay';
-        if (isTomorrow(date)) return 'Ngày mai';
-        return format(date, 'dd/MM/yyyy', { locale: vi });
-    };
+    const hasFilters = filterDoctor || filterDate || filterStatus;
 
     const getStatusBadge = (schedule: Schedule) => {
         const date = parseISO(schedule.date);
-        const currentNumber = schedule.currentNumber || 0;
-        const maxNumber = schedule.maxNumber;
-
-        if (isPast(date)) {
-            return <Badge variant="neutral" size="sm">Đã qua</Badge>;
-        }
-
-        if (currentNumber >= maxNumber) {
-            return <Badge variant="error" size="sm">Đã đầy</Badge>;
-        }
-
-        if (currentNumber > maxNumber * 0.8) {
-            return <Badge variant="warning" size="sm">Sắp đầy</Badge>;
-        }
-
-        return <Badge variant="success" size="sm">Còn chỗ</Badge>;
+        const current = schedule.currentNumber || 0;
+        if (isPast(date)) return { text: 'Đã qua', bg: 'bg-gray-100', color: 'text-gray-600' };
+        if (current >= schedule.maxNumber) return { text: 'Đã đầy', bg: 'bg-red-100', color: 'text-red-700' };
+        if (current > schedule.maxNumber * 0.8) return { text: 'Sắp đầy', bg: 'bg-yellow-100', color: 'text-yellow-700' };
+        return { text: 'Còn chỗ', bg: 'bg-green-100', color: 'text-green-700' };
     };
 
-    // Helper functions for filtering, sorting, and pagination
-    const getFilteredSchedules = () => {
-        let filtered = schedules;
+    const openCreatePanel = () => {
+        setEditingSchedule(null);
+        setFormData({ doctorId: '', date: format(new Date(), 'yyyy-MM-dd'), timeType: timeStates[0]?.keyMap || '', maxNumber: 10 });
+        setIsPanelOpen(true);
+    };
 
-        // Filter by search term (doctor name)
-        if (searchTerm) {
-            filtered = filtered.filter(schedule =>
-                `${schedule.doctorData?.firstName} ${schedule.doctorData?.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                schedule.doctorData?.Specialty?.name.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-        }
-
-        // Filter by doctor
-        if (selectedDoctor) {
-            filtered = filtered.filter(schedule =>
-                schedule.doctorId.toString() === selectedDoctor
-            );
-        }
-
-        // Filter by date
-        if (dateFilter !== 'all') {
-            const today = new Date();
-            const todayStr = today.toISOString().split('T')[0];
-            const tomorrow = new Date(today);
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            const tomorrowStr = tomorrow.toISOString().split('T')[0];
-
-            switch (dateFilter) {
-                case 'today':
-                    filtered = filtered.filter(schedule => schedule.date === todayStr);
-                    break;
-                case 'tomorrow':
-                    filtered = filtered.filter(schedule => schedule.date === tomorrowStr);
-                    break;
-                case 'upcoming':
-                    filtered = filtered.filter(schedule => schedule.date >= todayStr);
-                    break;
-                case 'past':
-                    filtered = filtered.filter(schedule => schedule.date < todayStr);
-                    break;
-            }
-        }
-
-        // Filter by status
-        if (statusFilter !== 'all') {
-            filtered = filtered.filter(schedule => {
-                const date = parseISO(schedule.date);
-                const currentNumber = schedule.currentNumber || 0;
-
-                switch (statusFilter) {
-                    case 'available':
-                        return !isPast(date) && currentNumber < schedule.maxNumber;
-                    case 'full':
-                        return !isPast(date) && currentNumber >= schedule.maxNumber;
-                    case 'past':
-                        return isPast(date);
-                    default:
-                        return true;
-                }
-            });
-        }
-
-        // Sort schedules
-        filtered.sort((a, b) => {
-            let aValue: string | number = '';
-            let bValue: string | number = '';
-
-            switch (sortBy) {
-                case 'date':
-                    aValue = new Date(a.date).getTime();
-                    bValue = new Date(b.date).getTime();
-                    break;
-                case 'doctor':
-                    aValue = `${a.doctorData?.firstName} ${a.doctorData?.lastName}` || '';
-                    bValue = `${b.doctorData?.firstName} ${b.doctorData?.lastName}` || '';
-                    break;
-                case 'timeType':
-                    aValue = a.timeTypeData?.valueVi || '';
-                    bValue = b.timeTypeData?.valueVi || '';
-                    break;
-                case 'maxNumber':
-                    aValue = a.maxNumber;
-                    bValue = b.maxNumber;
-                    break;
-                default:
-                    aValue = new Date(a.date).getTime();
-                    bValue = new Date(b.date).getTime();
-            }
-
-            if (typeof aValue === 'string' && typeof bValue === 'string') {
-                return sortOrder === 'asc'
-                    ? aValue.localeCompare(bValue)
-                    : bValue.localeCompare(aValue);
-            } else {
-                return sortOrder === 'asc'
-                    ? (aValue as number) - (bValue as number)
-                    : (bValue as number) - (aValue as number);
-            }
+    const openEditPanel = (schedule: Schedule) => {
+        setEditingSchedule(schedule);
+        setFormData({
+            doctorId: schedule.doctorId.toString(),
+            date: format(new Date(schedule.date), 'yyyy-MM-dd'),
+            timeType: schedule.timeType,
+            maxNumber: schedule.maxNumber
         });
-
-        return filtered;
+        setIsPanelOpen(true);
     };
 
-    const getPaginatedSchedules = () => {
-        const filtered = getFilteredSchedules();
-        const startIndex = (currentPage - 1) * itemsPerPage;
-        const endIndex = startIndex + itemsPerPage;
-        return filtered.slice(startIndex, endIndex);
+    const handleSave = async () => {
+        if (!formData.doctorId || !formData.date || !formData.timeType) {
+            toast.error('Vui lòng điền đầy đủ thông tin');
+            return;
+        }
+        setSubmitting(true);
+        try {
+            if (editingSchedule) {
+                await updateDoctorSchedule(editingSchedule.id, {
+                    date: formData.date,
+                    timeType: formData.timeType,
+                    maxNumber: formData.maxNumber
+                });
+                toast.success('Cập nhật thành công');
+            } else {
+                await createDoctorSchedule({ ...formData, doctorId: Number(formData.doctorId) });
+                toast.success('Tạo lịch khám thành công');
+            }
+            loadData();
+            setIsPanelOpen(false);
+        } catch (error) {
+            toast.error('Có lỗi xảy ra');
+        } finally {
+            setSubmitting(false);
+        }
     };
 
-    const getTotalPages = () => {
-        const filtered = getFilteredSchedules();
-        return Math.ceil(filtered.length / itemsPerPage);
+    const handleDelete = async (id: number, e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!confirm('Xác nhận xóa lịch khám này?')) return;
+        try {
+            await deleteDoctorSchedule(id);
+            toast.success('Đã xóa');
+            loadData();
+        } catch (error) {
+            toast.error('Lỗi khi xóa');
+        }
     };
+
+    const clearFilters = () => {
+        setFilterDoctor('');
+        setFilterDate('');
+        setFilterStatus('');
+    };
+
+    const columns = useMemo(() => [
+        {
+            key: 'date', header: 'Ngày', width: 'w-28',
+            render: (s: Schedule) => (
+                <div>
+                    <div className="font-medium">{format(parseISO(s.date), 'dd/MM/yyyy')}</div>
+                    <div className="text-xs text-gray-500">{format(parseISO(s.date), 'EEEE', { locale: vi })}</div>
+                </div>
+            )
+        },
+        {
+            key: 'doctor', header: 'Bác sĩ',
+            render: (s: Schedule) => (
+                <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 text-xs font-medium">
+                        {s.doctorData?.firstName?.charAt(0)}{s.doctorData?.lastName?.charAt(0)}
+                    </div>
+                    <div>
+                        <div className="font-medium text-gray-900">{s.doctorData?.firstName} {s.doctorData?.lastName}</div>
+                        <div className="text-xs text-gray-500">{s.doctorData?.Specialty?.name || '-'}</div>
+                    </div>
+                </div>
+            )
+        },
+        {
+            key: 'timeType', header: 'Khung giờ',
+            render: (s: Schedule) => (
+                <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs font-medium">
+                    {s.timeTypeData?.valueVi || s.timeType}
+                </span>
+            )
+        },
+        {
+            key: 'capacity', header: 'Đặt chỗ', width: 'w-28',
+            render: (s: Schedule) => {
+                const current = s.currentNumber || 0;
+                const percent = (current / s.maxNumber) * 100;
+                return (
+                    <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                            <div
+                                className={`h-full rounded-full ${percent >= 100 ? 'bg-red-500' : percent >= 80 ? 'bg-yellow-500' : 'bg-green-500'}`}
+                                style={{ width: `${Math.min(percent, 100)}%` }}
+                            />
+                        </div>
+                        <span className="text-xs text-gray-600 w-12">{current}/{s.maxNumber}</span>
+                    </div>
+                );
+            }
+        },
+        {
+            key: 'status', header: 'Trạng thái', width: 'w-24',
+            render: (s: Schedule) => {
+                const status = getStatusBadge(s);
+                return (
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${status.bg} ${status.color}`}>
+                        {status.text}
+                    </span>
+                );
+            }
+        },
+        {
+            key: 'actions', header: '', width: 'w-20',
+            render: (s: Schedule) => (
+                <div className="flex justify-end gap-1">
+                    <button onClick={() => openEditPanel(s)} className="p-1.5 hover:bg-gray-100 rounded-lg" title="Sửa">
+                        <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                        </svg>
+                    </button>
+                    <button onClick={(e) => handleDelete(s.id, e)} className="p-1.5 hover:bg-red-50 rounded-lg" title="Xóa">
+                        <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                </div>
+            )
+        },
+    ], []);
+
+    // Stats
+    const stats = useMemo(() => {
+        const upcoming = schedules.filter(s => !isPast(parseISO(s.date))).length;
+        const full = schedules.filter(s => (s.currentNumber || 0) >= s.maxNumber).length;
+        const available = schedules.filter(s => !isPast(parseISO(s.date)) && (s.currentNumber || 0) < s.maxNumber).length;
+        return { total: schedules.length, upcoming, full, available };
+    }, [schedules]);
 
     if (loading) {
-        return <LoadingPage text="Đang tải danh sách lịch khám..." />;
+        return (
+            <div className="h-full flex items-center justify-center">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+            </div>
+        );
     }
 
-    const schedulesToDisplay = getPaginatedSchedules();
-    const totalSchedules = getFilteredSchedules().length;
-    const totalPages = getTotalPages();
-
     return (
-        <div className="min-h-screen bg-neutral-50">
-            <div className="container py-8">
-                {/* Header */}
-                <div className="mb-8 mt-8">
-                    <h1 className="text-3xl font-bold text-neutral-900 mb-2">
-                        Quản lý lịch khám
-                    </h1>
-                    <p className="text-neutral-600">
-                        Quản lý lịch làm việc của bác sĩ và theo dõi tình trạng đặt lịch
-                    </p>
+        <div className="h-full flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b bg-white flex-shrink-0">
+                <div>
+                    <h1 className="text-xl font-bold text-gray-900">Quản lý lịch khám</h1>
+                    <p className="text-sm text-gray-500">{filteredSchedules.length} lịch khám</p>
                 </div>
+                <button onClick={openCreatePanel} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Thêm lịch khám
+                </button>
+            </div>
 
-                {/* Filters and Actions */}
-                <Card className="mb-6">
-                    <CardBody className="p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
-                            {/* Search */}
-                            <div>
-                                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                                    Tìm kiếm
-                                </label>
-                                <div className="relative">
-                                    <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                    </svg>
-                                    <input
-                                        type="text"
-                                        placeholder="Tìm theo tên bác sĩ, chuyên khoa..."
-                                        className="form-input pl-10"
-                                        value={searchTerm}
-                                        onChange={(e) => {
-                                            setSearchTerm(e.target.value);
-                                            setCurrentPage(1);
-                                        }}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Doctor Filter */}
-                            <div>
-                                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                                    Bác sĩ
-                                </label>
-                                <select
-                                    value={selectedDoctor}
-                                    onChange={(e) => {
-                                        setSelectedDoctor(e.target.value);
-                                        setCurrentPage(1);
-                                    }}
-                                    className="form-select"
-                                >
-                                    <option value="">Tất cả bác sĩ</option>
-                                    {doctors.map(doctor => (
-                                        <option key={doctor.id} value={doctor.id.toString()}>
-                                            {doctor.firstName} {doctor.lastName} - {doctor.Specialty?.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            {/* Date Filter */}
-                            <div>
-                                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                                    Thời gian
-                                </label>
-                                <select
-                                    value={dateFilter}
-                                    onChange={(e) => {
-                                        setDateFilter(e.target.value);
-                                        setCurrentPage(1);
-                                    }}
-                                    className="form-select"
-                                >
-                                    <option value="all">Tất cả</option>
-                                    <option value="today">Hôm nay</option>
-                                    <option value="tomorrow">Ngày mai</option>
-                                    <option value="upcoming">Sắp tới</option>
-                                    <option value="past">Đã qua</option>
-                                </select>
-                            </div>
-
-                            {/* Status Filter */}
-                            <div>
-                                <label className="block text-sm font-medium text-neutral-700 mb-2">
-                                    Trạng thái
-                                </label>
-                                <select
-                                    value={statusFilter}
-                                    onChange={(e) => {
-                                        setStatusFilter(e.target.value);
-                                        setCurrentPage(1);
-                                    }}
-                                    className="form-select"
-                                >
-                                    <option value="all">Tất cả</option>
-                                    <option value="available">Còn chỗ</option>
-                                    <option value="full">Đã đầy</option>
-                                    <option value="past">Đã qua</option>
-                                </select>
-                            </div>
-
-                            {/* Sort & Add Button */}
-                            <div className="flex gap-2">
-                                <select
-                                    value={sortBy}
-                                    onChange={(e) => setSortBy(e.target.value)}
-                                    className="form-select"
-                                >
-                                    <option value="date">Sắp xếp theo ngày</option>
-                                    <option value="doctor">Sắp xếp theo bác sĩ</option>
-                                    <option value="timeType">Sắp xếp theo giờ</option>
-                                    <option value="maxNumber">Sắp xếp theo số lượng</option>
-                                </select>
-                                <button
-                                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                                    className="btn-secondary px-3 py-2"
-                                    title={sortOrder === 'asc' ? 'Tăng dần' : 'Giảm dần'}
-                                >
-                                    {sortOrder === 'asc' ? '↑' : '↓'}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Stats */}
-                        <div className="mt-4 text-sm text-neutral-600">
-                            Hiển thị {schedulesToDisplay.length} trong tổng số {totalSchedules} lịch khám
-                        </div>
-
-                        {/* Add Button */}
-                        <div className="mt-4 flex justify-end">
-
-                            {/* Add Schedule Button */}
-                            <Button onClick={() => {
-                                setFormData({
-                                    doctorId: '',
-                                    date: '',
-                                    timeType: timeStates[0]?.keyMap || '',
-                                    maxNumber: 20
-                                });
-                                setIsCreateModalOpen(true);
-                            }}>
-                                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                </svg>
-                                Thêm lịch khám
-                            </Button>
-                        </div>
-                    </CardBody>
-                </Card>
-
-                {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-                    <Card>
-                        <CardBody className="flex items-center space-x-4">
-                            <div className="w-12 h-12 bg-primary-100 rounded-xl flex items-center justify-center">
-                                <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold text-neutral-900">{totalSchedules}</p>
-                                <p className="text-sm text-neutral-600">Tổng lịch khám</p>
-                            </div>
-                        </CardBody>
-                    </Card>
-
-                    <Card>
-                        <CardBody className="flex items-center space-x-4">
-                            <div className="w-12 h-12 bg-success-100 rounded-xl flex items-center justify-center">
-                                <svg className="w-6 h-6 text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold text-neutral-900">
-                                    {getFilteredSchedules().filter(s => !isPast(parseISO(s.date))).length}
-                                </p>
-                                <p className="text-sm text-neutral-600">Lịch sắp tới</p>
-                            </div>
-                        </CardBody>
-                    </Card>
-
-                    <Card>
-                        <CardBody className="flex items-center space-x-4">
-                            <div className="w-12 h-12 bg-warning-100 rounded-xl flex items-center justify-center">
-                                <svg className="w-6 h-6 text-warning-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold text-neutral-900">
-                                    {getFilteredSchedules().filter(s => (s.currentNumber || 0) >= s.maxNumber).length}
-                                </p>
-                                <p className="text-sm text-neutral-600">Lịch đã đầy</p>
-                            </div>
-                        </CardBody>
-                    </Card>
-
-                    <Card>
-                        <CardBody className="flex items-center space-x-4">
-                            <div className="w-12 h-12 bg-accent-100 rounded-xl flex items-center justify-center">
-                                <svg className="w-6 h-6 text-accent-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <p className="text-2xl font-bold text-neutral-900">{doctors.length}</p>
-                                <p className="text-sm text-neutral-600">Bác sĩ</p>
-                            </div>
-                        </CardBody>
-                    </Card>
+            {/* Stats */}
+            <div className="grid grid-cols-4 gap-4 px-6 py-4 bg-gray-50 border-b flex-shrink-0">
+                <div className="bg-white rounded-lg p-3 border">
+                    <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
+                    <div className="text-xs text-gray-500">Tổng lịch</div>
                 </div>
+                <div className="bg-white rounded-lg p-3 border">
+                    <div className="text-2xl font-bold text-blue-600">{stats.upcoming}</div>
+                    <div className="text-xs text-gray-500">Sắp tới</div>
+                </div>
+                <div className="bg-white rounded-lg p-3 border">
+                    <div className="text-2xl font-bold text-green-600">{stats.available}</div>
+                    <div className="text-xs text-gray-500">Còn chỗ</div>
+                </div>
+                <div className="bg-white rounded-lg p-3 border">
+                    <div className="text-2xl font-bold text-red-600">{stats.full}</div>
+                    <div className="text-xs text-gray-500">Đã đầy</div>
+                </div>
+            </div>
 
-                {/* Schedules Table */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>
-                            Danh sách lịch khám ({totalSchedules})
-                        </CardTitle>
-                    </CardHeader>
-                    <CardBody className="p-0">
-                        {schedulesToDisplay.length === 0 ? (
-                            <div className="text-center py-16">
-                                <div className="w-24 h-24 bg-neutral-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <svg className="w-12 h-12 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                </div>
-                                <h3 className="text-xl font-semibold text-neutral-900 mb-2">
-                                    Chưa có lịch khám nào
-                                </h3>
-                                <p className="text-neutral-600 mb-6">
-                                    {selectedDoctor ? 'Bác sĩ này chưa có lịch khám nào.' : 'Chưa có lịch khám nào trong hệ thống.'}
-                                </p>
-                                <Button onClick={() => {
-                                    setFormData({
-                                        doctorId: selectedDoctor,
-                                        date: '',
-                                        timeType: timeStates[0]?.keyMap || '',
-                                        maxNumber: 20
-                                    });
-                                    setIsCreateModalOpen(true);
-                                }}>
-                                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                                    </svg>
-                                    Tạo lịch khám đầu tiên
-                                </Button>
-                            </div>
-                        ) : (
-                            <div className="overflow-x-auto">
-                                <table className="min-w-full">
-                                    <thead className="bg-neutral-50 border-b border-neutral-200">
-                                        <tr>
-                                            <th className="px-6 py-4 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">ID</th>
-                                            <th className="px-6 py-4 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Bác sĩ</th>
-                                            <th className="px-6 py-4 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Ngày</th>
-                                            <th className="px-6 py-4 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Thời gian</th>
-                                            <th className="px-6 py-4 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Số lượng</th>
-                                            <th className="px-6 py-4 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Trạng thái</th>
-                                            <th className="px-6 py-4 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Thao tác</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="bg-white divide-y divide-neutral-200">
-                                        {schedulesToDisplay.map((schedule) => (
-                                            <tr key={schedule.id} className="hover:bg-neutral-50 transition-colors">
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
-                                                    #{schedule.id}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="flex items-center space-x-3">
-                                                        <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                                                            <span className="text-primary-600 font-medium text-sm">
-                                                                {schedule.doctorData?.firstName?.charAt(0)}{schedule.doctorData?.lastName?.charAt(0)}
-                                                            </span>
-                                                        </div>
-                                                        <div>
-                                                            <p className="text-sm font-medium text-neutral-900">
-                                                                {schedule.doctorData ? `${schedule.doctorData.firstName} ${schedule.doctorData.lastName}` : 'N/A'}
-                                                            </p>
-                                                            <p className="text-xs text-neutral-500">
-                                                                {schedule.doctorData?.Specialty?.name || 'N/A'}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div>
-                                                        <p className="text-sm font-medium text-neutral-900">
-                                                            {getDateLabel(schedule.date)}
-                                                        </p>
-                                                        <p className="text-xs text-neutral-500">
-                                                            {format(parseISO(schedule.date), 'EEEE', { locale: vi })}
-                                                        </p>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-neutral-600">
-                                                    <Badge variant="outline" size="sm">
-                                                        {schedule.timeTypeData?.valueVi || 'N/A'}
-                                                    </Badge>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="text-sm">
-                                                        <span className="font-medium text-neutral-900">
-                                                            {schedule.currentNumber || 0}
-                                                        </span>
-                                                        <span className="text-neutral-500">
-                                                            /{schedule.maxNumber}
-                                                        </span>
-                                                    </div>
-                                                    <div className="w-full bg-neutral-200 rounded-full h-1.5 mt-1">
-                                                        <div
-                                                            className="bg-primary-600 h-1.5 rounded-full"
-                                                            style={{
-                                                                width: `${Math.min(((schedule.currentNumber || 0) / schedule.maxNumber) * 100, 100)}%`
-                                                            }}
-                                                        ></div>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    {getStatusBadge(schedule)}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <div className="flex items-center space-x-2">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            onClick={() => {
-                                                                setSelectedSchedule(schedule);
-                                                                setFormData({
-                                                                    doctorId: schedule.doctorId.toString(),
-                                                                    date: schedule.date,
-                                                                    timeType: schedule.timeType,
-                                                                    maxNumber: schedule.maxNumber
-                                                                });
-                                                                setIsEditModalOpen(true);
-                                                            }}
-                                                        >
-                                                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                            </svg>
-                                                            Sửa
-                                                        </Button>
-                                                        <Button
-                                                            variant="error"
-                                                            size="sm"
-                                                            onClick={() => handleDeleteSchedule(schedule.id)}
-                                                        >
-                                                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                            </svg>
-                                                            Xóa
-                                                        </Button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </CardBody>
-                </Card>
+            {/* Toolbar */}
+            <div className="flex items-center gap-3 px-6 py-3 border-b bg-white flex-shrink-0">
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                
+                <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)}
+                    className="px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                
+                <select value={filterDoctor} onChange={(e) => setFilterDoctor(e.target.value)}
+                    className="px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="">Tất cả bác sĩ</option>
+                    {doctors.map(d => (
+                        <option key={d.id} value={d.id}>{d.firstName} {d.lastName}</option>
+                    ))}
+                </select>
+                
+                <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
+                    className="px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500">
+                    <option value="">Tất cả trạng thái</option>
+                    <option value="available">Còn chỗ</option>
+                    <option value="full">Đã đầy</option>
+                    <option value="past">Đã qua</option>
+                </select>
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                    <div className="flex items-center justify-between mt-6">
-                        <div className="text-sm text-neutral-600">
-                            Hiển thị {((currentPage - 1) * itemsPerPage) + 1} - {Math.min(currentPage * itemsPerPage, totalSchedules)} trong tổng số {totalSchedules} lịch khám
-                        </div>
-                        <div className="flex items-center space-x-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                                disabled={currentPage === 1}
-                            >
-                                Trước
-                            </Button>
-
-                            {/* Page numbers */}
-                            <div className="flex items-center space-x-1">
-                                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                    let pageNum;
-                                    if (totalPages <= 5) {
-                                        pageNum = i + 1;
-                                    } else if (currentPage <= 3) {
-                                        pageNum = i + 1;
-                                    } else if (currentPage >= totalPages - 2) {
-                                        pageNum = totalPages - 4 + i;
-                                    } else {
-                                        pageNum = currentPage - 2 + i;
-                                    }
-
-                                    return (
-                                        <button
-                                            key={pageNum}
-                                            onClick={() => setCurrentPage(pageNum)}
-                                            className={cn(
-                                                "px-3 py-1 text-sm rounded-md transition-colors",
-                                                currentPage === pageNum
-                                                    ? "bg-primary-600 text-white"
-                                                    : "text-neutral-600 hover:bg-neutral-100"
-                                            )}
-                                        >
-                                            {pageNum}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                                disabled={currentPage === totalPages}
-                            >
-                                Sau
-                            </Button>
-                        </div>
-                    </div>
+                {hasFilters && (
+                    <button onClick={clearFilters} className="flex items-center gap-1 px-2 py-1 text-sm text-gray-600 hover:text-gray-900">
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Xóa bộ lọc
+                    </button>
                 )}
             </div>
 
-            {/* Create Schedule Modal */}
-            <Modal
-                isOpen={isCreateModalOpen}
-                onClose={() => setIsCreateModalOpen(false)}
-                title="Thêm lịch khám mới"
-                size="md"
+            {/* Table */}
+            <div className="flex-1 overflow-hidden bg-white">
+                <DataTable
+                    columns={columns}
+                    data={filteredSchedules}
+                    keyField="id"
+                    compact
+                    pageSize={12}
+                    emptyMessage="Không có lịch khám nào"
+                />
+            </div>
+
+            {/* Slide Panel */}
+            <SlidePanel
+                isOpen={isPanelOpen}
+                onClose={() => setIsPanelOpen(false)}
+                title={editingSchedule ? 'Chỉnh sửa lịch khám' : 'Thêm lịch khám mới'}
+                width="md"
             >
-                <ModalBody>
-                    <div className="space-y-6">
-                        <Select
-                            label="Bác sĩ"
-                            value={formData.doctorId}
-                            onChange={(e) => setFormData({ ...formData, doctorId: e.target.value })}
-                            options={[
-                                { value: '', label: 'Chọn bác sĩ' },
-                                ...doctors.map(doctor => ({
-                                    value: doctor.id.toString(),
-                                    label: `${doctor.firstName} ${doctor.lastName} - ${doctor.Specialty?.name}`
-                                }))
-                            ]}
-                            required
-                        />
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Input
-                                label="Ngày khám"
-                                type="date"
-                                value={formData.date}
-                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                required
-                                min={new Date().toISOString().split('T')[0]}
-                            />
-
-                            <Select
-                                label="Thời gian"
-                                value={formData.timeType}
-                                onChange={(e) => setFormData({ ...formData, timeType: e.target.value })}
-                                options={timeStates.map(time => ({
-                                    value: time.keyMap,
-                                    label: time.valueVi
-                                }))}
-                                required
-                            />
-                        </div>
-
-                        <Input
-                            label="Số lượng bệnh nhân tối đa"
-                            type="number"
-                            value={formData.maxNumber.toString()}
-                            onChange={(e) => setFormData({ ...formData, maxNumber: parseInt(e.target.value) || 1 })}
-                            min="1"
-                            max="50"
-                            required
-                            helperText="Số lượng bệnh nhân có thể đặt lịch trong khung giờ này"
-                        />
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Bác sĩ <span className="text-red-500">*</span></label>
+                        <select value={formData.doctorId} onChange={(e) => setFormData({ ...formData, doctorId: e.target.value })}
+                            disabled={!!editingSchedule}
+                            className="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100">
+                            <option value="">Chọn bác sĩ</option>
+                            {doctors.map(d => (
+                                <option key={d.id} value={d.id}>{d.firstName} {d.lastName} - {d.Specialty?.name || 'N/A'}</option>
+                            ))}
+                        </select>
                     </div>
-                </ModalBody>
-                <ModalFooter>
-                    <Button
-                        variant="outline"
-                        onClick={() => setIsCreateModalOpen(false)}
-                    >
-                        Hủy
-                    </Button>
-                    <Button onClick={handleCreateSchedule}>
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                        Tạo lịch khám
-                    </Button>
-                </ModalFooter>
-            </Modal>
 
-            {/* Edit Schedule Modal */}
-            <Modal
-                isOpen={isEditModalOpen}
-                onClose={() => setIsEditModalOpen(false)}
-                title="Cập nhật lịch khám"
-                size="md"
-            >
-                <ModalBody>
-                    <div className="space-y-6">
-                        {selectedSchedule && (
-                            <div className="bg-neutral-50 p-4 rounded-lg">
-                                <h4 className="font-medium text-neutral-900 mb-2">Thông tin bác sĩ</h4>
-                                <p className="text-sm text-neutral-600">
-                                    {selectedSchedule.doctorData ?
-                                        `${selectedSchedule.doctorData.firstName} ${selectedSchedule.doctorData.lastName} - ${selectedSchedule.doctorData.Specialty?.name}`
-                                        : 'N/A'
-                                    }
-                                </p>
-                            </div>
-                        )}
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <Input
-                                label="Ngày khám"
-                                type="date"
-                                value={formData.date}
-                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                required
-                                min={new Date().toISOString().split('T')[0]}
-                            />
-
-                            <Select
-                                label="Thời gian"
-                                value={formData.timeType}
-                                onChange={(e) => setFormData({ ...formData, timeType: e.target.value })}
-                                options={timeStates.map(time => ({
-                                    value: time.keyMap,
-                                    label: time.valueVi
-                                }))}
-                                required
-                            />
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Ngày <span className="text-red-500">*</span></label>
+                            <input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                                className="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500" />
                         </div>
-
-                        <Input
-                            label="Số lượng bệnh nhân tối đa"
-                            type="number"
-                            value={formData.maxNumber.toString()}
-                            onChange={(e) => setFormData({ ...formData, maxNumber: parseInt(e.target.value) || 1 })}
-                            min={selectedSchedule?.currentNumber?.toString() || "1"}
-                            max="50"
-                            required
-                            helperText={`Hiện tại có ${selectedSchedule?.currentNumber || 0} bệnh nhân đã đặt lịch`}
-                        />
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Khung giờ <span className="text-red-500">*</span></label>
+                            <select value={formData.timeType} onChange={(e) => setFormData({ ...formData, timeType: e.target.value })}
+                                className="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500">
+                                <option value="">Chọn khung giờ</option>
+                                {timeStates.map(t => (
+                                    <option key={t.keyMap} value={t.keyMap}>{t.valueVi}</option>
+                                ))}
+                            </select>
+                        </div>
                     </div>
-                </ModalBody>
-                <ModalFooter>
-                    <Button
-                        variant="outline"
-                        onClick={() => setIsEditModalOpen(false)}
-                    >
-                        Hủy
-                    </Button>
-                    <Button onClick={handleUpdateSchedule}>
-                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        Cập nhật
-                    </Button>
-                </ModalFooter>
-            </Modal>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Số bệnh nhân tối đa</label>
+                        <input type="number" min="1" value={formData.maxNumber}
+                            onChange={(e) => setFormData({ ...formData, maxNumber: parseInt(e.target.value) || 1 })}
+                            className="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                    </div>
+
+                    <div className="flex gap-3 pt-4 border-t">
+                        <button onClick={() => setIsPanelOpen(false)}
+                            className="flex-1 px-4 py-2 text-sm font-medium border rounded-lg hover:bg-gray-50 transition">
+                            Hủy
+                        </button>
+                        <button onClick={handleSave} disabled={submitting}
+                            className="flex-1 px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50">
+                            {submitting ? 'Đang lưu...' : (editingSchedule ? 'Cập nhật' : 'Tạo mới')}
+                        </button>
+                    </div>
+                </div>
+            </SlidePanel>
         </div>
     );
 }
