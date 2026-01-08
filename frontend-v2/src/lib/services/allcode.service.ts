@@ -31,10 +31,9 @@ export const TIME_SLOTS: Allcode[] = [
 ]
 
 export const POSITIONS: Allcode[] = [
-  { keyMap: 'P0', type: 'POSITION', valueVi: 'Không có', valueEn: 'None' },
-  { keyMap: 'P1', type: 'POSITION', valueVi: 'Bác sĩ', valueEn: 'Doctor' },
-  { keyMap: 'P2', type: 'POSITION', valueVi: 'Thạc sĩ', valueEn: 'Master' },
-  { keyMap: 'P3', type: 'POSITION', valueVi: 'Tiến sĩ', valueEn: 'PhD' },
-  { keyMap: 'P4', type: 'POSITION', valueVi: 'Phó Giáo sư', valueEn: 'Associate Professor' },
-  { keyMap: 'P5', type: 'POSITION', valueVi: 'Giáo sư', valueEn: 'Professor' },
+  { keyMap: 'P0', type: 'POSITION', valueVi: 'Bác sĩ', valueEn: 'Doctor' },
+  { keyMap: 'P1', type: 'POSITION', valueVi: 'Thạc sĩ', valueEn: 'Master' },
+  { keyMap: 'P2', type: 'POSITION', valueVi: 'Tiến sĩ', valueEn: 'PhD' },
+  { keyMap: 'P3', type: 'POSITION', valueVi: 'Phó giáo sư', valueEn: 'Associate Professor' },
+  { keyMap: 'P4', type: 'POSITION', valueVi: 'Giáo sư', valueEn: 'Professor' },
 ]

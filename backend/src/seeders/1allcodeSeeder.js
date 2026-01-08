@@ -8,9 +8,11 @@ module.exports = {
             { keyMap: 'R3', type: 'ROLE', valueEn: 'Admin', valueVi: 'Quản trị viên', createdAt: new Date(), updatedAt: new Date() },
 
             // Chức vụ (POSITION)
-            { keyMap: 'P1', type: 'POSITION', valueEn: 'Specialist', valueVi: 'Chuyên gia', createdAt: new Date(), updatedAt: new Date() },
-            { keyMap: 'P2', type: 'POSITION', valueEn: 'Head of Department', valueVi: 'Trưởng khoa', createdAt: new Date(), updatedAt: new Date() },
-            { keyMap: 'P3', type: 'POSITION', valueEn: 'Professor', valueVi: 'Giáo sư', createdAt: new Date(), updatedAt: new Date() },
+            { keyMap: 'P0', type: 'POSITION', valueEn: 'Doctor', valueVi: 'Bác sĩ', createdAt: new Date(), updatedAt: new Date() },
+            { keyMap: 'P1', type: 'POSITION', valueEn: 'Specialist', valueVi: 'Thạc sĩ', createdAt: new Date(), updatedAt: new Date() },
+            { keyMap: 'P2', type: 'POSITION', valueEn: 'Head of Department', valueVi: 'Tiến sĩ', createdAt: new Date(), updatedAt: new Date() },
+            { keyMap: 'P3', type: 'POSITION', valueEn: 'Associate Professor', valueVi: 'Phó giáo sư', createdAt: new Date(), updatedAt: new Date() },
+            { keyMap: 'P4', type: 'POSITION', valueEn: 'Professor', valueVi: 'Giáo sư', createdAt: new Date(), updatedAt: new Date() },
 
             // Giờ khám (TIME)
             { keyMap: 'T1', type: 'TIME', valueEn: '8:00 - 9:00', valueVi: '8:00 - 9:00', createdAt: new Date(), updatedAt: new Date() },

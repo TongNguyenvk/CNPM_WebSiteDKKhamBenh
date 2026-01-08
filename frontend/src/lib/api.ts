@@ -1147,12 +1147,13 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
 export const updateUser = async (userId: number, data: UpdateUserData): Promise<UserProfile> => {
     try {
         const token = localStorage.getItem('token');
-        const response = await apiClient.put<ApiResponse<UserProfile>>(`/users/${userId}`, data, {
+        const response = await apiClient.put<{ message: string; user: UserProfile }>(`/users/${userId}`, data, {
             headers: {
                 Authorization: `Bearer ${token}`
             }
         });
-        return response.data.data;
+        // Backend trả về { message: '...', user: {...} }
+        return response.data.user;
     } catch (error: any) {
         throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật người dùng');
     }

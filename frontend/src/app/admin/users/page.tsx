@@ -35,7 +35,7 @@ export default function UsersPage() {
     const [submitting, setSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         email: '', password: '', firstName: '', lastName: '', roleId: 'R2',
-        phoneNumber: '', address: '', gender: true, positionId: 'P0', specialtyId: 0, description: ''
+        phoneNumber: '', address: '', gender: true, positionId: 'P1', specialtyId: 0, description: ''
     });
 
     useEffect(() => { loadData(); }, []);
@@ -92,20 +92,75 @@ export default function UsersPage() {
             if (editingUser) {
                 await updateUser(editingUser.id, formData);
                 toast.success('Cập nhật thành công');
+                // Cập nhật state trực tiếp thay vì reload
+                setUsersByRole(prev => ({
+                    ...prev,
+                    [editingUser.roleId]: prev[editingUser.roleId as keyof UsersByRole].map(u => 
+                        u.id === editingUser.id ? { ...u, ...formData } : u
+                    )
+                }));
             } else {
                 if (!formData.password) { toast.error('Vui lòng nhập mật khẩu'); setSubmitting(false); return; }
                 if (formData.roleId === 'R2') {
                     if (!formData.specialtyId) { toast.error('Vui lòng chọn chuyên khoa'); setSubmitting(false); return; }
-                    await createDoctor({ ...formData, specialtyId: formData.specialtyId, descriptionMarkdown: formData.description, descriptionHTML: formData.description });
+                    const newDoctor = await createDoctor({ ...formData, specialtyId: formData.specialtyId, descriptionMarkdown: formData.description, descriptionHTML: formData.description });
+                    // Thêm user mới vào state
+                    const specialty = specialties.find(s => s.id === formData.specialtyId);
+                    setUsersByRole(prev => ({
+                        ...prev,
+                        R2: [...prev.R2, { 
+                            id: newDoctor.userId, 
+                            email: formData.email, 
+                            firstName: formData.firstName, 
+                            lastName: formData.lastName, 
+                            roleId: 'R2',
+                            phoneNumber: formData.phoneNumber,
+                            address: formData.address,
+                            gender: formData.gender,
+                            specialtyData: specialty ? { id: specialty.id, name: specialty.name } : undefined,
+                            positionData: { keyMap: formData.positionId, valueVi: positions.find(p => p.key === formData.positionId)?.label || '' }
+                        }]
+                    }));
                 } else if (formData.roleId === 'R3') {
-                    await createAdmin(formData);
+                    const newAdmin = await createAdmin(formData);
+                    // Thêm admin mới vào state
+                    setUsersByRole(prev => ({
+                        ...prev,
+                        R3: [...prev.R3, { 
+                            id: newAdmin.userId, 
+                            email: formData.email, 
+                            firstName: formData.firstName, 
+                            lastName: formData.lastName, 
+                            roleId: 'R3',
+                            phoneNumber: formData.phoneNumber,
+                            address: formData.address,
+                            gender: formData.gender
+                        }]
+                    }));
                 }
                 toast.success('Tạo người dùng thành công');
             }
-            loadData();
             setIsPanelOpen(false);
         } catch (error: unknown) {
-            toast.error(error instanceof Error ? error.message : 'Lỗi');
+            // Xử lý lỗi chi tiết hơn cho người dùng
+            let errorMessage = 'Đã xảy ra lỗi không xác định';
+            if (error instanceof Error) {
+                const msg = error.message.toLowerCase();
+                if (msg.includes('email') && (msg.includes('đã được sử dụng') || msg.includes('exist') || msg.includes('duplicate'))) {
+                    errorMessage = 'Email này đã được sử dụng. Vui lòng chọn email khác.';
+                } else if (msg.includes('chuyên khoa') || msg.includes('specialty')) {
+                    errorMessage = 'Vui lòng chọn chuyên khoa hợp lệ.';
+                } else if (msg.includes('mật khẩu') || msg.includes('password')) {
+                    errorMessage = 'Mật khẩu không hợp lệ. Vui lòng kiểm tra lại.';
+                } else if (msg.includes('quyền') || msg.includes('permission') || msg.includes('403')) {
+                    errorMessage = 'Bạn không có quyền thực hiện thao tác này.';
+                } else if (msg.includes('kết nối') || msg.includes('network') || msg.includes('connection')) {
+                    errorMessage = 'Lỗi kết nối. Vui lòng kiểm tra mạng và thử lại.';
+                } else {
+                    errorMessage = error.message;
+                }
+            }
+            toast.error(errorMessage);
         } finally {
             setSubmitting(false);
         }
@@ -116,14 +171,31 @@ export default function UsersPage() {
         if (!confirm('Xác nhận xóa người dùng này?')) return;
         try { 
             await deleteUser(id); 
-            toast.success('Đã xóa'); 
-            // Cập nhật state trực tiếp để UI refresh ngay
+            toast.success('Đã xóa người dùng thành công'); 
+            // Cập nhật state trực tiếp để UI refresh ngay mà không reload trang
             setUsersByRole(prev => ({
                 ...prev,
                 [selectedRole]: prev[selectedRole].filter(u => u.id !== id)
             }));
         }
-        catch (error: unknown) { toast.error(error instanceof Error ? error.message : 'Lỗi'); }
+        catch (error: unknown) { 
+            let errorMessage = 'Không thể xóa người dùng';
+            if (error instanceof Error) {
+                const msg = error.message.toLowerCase();
+                if (msg.includes('quyền') || msg.includes('permission') || msg.includes('403')) {
+                    errorMessage = 'Bạn không có quyền xóa người dùng này.';
+                } else if (msg.includes('không tìm thấy') || msg.includes('not found') || msg.includes('404')) {
+                    errorMessage = 'Người dùng không tồn tại hoặc đã bị xóa.';
+                } else if (msg.includes('ràng buộc') || msg.includes('constraint') || msg.includes('foreign key')) {
+                    errorMessage = 'Không thể xóa vì người dùng này có dữ liệu liên quan (lịch khám, đặt lịch...).';
+                } else if (msg.includes('kết nối') || msg.includes('network')) {
+                    errorMessage = 'Lỗi kết nối. Vui lòng thử lại.';
+                } else {
+                    errorMessage = error.message;
+                }
+            }
+            toast.error(errorMessage);
+        }
     };
 
     const columns = useMemo(() => {
