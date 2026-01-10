@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { getDoctorAppointments, updateBookingStatus } from '@/lib/api';
 import { SlidePanel, DataTable } from '@/components/ui';
 import { format, parseISO, isToday, isTomorrow } from 'date-fns';
@@ -25,12 +26,27 @@ const statusConfig: Record<string, { label: string; bg: string; color: string }>
     S4: { label: 'Đã hủy', bg: 'bg-red-100', color: 'text-red-700' },
 };
 
-export default function DoctorAppointmentsPage() {
+function DoctorAppointmentsContent() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
+
+    // URL state
+    const filterStatus = searchParams.get('status') || 'all';
+    const filterDate = searchParams.get('date') || 'all';
+    const searchTerm = searchParams.get('search') || '';
+
+    const updateUrl = (updates: Record<string, string>) => {
+        const params = new URLSearchParams(searchParams.toString());
+        Object.entries(updates).forEach(([key, value]) => {
+            if (value && value !== 'all') params.set(key, value);
+            else params.delete(key);
+        });
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    };
+
     const [appointments, setAppointments] = useState<Appointment[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filterStatus, setFilterStatus] = useState('all');
-    const [filterDate, setFilterDate] = useState('all');
-    const [searchTerm, setSearchTerm] = useState('');
     const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
     const [isPanelOpen, setIsPanelOpen] = useState(false);
 
@@ -138,17 +154,13 @@ export default function DoctorAppointmentsPage() {
             render: (a: Appointment) => (
                 <div className="flex items-center gap-2">
                     {a.statusId === 'S1' && (
-                        <button 
-                            onClick={(e) => { e.stopPropagation(); handleStatusUpdate(a.id, 'S2'); }}
-                            className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700"
-                        >
+                        <button onClick={(e) => { e.stopPropagation(); handleStatusUpdate(a.id, 'S2'); }}
+                            className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
                             Xác nhận
                         </button>
                     )}
-                    <button 
-                        onClick={() => { setSelectedAppointment(a); setIsPanelOpen(true); }}
-                        className="p-1.5 hover:bg-gray-100 rounded-lg"
-                    >
+                    <button onClick={() => { setSelectedAppointment(a); setIsPanelOpen(true); }}
+                        className="p-1.5 hover:bg-gray-100 rounded-lg">
                         <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -160,11 +172,7 @@ export default function DoctorAppointmentsPage() {
     ], []);
 
     if (loading) {
-        return (
-            <div className="h-full flex items-center justify-center">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-            </div>
-        );
+        return <div className="h-full flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div></div>;
     }
 
     return (
@@ -186,10 +194,7 @@ export default function DoctorAppointmentsPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                         </div>
-                        <div>
-                            <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-                            <p className="text-sm text-gray-500">Tổng lịch</p>
-                        </div>
+                        <div><p className="text-2xl font-bold text-gray-900">{stats.total}</p><p className="text-sm text-gray-500">Tổng lịch</p></div>
                     </div>
                 </div>
                 <div className="bg-white rounded-xl p-4 border">
@@ -199,10 +204,7 @@ export default function DoctorAppointmentsPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <div>
-                            <p className="text-2xl font-bold text-gray-900">{stats.pending}</p>
-                            <p className="text-sm text-gray-500">Chờ xác nhận</p>
-                        </div>
+                        <div><p className="text-2xl font-bold text-gray-900">{stats.pending}</p><p className="text-sm text-gray-500">Chờ xác nhận</p></div>
                     </div>
                 </div>
                 <div className="bg-white rounded-xl p-4 border">
@@ -212,10 +214,7 @@ export default function DoctorAppointmentsPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <div>
-                            <p className="text-2xl font-bold text-gray-900">{stats.confirmed}</p>
-                            <p className="text-sm text-gray-500">Đã xác nhận</p>
-                        </div>
+                        <div><p className="text-2xl font-bold text-gray-900">{stats.confirmed}</p><p className="text-sm text-gray-500">Đã xác nhận</p></div>
                     </div>
                 </div>
                 <div className="bg-white rounded-xl p-4 border">
@@ -225,10 +224,7 @@ export default function DoctorAppointmentsPage() {
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                             </svg>
                         </div>
-                        <div>
-                            <p className="text-2xl font-bold text-gray-900">{stats.completed}</p>
-                            <p className="text-sm text-gray-500">Hoàn thành</p>
-                        </div>
+                        <div><p className="text-2xl font-bold text-gray-900">{stats.completed}</p><p className="text-sm text-gray-500">Hoàn thành</p></div>
                     </div>
                 </div>
             </div>
@@ -239,30 +235,20 @@ export default function DoctorAppointmentsPage() {
                     <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
-                    <input
-                        type="text"
-                        placeholder="Tìm theo tên, email, SĐT..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    <input type="text" placeholder="Tìm theo tên, email, SĐT..." value={searchTerm}
+                        onChange={(e) => updateUrl({ search: e.target.value })}
+                        className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
-                <select 
-                    value={filterStatus} 
-                    onChange={(e) => setFilterStatus(e.target.value)} 
-                    className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
+                <select value={filterStatus} onChange={(e) => updateUrl({ status: e.target.value })}
+                    className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
                     <option value="all">Tất cả trạng thái</option>
                     <option value="S1">Chờ xác nhận</option>
                     <option value="S2">Đã xác nhận</option>
                     <option value="S3">Hoàn thành</option>
                     <option value="S4">Đã hủy</option>
                 </select>
-                <select 
-                    value={filterDate} 
-                    onChange={(e) => setFilterDate(e.target.value)} 
-                    className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
+                <select value={filterDate} onChange={(e) => updateUrl({ date: e.target.value })}
+                    className="px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
                     <option value="all">Tất cả thời gian</option>
                     <option value="today">Hôm nay</option>
                     <option value="tomorrow">Ngày mai</option>
@@ -273,41 +259,23 @@ export default function DoctorAppointmentsPage() {
 
             {/* Table */}
             <div className="flex-1 overflow-hidden bg-white">
-                <DataTable
-                    columns={columns}
-                    data={filteredAppointments}
-                    keyField="id"
-                    pageSize={15}
-                    emptyMessage="Không có lịch khám nào"
-                />
+                <DataTable columns={columns} data={filteredAppointments} keyField="id" pageSize={15} emptyMessage="Không có lịch khám nào" />
             </div>
 
             {/* Detail Panel */}
-            <SlidePanel
-                isOpen={isPanelOpen}
-                onClose={() => setIsPanelOpen(false)}
-                title="Chi tiết lịch khám"
-                width="md"
-            >
+            <SlidePanel isOpen={isPanelOpen} onClose={() => setIsPanelOpen(false)} title="Chi tiết lịch khám" width="md">
                 {selectedAppointment && (
                     <div className="space-y-6">
-                        {/* Patient Info */}
                         <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-xl">
                             <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-blue-700 text-xl font-bold">
                                 {selectedAppointment.patientData?.firstName?.charAt(0)}{selectedAppointment.patientData?.lastName?.charAt(0)}
                             </div>
                             <div>
-                                <p className="text-lg font-semibold text-gray-900">
-                                    {selectedAppointment.patientData?.firstName} {selectedAppointment.patientData?.lastName}
-                                </p>
+                                <p className="text-lg font-semibold text-gray-900">{selectedAppointment.patientData?.firstName} {selectedAppointment.patientData?.lastName}</p>
                                 <p className="text-gray-500">{selectedAppointment.patientData?.email}</p>
-                                {selectedAppointment.patientData?.phoneNumber && (
-                                    <p className="text-gray-500">{selectedAppointment.patientData.phoneNumber}</p>
-                                )}
+                                {selectedAppointment.patientData?.phoneNumber && <p className="text-gray-500">{selectedAppointment.patientData.phoneNumber}</p>}
                             </div>
                         </div>
-
-                        {/* Appointment Info */}
                         <div className="space-y-4">
                             <h3 className="font-semibold text-gray-900">Thông tin lịch khám</h3>
                             <div className="grid grid-cols-2 gap-4">
@@ -337,43 +305,33 @@ export default function DoctorAppointmentsPage() {
                                 </div>
                             )}
                         </div>
-
-                        {/* Actions */}
                         {selectedAppointment.statusId === 'S1' && (
                             <div className="flex gap-3 pt-4 border-t">
-                                <button
-                                    onClick={() => handleStatusUpdate(selectedAppointment.id, 'S4')}
-                                    className="flex-1 px-4 py-2.5 font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition"
-                                >
-                                    Từ chối
-                                </button>
-                                <button
-                                    onClick={() => handleStatusUpdate(selectedAppointment.id, 'S2')}
-                                    className="flex-1 px-4 py-2.5 font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                                >
-                                    Xác nhận
-                                </button>
+                                <button onClick={() => handleStatusUpdate(selectedAppointment.id, 'S4')}
+                                    className="flex-1 px-4 py-2.5 font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition">Từ chối</button>
+                                <button onClick={() => handleStatusUpdate(selectedAppointment.id, 'S2')}
+                                    className="flex-1 px-4 py-2.5 font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Xác nhận</button>
                             </div>
                         )}
                         {selectedAppointment.statusId === 'S2' && (
                             <div className="flex gap-3 pt-4 border-t">
-                                <button
-                                    onClick={() => handleStatusUpdate(selectedAppointment.id, 'S4')}
-                                    className="flex-1 px-4 py-2.5 font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition"
-                                >
-                                    Hủy lịch
-                                </button>
-                                <button
-                                    onClick={() => handleStatusUpdate(selectedAppointment.id, 'S3')}
-                                    className="flex-1 px-4 py-2.5 font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-                                >
-                                    Hoàn thành
-                                </button>
+                                <button onClick={() => handleStatusUpdate(selectedAppointment.id, 'S4')}
+                                    className="flex-1 px-4 py-2.5 font-medium text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition">Hủy lịch</button>
+                                <button onClick={() => handleStatusUpdate(selectedAppointment.id, 'S3')}
+                                    className="flex-1 px-4 py-2.5 font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">Hoàn thành</button>
                             </div>
                         )}
                     </div>
                 )}
             </SlidePanel>
         </div>
+    );
+}
+
+export default function DoctorAppointmentsPage() {
+    return (
+        <Suspense fallback={<div className="h-full flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div></div>}>
+            <DoctorAppointmentsContent />
+        </Suspense>
     );
 }

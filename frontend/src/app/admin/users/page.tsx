@@ -434,6 +434,19 @@ export default function UsersPage() {
                             className="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500" />
                     </div>
 
+                    {(formData.roleId === 'R2' || editingUser?.roleId === 'R2') && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Mô tả / Giới thiệu</label>
+                            <textarea 
+                                value={formData.description}
+                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                rows={4}
+                                placeholder="Nhập mô tả về kinh nghiệm, chuyên môn của bác sĩ..."
+                                className="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 resize-none" />
+                            <p className="text-xs text-gray-500 mt-1">Mô tả này sẽ hiển thị cho bệnh nhân khi xem thông tin bác sĩ</p>
+                        </div>
+                    )}
+
                     <div className="flex gap-3 pt-4 border-t">
                         <button onClick={() => setIsPanelOpen(false)}
                             className="flex-1 px-4 py-2 text-sm font-medium border rounded-lg hover:bg-gray-50 transition">

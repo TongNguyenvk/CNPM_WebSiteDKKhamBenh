@@ -54,6 +54,8 @@ services:
 
 volumes:
   db_data:
+    external: true
+    name: websitedkkhambenh_db_data
 
 networks:
   app-network:

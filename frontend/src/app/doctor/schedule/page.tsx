@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { getDoctorSchedules, createSchedule, deleteDoctorSchedule } from '@/lib/api';
 import { SlidePanel, DataTable } from '@/components/ui';
-import { format } from 'date-fns';
+import { format, addDays, isBefore, startOfDay } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
 
@@ -19,14 +20,10 @@ interface Schedule {
 }
 
 const timeSlots = [
-    { key: 'T1', label: '08:00 - 09:00' },
-    { key: 'T2', label: '09:00 - 10:00' },
-    { key: 'T3', label: '10:00 - 11:00' },
-    { key: 'T4', label: '11:00 - 12:00' },
-    { key: 'T5', label: '13:00 - 14:00' },
-    { key: 'T6', label: '14:00 - 15:00' },
-    { key: 'T7', label: '15:00 - 16:00' },
-    { key: 'T8', label: '16:00 - 17:00' },
+    { key: 'T1', label: '08:00 - 09:00' }, { key: 'T2', label: '09:00 - 10:00' },
+    { key: 'T3', label: '10:00 - 11:00' }, { key: 'T4', label: '11:00 - 12:00' },
+    { key: 'T5', label: '13:00 - 14:00' }, { key: 'T6', label: '14:00 - 15:00' },
+    { key: 'T7', label: '15:00 - 16:00' }, { key: 'T8', label: '16:00 - 17:00' },
 ];
 
 const statusConfig: Record<string, { label: string; bg: string; color: string }> = {
@@ -35,18 +32,34 @@ const statusConfig: Record<string, { label: string; bg: string; color: string }>
     rejected: { label: 'Từ chối', bg: 'bg-red-100', color: 'text-red-700' },
 };
 
-export default function DoctorSchedulePage() {
+function DoctorScheduleContent() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
+
+    // URL state - lấy ngày từ URL hoặc mặc định là hôm nay
+    const selectedDate = searchParams.get('date') || format(new Date(), 'yyyy-MM-dd');
+
+    const updateUrl = (date: string) => {
+        const params = new URLSearchParams(searchParams.toString());
+        if (date && date !== format(new Date(), 'yyyy-MM-dd')) {
+            params.set('date', date);
+        } else {
+            params.delete('date');
+        }
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    };
+
     const [schedules, setSchedules] = useState<Schedule[]>([]);
     const [loading, setLoading] = useState(true);
-    const [selectedDate, setSelectedDate] = useState(format(new Date(), 'yyyy-MM-dd'));
     const [isPanelOpen, setIsPanelOpen] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [userId, setUserId] = useState<number | null>(null);
-    const [formData, setFormData] = useState({
-        date: format(new Date(), 'yyyy-MM-dd'),
-        timeType: '',
-        maxNumber: 5,
-    });
+    
+    // Ngày tối thiểu là ngày mai
+    const minDate = format(addDays(new Date(), 1), 'yyyy-MM-dd');
+    
+    const [formData, setFormData] = useState({ date: minDate, timeType: '', maxNumber: 5 });
 
     useEffect(() => {
         const userStr = localStorage.getItem('user');
@@ -71,7 +84,7 @@ export default function DoctorSchedulePage() {
     };
 
     const openCreatePanel = () => {
-        setFormData({ date: selectedDate, timeType: '', maxNumber: 5 });
+        setFormData({ date: minDate, timeType: '', maxNumber: 5 });
         setIsPanelOpen(true);
     };
 
@@ -80,14 +93,18 @@ export default function DoctorSchedulePage() {
             toast.error('Vui lòng chọn ngày và khung giờ');
             return;
         }
+        
+        // Validate ngày phải >= ngày mai
+        const selectedDateObj = startOfDay(new Date(formData.date));
+        const tomorrow = startOfDay(addDays(new Date(), 1));
+        if (isBefore(selectedDateObj, tomorrow)) {
+            toast.error('Ngày đăng ký phải từ ngày mai trở đi');
+            return;
+        }
+        
         setSubmitting(true);
         try {
-            await createSchedule({
-                doctorId: userId,
-                date: formData.date,
-                timeType: formData.timeType,
-                maxNumber: Number(formData.maxNumber)
-            });
+            await createSchedule({ doctorId: userId, date: formData.date, timeType: formData.timeType, maxNumber: Number(formData.maxNumber) });
             toast.success('Đăng ký lịch thành công! Đang chờ Admin duyệt.');
             setIsPanelOpen(false);
             fetchSchedules(userId);
@@ -110,10 +127,7 @@ export default function DoctorSchedulePage() {
         }
     };
 
-    const getTimeLabel = (timeType: string) => {
-        const slot = timeSlots.find(s => s.key === timeType);
-        return slot ? slot.label : timeType;
-    };
+    const getTimeLabel = (timeType: string) => timeSlots.find(s => s.key === timeType)?.label || timeType;
 
     const columns = useMemo(() => [
         {
@@ -130,10 +144,8 @@ export default function DoctorSchedulePage() {
                 <div className="flex items-center gap-3">
                     <span className="font-medium">{s.currentNumber || 0}/{s.maxNumber}</span>
                     <div className="w-20 bg-gray-200 rounded-full h-2">
-                        <div 
-                            className="bg-blue-500 h-2 rounded-full transition-all" 
-                            style={{ width: `${Math.min(((s.currentNumber || 0) / s.maxNumber) * 100, 100)}%` }}
-                        ></div>
+                        <div className="bg-blue-500 h-2 rounded-full transition-all" 
+                            style={{ width: `${Math.min(((s.currentNumber || 0) / s.maxNumber) * 100, 100)}%` }}></div>
                     </div>
                 </div>
             )
@@ -160,16 +172,11 @@ export default function DoctorSchedulePage() {
     ], []);
 
     if (loading) {
-        return (
-            <div className="h-full flex items-center justify-center">
-                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-            </div>
-        );
+        return <div className="h-full flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div></div>;
     }
 
     return (
         <div className="h-full flex flex-col">
-            {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b bg-white flex-shrink-0">
                 <div>
                     <h1 className="text-xl font-bold text-gray-900">Lịch làm việc</h1>
@@ -183,89 +190,64 @@ export default function DoctorSchedulePage() {
                 </button>
             </div>
 
-            {/* Info */}
             <div className="px-6 py-3 bg-blue-50 border-b flex-shrink-0">
                 <p className="text-sm text-blue-700">
-                    <strong>Lưu ý:</strong> Lịch đăng ký mới sẽ ở trạng thái &quot;Chờ duyệt&quot; cho đến khi Admin phê duyệt. Chỉ lịch đã duyệt mới hiển thị cho bệnh nhân.
+                    <strong>Lưu ý:</strong> Lịch đăng ký mới sẽ ở trạng thái &quot;Chờ duyệt&quot; cho đến khi Admin phê duyệt.
                 </p>
             </div>
 
-            {/* Toolbar */}
             <div className="flex items-center gap-4 px-6 py-3 border-b bg-white flex-shrink-0">
                 <div>
                     <label className="block text-sm font-medium text-gray-500 mb-1">Chọn ngày xem</label>
-                    <input
-                        type="date"
-                        value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    <input type="date" value={selectedDate} onChange={(e) => updateUrl(e.target.value)}
+                        className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
                 </div>
             </div>
 
-            {/* Table */}
             <div className="flex-1 overflow-hidden bg-white">
-                <DataTable
-                    columns={columns}
-                    data={schedules}
-                    keyField="id"
-                    pageSize={15}
-                    emptyMessage="Không có lịch làm việc nào cho ngày này"
-                />
+                <DataTable columns={columns} data={schedules} keyField="id" pageSize={15} emptyMessage="Không có lịch làm việc nào cho ngày này" />
             </div>
 
-            {/* Slide Panel */}
-            <SlidePanel
-                isOpen={isPanelOpen}
-                onClose={() => setIsPanelOpen(false)}
-                title="Đăng ký lịch làm việc"
-                width="md"
-            >
+            <SlidePanel isOpen={isPanelOpen} onClose={() => setIsPanelOpen(false)} title="Đăng ký lịch làm việc" width="md">
                 <div className="space-y-5">
                     <div>
                         <label className="block font-medium text-gray-700 mb-2">Ngày <span className="text-red-500">*</span></label>
-                        <input
-                            type="date"
-                            value={formData.date}
+                        <input type="date" value={formData.date} min={minDate}
                             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                            className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                        />
+                            className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                        <p className="text-xs text-gray-500 mt-1">Chỉ được chọn từ ngày mai trở đi</p>
                     </div>
-
                     <div>
                         <label className="block font-medium text-gray-700 mb-2">Khung giờ <span className="text-red-500">*</span></label>
-                        <select
-                            value={formData.timeType}
-                            onChange={(e) => setFormData({ ...formData, timeType: e.target.value })}
-                            className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                        >
+                        <select value={formData.timeType} onChange={(e) => setFormData({ ...formData, timeType: e.target.value })}
+                            className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500">
                             <option value="">Chọn khung giờ</option>
                             {timeSlots.map(slot => <option key={slot.key} value={slot.key}>{slot.label}</option>)}
                         </select>
                     </div>
-
                     <div>
                         <label className="block font-medium text-gray-700 mb-2">Số bệnh nhân tối đa</label>
-                        <input
-                            type="number"
-                            min="1"
-                            max="20"
-                            value={formData.maxNumber}
+                        <input type="number" min="1" max="20" value={formData.maxNumber}
                             onChange={(e) => setFormData({ ...formData, maxNumber: parseInt(e.target.value) || 1 })}
-                            className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500"
-                        />
+                            className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500" />
                     </div>
-
                     <div className="flex gap-3 pt-4 border-t">
-                        <button onClick={() => setIsPanelOpen(false)} className="flex-1 px-4 py-2.5 font-medium border rounded-lg hover:bg-gray-50 transition">
-                            Hủy
-                        </button>
-                        <button onClick={handleCreate} disabled={submitting} className="flex-1 px-4 py-2.5 font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50">
+                        <button onClick={() => setIsPanelOpen(false)} className="flex-1 px-4 py-2.5 font-medium border rounded-lg hover:bg-gray-50 transition">Hủy</button>
+                        <button onClick={handleCreate} disabled={submitting}
+                            className="flex-1 px-4 py-2.5 font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50">
                             {submitting ? 'Đang đăng ký...' : 'Đăng ký'}
                         </button>
                     </div>
                 </div>
             </SlidePanel>
         </div>
+    );
+}
+
+export default function DoctorSchedulePage() {
+    return (
+        <Suspense fallback={<div className="h-full flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div></div>}>
+            <DoctorScheduleContent />
+        </Suspense>
     );
 }

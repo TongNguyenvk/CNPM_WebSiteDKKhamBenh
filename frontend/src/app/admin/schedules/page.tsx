@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { getAllSchedules, getPendingSchedules, approveSchedule, rejectSchedule, createSchedule, updateDoctorSchedule, deleteDoctorSchedule, getAllDoctors } from '@/lib/api';
-import { format } from 'date-fns';
+import { format, parseISO, isPast, addDays, isBefore, startOfDay } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { SlidePanel, DataTable } from '@/components/ui';
+import { SlidePanel, DataTable, SearchableSelect } from '@/components/ui';
 import { toast } from 'react-hot-toast';
 
 interface Schedule {
@@ -34,18 +35,37 @@ const statusConfig: Record<string, { text: string; bg: string; color: string }> 
     rejected: { text: 'Từ chối', bg: 'bg-red-100', color: 'text-red-700' },
 };
 
-export default function AdminSchedulePage() {
+function SchedulePageContent() {
+    const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
+
+    // URL state
+    const activeTab = (searchParams.get('tab') as 'all' | 'pending') || 'all';
+    const filterDate = searchParams.get('date') || '';
+    const filterDoctor = searchParams.get('doctor') || '';
+    const filterStatus = searchParams.get('status') || '';
+
+    const updateUrl = (updates: Record<string, string>) => {
+        const params = new URLSearchParams(searchParams.toString());
+        Object.entries(updates).forEach(([key, value]) => {
+            if (value) params.set(key, value);
+            else params.delete(key);
+        });
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+    };
+
     const [schedules, setSchedules] = useState<Schedule[]>([]);
     const [pendingSchedules, setPendingSchedules] = useState<Schedule[]>([]);
     const [doctors, setDoctors] = useState<Doctor[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'all' | 'pending'>('all');
-    const [filterDate, setFilterDate] = useState('');
-    const [filterDoctor, setFilterDoctor] = useState('');
-    const [filterStatus, setFilterStatus] = useState('');
     const [isPanelOpen, setIsPanelOpen] = useState(false);
     const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
-    const [formData, setFormData] = useState({ doctorId: '', date: format(new Date(), 'yyyy-MM-dd'), timeType: '', maxNumber: 1 });
+    
+    // Ngày tối thiểu là ngày mai
+    const minDate = format(addDays(new Date(), 1), 'yyyy-MM-dd');
+    
+    const [formData, setFormData] = useState({ doctorId: '', date: minDate, timeType: '', maxNumber: 1 });
     const [submitting, setSubmitting] = useState(false);
 
     const loadData = async () => {
@@ -78,9 +98,25 @@ export default function AdminSchedulePage() {
     const displaySchedules = activeTab === 'pending' ? pendingSchedules : filteredSchedules;
     const hasFilters = filterDate || filterDoctor || filterStatus;
 
+    const stats = useMemo(() => {
+        const upcoming = schedules.filter(s => !isPast(parseISO(s.date))).length;
+        const approved = schedules.filter(s => s.status === 'approved').length;
+        const pending = pendingSchedules.length;
+        const full = schedules.filter(s => (s.currentNumber || 0) >= s.maxNumber).length;
+        return { total: schedules.length, upcoming, approved, pending, full };
+    }, [schedules, pendingSchedules]);
+
+    const doctorOptions = useMemo(() => {
+        return doctors.map(d => ({
+            value: d.id,
+            label: `${d.firstName} ${d.lastName}`,
+            subLabel: d.specialtyData?.name || 'Chưa có chuyên khoa'
+        }));
+    }, [doctors]);
+
     const openCreatePanel = () => {
         setEditingSchedule(null);
-        setFormData({ doctorId: '', date: format(new Date(), 'yyyy-MM-dd'), timeType: '', maxNumber: 1 });
+        setFormData({ doctorId: '', date: minDate, timeType: '', maxNumber: 1 });
         setIsPanelOpen(true);
     };
 
@@ -95,6 +131,17 @@ export default function AdminSchedulePage() {
             toast.error('Vui lòng điền đầy đủ thông tin');
             return;
         }
+        
+        // Validate ngày phải >= ngày mai (chỉ khi tạo mới)
+        if (!editingSchedule) {
+            const selectedDateObj = startOfDay(new Date(formData.date));
+            const tomorrow = startOfDay(addDays(new Date(), 1));
+            if (isBefore(selectedDateObj, tomorrow)) {
+                toast.error('Ngày tạo lịch phải từ ngày mai trở đi');
+                return;
+            }
+        }
+        
         setSubmitting(true);
         try {
             if (editingSchedule) {
@@ -134,9 +181,7 @@ export default function AdminSchedulePage() {
     };
 
     const clearFilters = () => {
-        setFilterDate('');
-        setFilterDoctor('');
-        setFilterStatus('');
+        updateUrl({ date: '', doctor: '', status: '' });
     };
 
     const columns = useMemo(() => [
@@ -239,18 +284,41 @@ export default function AdminSchedulePage() {
                 </button>
             </div>
 
+            {/* Stats */}
+            <div className="grid grid-cols-5 gap-4 px-6 py-4 bg-gray-50 border-b flex-shrink-0">
+                <div className="bg-white rounded-lg p-3 border">
+                    <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
+                    <div className="text-xs text-gray-500">Tổng lịch</div>
+                </div>
+                <div className="bg-white rounded-lg p-3 border">
+                    <div className="text-2xl font-bold text-blue-600">{stats.upcoming}</div>
+                    <div className="text-xs text-gray-500">Sắp tới</div>
+                </div>
+                <div className="bg-white rounded-lg p-3 border">
+                    <div className="text-2xl font-bold text-green-600">{stats.approved}</div>
+                    <div className="text-xs text-gray-500">Đã duyệt</div>
+                </div>
+                <div className="bg-white rounded-lg p-3 border">
+                    <div className="text-2xl font-bold text-yellow-600">{stats.pending}</div>
+                    <div className="text-xs text-gray-500">Chờ duyệt</div>
+                </div>
+                <div className="bg-white rounded-lg p-3 border">
+                    <div className="text-2xl font-bold text-red-600">{stats.full}</div>
+                    <div className="text-xs text-gray-500">Đã đầy</div>
+                </div>
+            </div>
+
             {/* Toolbar */}
             <div className="flex items-center gap-3 px-6 py-3 border-b bg-white flex-shrink-0">
-                {/* Tabs */}
                 <div className="flex bg-gray-100 p-1 rounded-lg">
                     <button
-                        onClick={() => setActiveTab('all')}
+                        onClick={() => updateUrl({ tab: '' })}
                         className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${activeTab === 'all' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600'}`}
                     >
                         Tất cả
                     </button>
                     <button
-                        onClick={() => setActiveTab('pending')}
+                        onClick={() => updateUrl({ tab: 'pending' })}
                         className={`px-3 py-1.5 rounded-md text-sm font-medium transition flex items-center gap-2 ${activeTab === 'pending' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600'}`}
                     >
                         Chờ duyệt
@@ -263,14 +331,14 @@ export default function AdminSchedulePage() {
                 {activeTab === 'all' && (
                     <>
                         <div className="h-6 w-px bg-gray-200" />
-                        <input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)}
+                        <input type="date" value={filterDate} onChange={(e) => updateUrl({ date: e.target.value })}
                             className="px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500" />
-                        <select value={filterDoctor} onChange={(e) => setFilterDoctor(e.target.value)}
+                        <select value={filterDoctor} onChange={(e) => updateUrl({ doctor: e.target.value })}
                             className="px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500">
                             <option value="">Tất cả bác sĩ</option>
                             {doctors.map(d => <option key={d.id} value={d.id}>{d.firstName} {d.lastName}</option>)}
                         </select>
-                        <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)}
+                        <select value={filterStatus} onChange={(e) => updateUrl({ status: e.target.value })}
                             className="px-3 py-1.5 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500">
                             <option value="">Tất cả trạng thái</option>
                             <option value="pending">Chờ duyệt</option>
@@ -291,39 +359,33 @@ export default function AdminSchedulePage() {
 
             {/* Table */}
             <div className="flex-1 overflow-hidden bg-white">
-                <DataTable
-                    columns={columns}
-                    data={displaySchedules}
-                    keyField="id"
-                    compact
-                    pageSize={15}
-                    emptyMessage={activeTab === 'pending' ? 'Không có lịch chờ duyệt' : 'Không có lịch nào'}
-                />
+                <DataTable columns={columns} data={displaySchedules} keyField="id" compact pageSize={15}
+                    emptyMessage={activeTab === 'pending' ? 'Không có lịch chờ duyệt' : 'Không có lịch nào'} />
             </div>
 
             {/* Slide Panel */}
-            <SlidePanel
-                isOpen={isPanelOpen}
-                onClose={() => setIsPanelOpen(false)}
-                title={editingSchedule ? 'Chỉnh sửa lịch' : 'Thêm lịch phân công'}
-                width="md"
-            >
+            <SlidePanel isOpen={isPanelOpen} onClose={() => setIsPanelOpen(false)}
+                title={editingSchedule ? 'Chỉnh sửa lịch' : 'Thêm lịch phân công'} width="md">
                 <div className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Bác sĩ <span className="text-red-500">*</span></label>
-                        <select value={formData.doctorId} onChange={(e) => setFormData({ ...formData, doctorId: e.target.value })}
-                            disabled={!!editingSchedule}
-                            className="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100">
-                            <option value="">Chọn bác sĩ</option>
-                            {doctors.map(d => <option key={d.id} value={d.id}>{d.firstName} {d.lastName} - {d.specialtyData?.name || 'N/A'}</option>)}
-                        </select>
+                        {editingSchedule ? (
+                            <input type="text" disabled
+                                value={`${doctors.find(d => d.id.toString() === formData.doctorId)?.firstName || ''} ${doctors.find(d => d.id.toString() === formData.doctorId)?.lastName || ''}`}
+                                className="w-full px-3 py-2 text-sm border rounded-lg bg-gray-100" />
+                        ) : (
+                            <SearchableSelect options={doctorOptions} value={formData.doctorId}
+                                onChange={(val) => setFormData({ ...formData, doctorId: val.toString() })}
+                                placeholder="Tìm và chọn bác sĩ..." />
+                        )}
                     </div>
-
                     <div className="grid grid-cols-2 gap-3">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Ngày <span className="text-red-500">*</span></label>
-                            <input type="date" value={formData.date} onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                            <input type="date" value={formData.date} min={editingSchedule ? undefined : minDate}
+                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                                 className="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500" />
+                            {!editingSchedule && <p className="text-xs text-gray-500 mt-1">Chỉ được chọn từ ngày mai trở đi</p>}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Khung giờ <span className="text-red-500">*</span></label>
@@ -334,19 +396,15 @@ export default function AdminSchedulePage() {
                             </select>
                         </div>
                     </div>
-
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Số bệnh nhân tối đa</label>
                         <input type="number" min="1" value={formData.maxNumber}
                             onChange={(e) => setFormData({ ...formData, maxNumber: parseInt(e.target.value) || 1 })}
                             className="w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500" />
                     </div>
-
                     <div className="flex gap-3 pt-4 border-t">
                         <button onClick={() => setIsPanelOpen(false)}
-                            className="flex-1 px-4 py-2 text-sm font-medium border rounded-lg hover:bg-gray-50 transition">
-                            Hủy
-                        </button>
+                            className="flex-1 px-4 py-2 text-sm font-medium border rounded-lg hover:bg-gray-50 transition">Hủy</button>
                         <button onClick={handleSave} disabled={submitting}
                             className="flex-1 px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-50">
                             {submitting ? 'Đang lưu...' : (editingSchedule ? 'Cập nhật' : 'Tạo mới')}
@@ -355,5 +413,13 @@ export default function AdminSchedulePage() {
                 </div>
             </SlidePanel>
         </div>
+    );
+}
+
+export default function AdminSchedulePage() {
+    return (
+        <Suspense fallback={<div className="h-full flex items-center justify-center"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div></div>}>
+            <SchedulePageContent />
+        </Suspense>
     );
 }

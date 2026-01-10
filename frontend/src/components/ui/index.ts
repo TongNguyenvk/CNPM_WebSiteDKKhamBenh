@@ -7,3 +7,4 @@ export * from './loading';
 export * from './modal';
 export * from './slide-panel';
 export * from './data-table';
+export * from './searchable-select';
